@@ -13,9 +13,9 @@ case $VERSION in
         "3.1")
                 ;;
         "3.4")
-                wget http://llvm.org/releases/3.4/clang-3.4.src.tar.gz
-                wget http://llvm.org/releases/3.4/llvm-3.4.src.tar.gz
-                wget http://llvm.org/releases/3.4/compiler-rt-3.4.src.tar.gz
+                wget https://releases.llvm.org/3.4/clang-3.4.src.tar.gz
+                wget https://releases.llvm.org/3.4/llvm-3.4.src.tar.gz
+                wget https://releases.llvm.org/3.4/compiler-rt-3.4.src.tar.gz
                 tar xf llvm-3.4.src.tar.gz && rm -f llvm-3.4.src.tar.gz 
                 tar xf clang-3.4.src.tar.gz && rm -f clang-3.4.src.tar.gz 
                 tar xf compiler-rt-3.4.src.tar.gz && rm -f compiler-rt-3.4.src.tar.gz
@@ -34,5 +34,5 @@ cd $LLVM_HOME/build
 			 --disable-bindings \
 			 --enable-targets=host-only \
 			 --enable-shared
-make -j2
+make -j$(nproc)
 make install

@@ -1,10 +1,8 @@
-FROM ubuntu
+FROM ubuntu:14.04
 
-MAINTAINER Mingliang Liu <liuml07@gmail.com>
-
-ENV LLVM_HOME /usr/local/llvm
-ENV BuildMode Release+Asserts
-ENV TEST_PARALLELISM seq
+ENV LLVM_HOME=/usr/local/llvm
+ENV BuildMode=Release+Asserts
+ENV TEST_PARALLELISM=seq
 
 RUN apt-get update
 RUN apt-get upgrade -y
