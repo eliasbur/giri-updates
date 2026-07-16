@@ -1,0 +1,4 @@
+# Keep host build artifacts and VCS metadata out of the image build context so
+# `cmake -S . -B build` inside the container starts from a clean tree.
+build/
+.git/

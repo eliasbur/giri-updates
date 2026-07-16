@@ -1,38 +1,33 @@
 #!/bin/bash
 
-# USAGE: export LLVM_HOME=llvm && $0 [VERSION]
+# USAGE: export LLVM_HOME=/usr/local/llvm && $0 [VERSION]
+#
+# Installs a prebuilt LLVM/Clang release into $LLVM_HOME. This branch targets
+# LLVM 8.0.0; the prebuilt Ubuntu 18.04 binary is what the Dockerfile pins, so
+# there is no from-source LLVM build here (unlike the LLVM 3.4 branch).
+
+set -e
 
 if [ "giri$LLVM_HOME" == "giri" ]; then
 	echo "Please set the LLVM_HOME env!"
 	exit 1
 fi
 
-VERSION=3.4
+VERSION=8.0.0
 [ $# -ge 1 ] && VERSION=$1
-case $VERSION in
-        "3.1")
-                ;;
-        "3.4")
-                wget https://releases.llvm.org/3.4/clang-3.4.src.tar.gz
-                wget https://releases.llvm.org/3.4/llvm-3.4.src.tar.gz
-                wget https://releases.llvm.org/3.4/compiler-rt-3.4.src.tar.gz
-                tar xf llvm-3.4.src.tar.gz && rm -f llvm-3.4.src.tar.gz 
-                tar xf clang-3.4.src.tar.gz && rm -f clang-3.4.src.tar.gz 
-                tar xf compiler-rt-3.4.src.tar.gz && rm -f compiler-rt-3.4.src.tar.gz
-                mv llvm-3.4 $LLVM_HOME
-                mv clang-3.4 $LLVM_HOME/tools/clang
-                mv compiler-rt-3.4 $LLVM_HOME/projects/compiler-rt
-				;;
-esac
 
-mkdir -p $LLVM_HOME/build
-cd $LLVM_HOME/build
-../configure --enable-optimized \
-			 --disable-debug-symbols \
-			 --disable-docs \
-			 --disable-terminfo \
-			 --disable-bindings \
-			 --enable-targets=host-only \
-			 --enable-shared
-make -j$(nproc)
-make install
+case $VERSION in
+	"8.0.0")
+		TARBALL=clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+		wget https://releases.llvm.org/8.0.0/$TARBALL
+		mkdir -p $LLVM_HOME
+		# The tarball unpacks into a single top-level dir; flatten it into
+		# $LLVM_HOME so $LLVM_HOME/{bin,lib/cmake/llvm} are directly available.
+		tar xf $TARBALL --strip-components=1 -C $LLVM_HOME
+		rm -f $TARBALL
+		;;
+	*)
+		echo "Unsupported LLVM version '$VERSION' for this branch (expected 8.0.0)."
+		exit 1
+		;;
+esac
