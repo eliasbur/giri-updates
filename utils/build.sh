@@ -8,7 +8,10 @@ set -e
 
 : ${LLVM_DIR:=$LLVM_HOME/lib/cmake/llvm}
 
-cmake -S . -B build -DLLVM_DIR=$LLVM_DIR
-cmake --build build -j$(nproc)
+mkdir -p build
+cd build
+cmake -DLLVM_DIR=$LLVM_DIR ..
+cmake --build . -- -j$(nproc)
+cd ..
 
 make -C test test

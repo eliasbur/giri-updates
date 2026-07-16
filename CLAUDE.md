@@ -19,13 +19,14 @@ criterion's value. It works in two phases:
 project targeted LLVM 3.4 with LLVM's old autoconf+Makefile build; on this branch the build system is
 now **CMake** and the target toolchain is **LLVM/Clang 8.0.0**.
 
-**Port status:** the *foundation* is landed — CMake build system, mechanical header/rename fixes, and
-`DataLayout`-as-a-pass removal (PORTING.md Phases 1–3). Still **not done**: the Phase 0 spike and the
-three semantic redesigns — the Metadata/Value split in `BasicBlockNumbering`/`LoadStoreNumbering`
-(Phase 4), debug-info line mapping (Phase 5), and `PostDominanceFrontier` (Phase 6). Until those land,
-the CMake build compiles past the mechanical sites and then fails at the Phase 4/5/6 code — that is
-expected. See [`PORTING.md`](PORTING.md) for the phased plan and follow its sequencing; if asked to
-continue the port, read it first rather than improvising.
+**Port status:** the *foundation* is landed and **verified working** — CMake build system, mechanical
+header/rename fixes, and `DataLayout`-as-a-pass removal (PORTING.md Phases 1–3). Phase 1 (CMake) has
+been confirmed: `docker build -t giri-llvm8 .` successfully configures and compiles through the
+runtime library and the beginning of the core passes, then hits the expected Phase 4-6 semantic errors.
+Still **not done**: the Phase 0 spike and the three semantic redesigns — the Metadata/Value split in
+`BasicBlockNumbering`/`LoadStoreNumbering` (Phase 4), debug-info line mapping (Phase 5), and
+`PostDominanceFrontier` (Phase 6). See [`PORTING.md`](PORTING.md) for the phased plan and follow its
+sequencing; if asked to continue the port, read it first rather than improvising.
 
 For a deep dive into the actual tracing/slicing pipeline — the LLVM pass invocations, the on-disk
 trace format, and the invariants a change (or the port) must preserve — see
@@ -40,9 +41,18 @@ pins Ubuntu 18.04 + prebuilt LLVM/Clang 8.0.0 (the release LLVM's 8.0.0 binaries
 docker build -t giri-llvm8 .
 ```
 
+**Confirmed working:** Phase 1 CMake build is verified. This command successfully configures with
+CMake and compiles through `librtgiri.a`, then proceeds to the main Giri passes before hitting the
+expected Phase 4-6 semantic errors (documented in `PORTING.md` under "Current compilation errors").
+
 This runs `utils/install_llvm.sh 8.0.0` (downloads the prebuilt LLVM 8.0.0 release into `$LLVM_HOME`)
 followed by `utils/build.sh` (CMake-configures and builds Giri against it via `$LLVM_DIR`, then runs
 the test suite) inside the container — see [`Dockerfile`](Dockerfile) for the exact steps.
+
+**Critical detail:** `utils/build.sh` uses CMake 3.10-compatible syntax (changing into `build/` before
+running `cmake`) rather than the modern `-S` and `-B` flags, which require CMake 3.13+. Ubuntu 18.04's
+default is CMake 3.10. Do not change `utils/build.sh` to use `-S` / `-B` without also updating the
+Dockerfile to install a newer CMake.
 
 Because the LLVM toolchain is an early, cached Docker layer, don't rebuild the image for every code
 change: once the base image exists, `docker run` a container and iterate (`cmake --build build`, rerun
@@ -52,8 +62,11 @@ image build will fail at those still-unported sites until they're done.
 ### The CMake build directly (inside the container, or against any LLVM 8.0.0 install)
 
 ```bash
-cmake -S . -B build -DLLVM_DIR=$LLVM_HOME/lib/cmake/llvm
-cmake --build build -j
+mkdir -p build
+cd build
+cmake -DLLVM_DIR=$LLVM_HOME/lib/cmake/llvm ..
+cmake --build . -- -j$(nproc)
+cd ..
 ```
 
 Build output lands in a **flat** `build/lib` (`libgiri.so`, `libdgutility.so`, `librtgiri.a`) and

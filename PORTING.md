@@ -9,14 +9,22 @@ assumes.
 **Pinned target version:** `llvmorg-8.0.0`. This branch (`port/llvm-8.0.0`) targets exactly LLVM
 8.0.0 — one branch per LLVM version — so use the `8.0.0` tag everywhere below.
 
-**Status on this branch (foundation landed).** Phases 1–3 are **done**: the build system is now CMake
-(not autoconf/Make), and the mechanical header/rename + `DataLayout`-as-a-pass fixes are applied. Build
-and test happen only inside Docker — `docker build -t giri-llvm8 .` (Ubuntu 18.04 + prebuilt LLVM
-8.0.0); Giri is never built on the host. Phase 0 (spike) and Phases 4–6 (metadata ID encoding,
+**Status on this branch (foundation landed).** Phases 1–3 are **done and verified to work**:
+- **Phase 1 (CMake):** verified working. The CMake build system is now in place. Critical fix:
+  `utils/build.sh` uses `mkdir -p build && cd build && cmake -DLLVM_DIR=$LLVM_DIR .. &&
+  cmake --build . -- -j$(nproc) && cd ..` to remain compatible with CMake 3.10 (Ubuntu 18.04's
+  default); the modern `-S` and `-B` flags require CMake 3.13+. The Docker build
+  (`docker build -t giri-llvm8 .`) now successfully configures and builds past Phase 2 errors.
+- **Phase 2 (mechanical renames):** done. Header-path fixes and LLVM API renames applied.
+- **Phase 3 (DataLayout):** done. `DataLayout` is no longer treated as a pass.
+
+Build and test happen only inside Docker — `docker build -t giri-llvm8 .` (Ubuntu 18.04 + prebuilt
+LLVM 8.0.0); Giri is never built on the host. Phase 0 (spike) and Phases 4–6 (metadata ID encoding,
 debug-info line mapping, `PostDominanceFrontier`) are **not yet done** — the CMake build compiles past
-the mechanical sites and then fails at those three, which is the intended handoff point. A few phase
-notes below were found stale during the audit; corrected here once: the debug metadata key is `"dbg"`
-(not `"Loc"`); the numbering code uses `MDNode::getWhenValsUnresolved` (not `MDNode::get`);
+the mechanical sites and then fails at those three, which is the intended handoff point.
+
+A few phase notes below were found stale during the audit; corrected here once: the debug metadata key
+is `"dbg"` (not `"Loc"`); the numbering code uses `MDNode::getWhenValsUnresolved` (not `MDNode::get`);
 `PostDominanceFrontier` currently subclasses `DominanceFrontierBase` (two-arg ctor), with
 `ForwardDominanceFrontierBase`/the templated `DominanceFrontierBase<BasicBlock,true>` being the LLVM 8
 *target*, not the present code; and every `DataLayout` include was already `llvm/IR/DataLayout.h`.
@@ -77,6 +85,32 @@ suite (`make -C test test`, i.e. `test/auto-tests.txt`: 19 `UnitTests/*` cases +
    before moving on. Don't stack multiple semantically-risky changes before checking.
 4. **Land the build system before touching C++.** Nothing else is checkable until Giri can invoke a
    compiler against LLVM 8 headers at all.
+
+## Current compilation errors (Phase 4-6, expected and documented here for next session)
+
+When running `docker build -t giri-llvm8 .` with the current codebase, the build reaches the Phase 4-6
+code and fails with these error categories (documented for reference in the next session):
+
+**Phase 4 (Metadata/Value split):**
+- `BasicBlock::iterator` / `Instruction*` conversion errors: functions like `skipAllocas()` return an
+  iterator but callers expect a raw pointer. LLVM 8 separates iterators from pointers; code needs to
+  dereference or call `&*iterator`.
+- `MDNode::getWhenValsUnresolved` no longer exists; needs `ConstantAsMetadata`-wrapped approach
+  per Phase 4 action items.
+- Type mismatches on iterator arguments to functions expecting `BasicBlock*` / `Instruction*`.
+
+**Phase 5 (Debug info):**
+- `DILocation l(N)` constructor signature changed; needs `DebugLoc` API instead.
+- `sys::fs::F_Append` no longer exists; file opening API changed.
+- `getPassName()` return type changed from `const char*` to `StringRef`.
+
+**Phase 6 (PostDominanceFrontier):**
+- `DominanceFrontierBase` appears not to exist or has changed; `PostDominanceFrontier` won't compile.
+- Multiple errors in `PostDominanceFrontier.h` around `iterator`, `DomSetType`, `Frontiers`, etc.
+- `PostDominatorTree::ID` no longer exists (no longer a legacy pass with static ID).
+
+These errors begin appearing after ~6 seconds of compilation (after `librtgiri.a` successfully builds)
+in files like `lib/Utility/BasicBlockNumbering.cpp`, `lib/Giri/TraceFile.cpp`, etc.
 
 ## Phase 0 — Spike: verify `PostDominanceFrontier`'s dependencies exist in LLVM 8
 
@@ -139,6 +173,12 @@ and more fragile, than replacing the build system outright.
 `tracer`, `prtrace` linked against LLVM 8, even though the C++ inside won't compile yet (that's
 Phases 2-6). Getting to "the build system invokes the compiler and fails on LLVM API errors, not on
 `llvm-config` not being found" is the actual exit signal here.
+
+**✓ Verified in Docker:** `docker build -t giri-llvm8 .` successfully completes CMake configuration
+and invokes the compiler. Build proceeds through `librtgiri.a` and begins compiling the main Giri
+passes before hitting the expected Phase 4/5/6 semantic errors (iterator-to-pointer conversion,
+`MDNode` API changes, `PostDominanceFrontier` class structure, etc.). This confirms Phase 1's CMake
+build system is working correctly and the handoff to Phase 4 is at the right place.
 
 ## Phase 2 — Mechanical header/rename fixes
 
