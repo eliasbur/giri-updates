@@ -18,13 +18,15 @@
 #include "Utility/BasicBlockNumbering.h"
 #include "Utility/LoadStoreNumbering.h"
 
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/IR/Verifier.h"
+#include "llvm/Bitcode/BitcodeReader.h"
+#include "llvm/Bitcode/BitcodeWriter.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/FileUtilities.h"
@@ -74,29 +76,34 @@ GetFileNameRoot(const std::string &InputFilename) {
 }
 
 int main(int argc, char **argv) {
-  LLVMContext &Context = getGlobalContext();
+  // getGlobalContext() was removed in modern LLVM; use a local context.
+  LLVMContext Context;
   llvm_shutdown_obj ShutdownObject;
 
   try {
     cl::ParseCommandLineOptions(argc, argv, "SAFECode Compiler\n");
-    sys::PrintStackTraceOnErrorSignal();
+    sys::PrintStackTraceOnErrorSignal(argv[0]);
 
     // Load the module to be compiled...
-    std::auto_ptr<Module> M;
-    std::string ErrorMessage;
-    //if (MemoryBuffer *Buffer
-    //      = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
-    //  M.reset(ParseBitcodeFile(Buffer, Context, &ErrorMessage));
-    //  delete Buffer;
-    //}
+    std::unique_ptr<Module> M;
 
-    OwningPtr<MemoryBuffer> BuffPtr;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BuffPtr, -1)) {
+    // MemoryBuffer::getFileOrSTDIN now returns ErrorOr<unique_ptr<...>>.
+    ErrorOr<std::unique_ptr<MemoryBuffer>> BuffOrErr =
+        MemoryBuffer::getFileOrSTDIN(InputFilename);
+    if (std::error_code ec = BuffOrErr.getError()) {
       std::cerr << ec.message() << "\n";
       return 1;
     }
+    std::unique_ptr<MemoryBuffer> BuffPtr = std::move(BuffOrErr.get());
 
-    M.reset(ParseBitcodeFile(BuffPtr.take(), Context, &ErrorMessage));
+    // parseBitcodeFile now returns Expected<unique_ptr<Module>>.
+    Expected<std::unique_ptr<Module>> ModuleOrErr =
+        parseBitcodeFile(BuffPtr->getMemBufferRef(), Context);
+    if (!ModuleOrErr) {
+      std::cerr << argv[0] << ": " << toString(ModuleOrErr.takeError()) << "\n";
+      return 1;
+    }
+    M = std::move(ModuleOrErr.get());
 
     if (M.get() == 0) {
       std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
@@ -104,8 +111,8 @@ int main(int argc, char **argv) {
     }
 
     // Build up all of the passes that we want to do to the module...
-    PassManager Passes;
-    Passes.add(new DataLayout(M.get()));
+    // DataLayout is no longer added as a pass; the Module carries it.
+    legacy::PassManager Passes;
 
     // Number all basic blocks and instructions.
     Passes.add(new BasicBlockNumberPass());
