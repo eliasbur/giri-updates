@@ -24,8 +24,6 @@ GIRI_BIN_DIR = $(GIRI_DIR)/bin
 .PHONY: all lib
 
 all: lib $(NAME).slice.loc
-	@ echo "Filename: $(NAME).c\nInput: $(INPUT)\nSlicing Criterion: $(CRITERION)\n\n$(NAME).c with annotated slice lines:"
-	@ awk 'NR==FNR{n[$$1];next} {print (FNR in n ? "+ " : "  ") $$0}' $(NAME).slice.loc $(NAME).c
 
 lib:
 	cmake --build $(GIRI_DIR)
