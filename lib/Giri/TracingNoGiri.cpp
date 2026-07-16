@@ -625,7 +625,8 @@ void TracingNoGiri::visitCallInst(CallInst &CI) {
 bool TracingNoGiri::runOnBasicBlock(BasicBlock &BB) {
   // Fetch the analysis results for numbering basic blocks.
   // Will be run once per module
-  TD        = &getAnalysis<DataLayout>();
+  // DataLayout is a plain Module member in modern LLVM, not an analysis pass.
+  TD        = &BB.getParent()->getParent()->getDataLayout();
   bbNumPass = &getAnalysis<QueryBasicBlockNumbers>();
   lsNumPass = &getAnalysis<QueryLoadStoreNumbers>();
 

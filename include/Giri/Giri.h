@@ -19,10 +19,10 @@
 #include "Utility/LoadStoreNumbering.h"
 #include "Utility/PostDominanceFrontier.h"
 
-#include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Pass.h"
-#include "llvm/InstVisitor.h"
+#include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/DataLayout.h"
 
 #include <deque>
@@ -56,7 +56,8 @@ public:
   virtual bool runOnBasicBlock(BasicBlock &BB);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<DataLayout>();
+    // DataLayout is no longer a pass in modern LLVM; it is fetched on demand
+    // from the Module (see runOnBasicBlock), so it is not required here.
     AU.addRequired<QueryBasicBlockNumbers>();
     AU.addPreserved<QueryBasicBlockNumbers>();
 
