@@ -31,7 +31,7 @@ test:: lib
 
 lib:
 	@ echo -n "Building the Giri..."
-	@ $(MAKE) -s -C ../build 2>&1 > /dev/null || (echo "Fail to build the Giri lib!" && exit 1)
+	@ cmake --build ../build 2>&1 > /dev/null || (echo "Fail to build the Giri lib!" && exit 1)
 	@ echo
 
 clean:

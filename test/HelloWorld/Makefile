@@ -4,14 +4,14 @@
 DEBUGFLAGS ?= -debug
 CFLAGS ?= -g -O0 -c -emit-llvm
 LDFLAGS ?=
-BuildMode ?= Release+Debug+Asserts
 GIRI_DIR ?= ../../build/
 NAME ?= hello-world
 
 CC = clang
 CXX = clang++
-GIRI_LIB_DIR = $(GIRI_DIR)/$(BuildMode)/lib
-GIRI_BIN_DIR = $(GIRI_DIR)/$(BuildMode)/bin
+# CMake flat output layout (build/lib, build/bin), not the old per-BuildMode dir.
+GIRI_LIB_DIR = $(GIRI_DIR)/lib
+GIRI_BIN_DIR = $(GIRI_DIR)/bin
 
 .PHONY: all lib
 
@@ -24,7 +24,7 @@ all: lib $(NAME).slice
 		echo
 
 lib:
-	$(MAKE) -s -C $(GIRI_DIR)
+	cmake --build $(GIRI_DIR)
 
 $(NAME).slice : $(NAME).bc $(NAME).trace
 	@ opt -load $(GIRI_LIB_DIR)/libdgutility.so \
@@ -38,7 +38,7 @@ $(NAME).trace: $(NAME).trace.exe
 	- ./$< $(INPUT)
 
 $(NAME).trace.exe : $(NAME).trace.s
-	$(CXX) -fno-strict-aliasing $+ -o $@ $(LDFLAGS) -L$(GIRI_LIB_DIR) -lrtgiri
+	$(CXX) -fno-strict-aliasing $+ -o $@ $(LDFLAGS) -L$(GIRI_LIB_DIR) -lrtgiri -pthread
 
 $(NAME).trace.s : $(NAME).trace.bc
 	llc -asm-verbose=false -O0 $< -o $@

@@ -5,7 +5,6 @@
 NAME ?= main
 DEBUGFLAGS ?= -debug
 GIRI_DIR ?= ../../../build/
-BuildMode ?= Release+Debug+Asserts
 SRC_FILES ?= $(wildcard *.c)
 IR_FILES ?= $(SRC_FILES:%.c=%.bc)
 INPUT ?=
@@ -17,15 +16,19 @@ MAPPING ?=
 CC = clang
 CXX = clang++
 CFLAGS += -g -O0 -c -emit-llvm
-GIRI_LIB_DIR = $(GIRI_DIR)/$(BuildMode)/lib
-GIRI_BIN_DIR = $(GIRI_DIR)/$(BuildMode)/bin
+# CMake uses a flat output layout (build/lib, build/bin) rather than the old
+# autoconf/Make per-BuildMode subdirectory (e.g. build/Release+Asserts/lib).
+GIRI_LIB_DIR = $(GIRI_DIR)/lib
+GIRI_BIN_DIR = $(GIRI_DIR)/bin
 
 .PHONY: all lib
 
 all: lib $(NAME).slice.loc
+	@ echo "Filename: $(NAME).c\nInput: $(INPUT)\nSlicing Criterion: $(CRITERION)\n\n$(NAME).c with annotated slice lines:"
+	@ awk 'NR==FNR{n[$$1];next} {print (FNR in n ? "+ " : "  ") $$0}' $(NAME).slice.loc $(NAME).c
 
 lib:
-	$(MAKE) -s -C $(GIRI_DIR)
+	cmake --build $(GIRI_DIR)
 
 %.slice.loc: %.slice
 	@ sed -n '/^Source.*[0-9]\+$$/p' $< |\
@@ -45,7 +48,7 @@ $(NAME).trace: $(NAME).trace.exe
 	- ./$< $(INPUT)
 
 $(NAME).trace.exe : $(NAME).trace.s
-	$(CXX) -fno-strict-aliasing $+ -o $@ -L$(GIRI_LIB_DIR) -lrtgiri $(LDFLAGS)
+	$(CXX) -fno-strict-aliasing $+ -o $@ -L$(GIRI_LIB_DIR) -lrtgiri -pthread $(LDFLAGS)
 
 $(NAME).trace.s : $(NAME).trace.bc
 	llc -asm-verbose=false -O0 $< -o $@
