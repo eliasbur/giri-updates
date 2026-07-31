@@ -80,4 +80,4 @@ Numbering passes (`-bbnum`/`-lsnum`) assign stable numeric IDs to BBs and load/s
 - **Porting guide:** `porting/AgentGuide.md` — detailed build/test/debugging commands
 - **How Giri works:** `porting/HowItWorks.md` — deep dive into the tracing/slicing pipeline
 - **LLVM API changes:** `porting/llvm-releases/<version>/api-breakings.yaml` — structured API deltas
-- **Porting tasks:** `porting/task-notes/Tasks/` — agentic task notes for the handle-task skill
+- **Porting tasks:** `porting/TaskNotes/Tasks/` — agentic task notes for the handle-task skill

@@ -8,7 +8,7 @@ Porting infrastructure — shared across all `port/llvm-*` branches. Kept separa
 | `AgentGuide.md` | Detailed build/test/debugging commands for agents |
 | `HowItWorks.md` | Deep dive into Giri's tracing/slicing pipeline |
 | `llvm-releases/` | Structured LLVM version change data (per version) |
-| `task-notes/Tasks/` | Agentic task notes for the handle-task skill |
+| `TaskNotes/Tasks/` | Agentic task notes for the handle-task skill |
 
 ## Branch structure
 
@@ -27,4 +27,4 @@ allows agents to work on different versions in parallel.
 1. Add `porting/llvm-releases/<version>/api-breakings.yaml` and `dockerfile-snippet.yaml` on `master`.
 2. Create `port/llvm-<version>` from `master`.
 3. Update `AGENTS.md` on that branch with the `## Current state` section.
-4. Write task notes in `porting/task-notes/Tasks/` and have agents handle them.
+4. Write task notes in `porting/TaskNotes/Tasks/` and have agents handle them.
