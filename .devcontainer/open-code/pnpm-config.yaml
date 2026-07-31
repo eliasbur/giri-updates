@@ -1,0 +1,5 @@
+# Global pnpm config
+
+# Don't auto-run "pnpm install" before scripts; host/container installs
+# differ, which would trigger a purge/reinstall on every run.
+verifyDepsBeforeRun: false

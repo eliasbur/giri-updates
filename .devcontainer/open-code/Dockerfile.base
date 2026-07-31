@@ -1,0 +1,99 @@
+FROM nvidia/cuda:12.0.0-base-ubuntu22.04
+
+ARG TARGETARCH
+ARG LOCAL_TOOLS="git curl jq ripgrep vim nano make zip unzip ssh-client wget tree imagemagick ca-certificates gnupg procps build-essential python3"
+
+# 0. Environment
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV LC_ALL=C.UTF-8
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+# 1. Install System Dependencies
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends ${LOCAL_TOOLS} && \
+  ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+  echo $TZ > /etc/timezone && \
+  rm -rf /var/lib/apt/lists/*
+
+# 2. Install Node.js (not included in CUDA base image)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install GH CLI (not in the official apt source)
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+    | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+  && apt-get update && apt-get install -y gh \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install glab (GitLab CLI) for MR creation — pinned to v1.109.0
+RUN cd /tmp && \
+    curl -fsSL https://gitlab.com/gitlab-org/cli/-/releases/v1.109.0/downloads/glab_1.109.0_linux_amd64.tar.gz \
+    | tar -xzf - \
+  && cp bin/glab /usr/local/bin/glab \
+  && rm -rf /tmp/{bin,CHANGELOG.md,LICENSE,README.md} \
+  && mkdir -p /root/.config/glab-cli \
+  && GLAB_NO_PROMPT=1 glab config set -g host git.tu-berlin.de \
+  && GLAB_NO_PROMPT=1 glab config set -g telemetry false \
+  && GLAB_NO_PROMPT=1 glab config set -g display_hyperlinks false \
+  && GLAB_NO_PROMPT=1 glab config set -g no_prompt true
+
+ENV GLAB_NO_PROMPT=true
+
+# Install Bun by copying from the official image
+COPY --from=oven/bun:1 /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
+
+# Playwright system dependencies for Chromium (used by agent-browser)
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+      apt-get update && \
+      apt-get install -y --no-install-recommends chromium chromium-sandbox && \
+      rm -rf /var/lib/apt/lists/*; \
+    else \
+      npx playwright install-deps chromium; \
+    fi
+
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD_ARM64=1
+
+# Corepack (no longer bundled with Node since v25, install manually)
+RUN npm install -g corepack && corepack enable
+
+# 3. Configure NPM/Bun global locations (under root's real home)
+ENV NPM_CONFIG_PREFIX=/root/.npm-global
+ENV PATH=$NPM_CONFIG_PREFIX/bin:$PATH
+
+ENV BUN_INSTALL=/root/.bun
+ENV PATH=$BUN_INSTALL/bin:$PATH
+
+RUN mkdir -p /root/.npm-global && \
+  mkdir -p /root/.config && \
+  mkdir -p /root/.local && \
+  mkdir -p /root/.bun/bin
+
+# 4. Install agent-browser (headless browser automation CLI for AI agents)
+RUN npm install -g agent-browser && \
+    if [ "$TARGETARCH" != "arm64" ]; then agent-browser install; fi
+
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
+
+# 5. install uv for python projects
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Install pyyaml (required by handle-task skill driver)
+RUN python3 -c "import yaml" 2>/dev/null || uv pip install --system pyyaml -q
+
+# 6. Bash configuration
+RUN echo "export PATH=${NPM_CONFIG_PREFIX}/bin:${BUN_INSTALL}/bin:/root/.local/bin:\$PATH" >> /root/.bashrc
+COPY ./.bash_aliases /root/.bash_aliases
+COPY ./pnpm-config.yaml /root/.config/pnpm/config.yaml
+RUN echo "if [ -f ~/.bash_aliases ]; then . ~/.bash_aliases; fi" >> /root/.bashrc
+
+CMD ["/bin/bash"]

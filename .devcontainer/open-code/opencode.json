@@ -1,0 +1,49 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "chat-ai/qwen3.6-27b",
+  "provider": {
+    "chat-ai": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "ChatAI",
+      "options": {
+        "baseURL": "{env:CHAT_ENDPOINT}",
+        "apiKey": "{env:CHAT_TOKEN}",
+        "headerTimeout": 60000,
+        "timeout": 600000,
+        "chunkTimeout": 60000
+      },
+      "models": {
+        "apertus-70b-instruct-2509": {},
+        "devstral-2-123b-instruct-2512": {},
+        "deepseek-v4-flash": {},
+        "gemma-4-31b-it": {},
+        "glm-4.7": {},
+        "meta-llama-3.1-8b-instruct": {},
+        "mistral-medium-3.5-128b": {},
+        "openai-gpt-oss-120b": {},
+        "qwen3.5-122b-a10b": {},
+        "qwen3.5-397b-a17b": {},
+        "qwen3.6-27b": {},
+        "qwen3.6-35b-a3b": {},
+        "qwen3-30b-a3b-instruct-2507": {},
+        "qwen3-coder-next": {},
+        "qwen3-omni-30b-a3b-instruct": {}
+      }
+    },
+    "saia": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "TU Berlin MythLLM",
+      "options": {
+        "baseURL": "{env:CHAT_ENDPOINT}/saia/v1",
+        "apiKey": "{env:CHAT_TOKEN}",
+        "headerTimeout": 60000,
+        "timeout": 600000,
+        "chunkTimeout": 60000
+      },
+      "models": {
+        "qwen3.6-27b": {},
+        "qwen3.6-35b-a3b": {}
+      }
+    }
+  }
+}

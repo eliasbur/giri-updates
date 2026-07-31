@@ -1,0 +1,31 @@
+{
+  "name": "open-code",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "initializeCommand": "docker build -t agent-base:local -f ${localWorkspaceFolder}/.devcontainer/open-code/Dockerfile.base ${localWorkspaceFolder}/.devcontainer/open-code",
+  "workspaceFolder": "${localWorkspaceFolder}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind,consistency=cached",
+  "remoteUser": "root",
+  "updateRemoteUserUID": false,
+  "postCreateCommand": "mkdir -p .claude && ln -sfn $(pwd)/.devcontainer/skills .claude/skills 2>/dev/null || true",
+  "runArgs": [
+    "--add-host=host.docker.internal:host-gateway",
+    "--env-file",
+    "${localWorkspaceFolder}/.devcontainer/open-code/.env"
+  ],
+  "mounts": [
+    "source=${localEnv:HOME}/.local/state/open-code,target=/root/.local/state/open-code,type=bind",
+    "source=${localEnv:HOME}/.local/share/open-code,target=/root/.local/share/open-code,type=bind"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python", "kwickramasekara.opencode-chat-unofficial",
+        "charliermarsh.ruff",
+        "ms-toolsai.jupyter",
+        "eamodio.gitlens"
+      ]
+    }
+  }
+}
