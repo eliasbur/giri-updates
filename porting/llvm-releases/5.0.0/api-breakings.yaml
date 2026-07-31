@@ -1,0 +1,385 @@
+# API changes required to port Giri from LLVM 3.4 to LLVM 5.0.0
+# Grouped by Giri subsystem so agents can work on one group at a time.
+#
+# How to read:
+#   - "old": the LLVM 3.4 API call / pattern as used in Giri
+#   - "new": the LLVM 5.0 equivalent
+#   - "reason": why the change is needed
+#   - "design_note": if a design decision is required (not just a mechanical rename)
+#
+# Verification section describes how to check the change is correct.
+
+---
+group: BuildSystem
+files:
+  - utils/install_llvm.sh
+  - utils/build.sh
+  - Dockerfile
+changes:
+  - old: "./configure --with-llvmsrc=... --with-llvmobj=..."
+    new: "CMake: cd build && cmake -DLLVM_DIR=$LLVM_HOME/lib/cmake/llvm .."
+    reason: "LLVM 5 is CMake-only; autoconf/configure build system removed upstream since 3.5"
+  - old: "make"
+    new: "cmake --build ."
+  - old: "sys/Configure.ac, autogen.sh, Makefile.llvm"
+    new: "CMakeLists.txt driven by llvm_map_components_to_libnames() or find_library()"
+  - old: "install_llvm.sh downloads source tarballs and builds from source"
+    new: "install_llvm.sh downloads prebuilt tarball or source+cmake build"
+    reason: "Prebuilt binaries are recommended for 5.0; source builds require CMake"
+  - old: "Dockerfile based on ubuntu:14.04 with autoconf/libtool/automake"
+    new: "Dockerfile based on ubuntu:16.04 with cmake/g++"
+
+---
+group: HeaderRenames
+files:
+  - lib/Giri/TracingNoGiri.cpp
+  - lib/Giri/Giri.cpp
+  - lib/Giri/TraceFile.cpp
+  - include/Giri/Giri.h
+  - include/Giri/TraceFile.h
+  - include/Utility/BasicBlockNumbering.h
+  - include/Utility/LoadStoreNumbering.h
+  - include/Utility/SourceLineMapping.h
+  - include/Utility/PostDominanceFrontier.h
+  - include/Utility/Utils.h
+  - tools/Tracer/Tracer.cpp
+  - tools/PrintTrace/PrintTrace.cpp
+  - lib/Utility/BasicBlockNumbering.cpp
+  - lib/Utility/LoadStoreNumbering.cpp
+  - lib/Utility/PostDominatorFrontier.cpp
+  - lib/Utility/SourceLineMapping.cpp
+changes:
+  - old: "llvm/InstVisitor.h"
+    new: "llvm/IR/InstVisitor.h"
+    reason: "Moved in LLVM 3.5+ as part of IR/ subdirectory reorganization"
+  - old: "llvm/Support/CallSite.h"
+    new: "llvm/IR/CallSite.h"
+    reason: "Moved in LLVM 3.7+; still present in 5.0 but in new location"
+  - old: "llvm/Support/CFG.h"
+    new: "llvm/IR/CFG.h"
+    reason: "Moved in LLVM 3.7+"
+  - old: "llvm/Analysis/Verifier.h"
+    new: "llvm/IR/Verifier.h"
+    reason: "Moved in LLVM 3.6+"
+  - old: "llvm/PassManager.h"
+    new: "llvm/IR/LegacyPassManager.h"
+    reason: "Pass manager header renamed; legacy PM namespace in LLVM 5"
+  - old: "llvm/Support/InstIterator.h"
+    new: "llvm/IR/InstIterator.h"
+    reason: "Moved in LLVM 3.5+"
+  - old: "llvm/IR/DataLayout.h"
+    new: "llvm/IR/DataLayout.h"
+    reason: "Header location is the same but DataLayout is no longer a pass"
+  - old: "llvm/Bitcode/ReaderWriter.h"
+    new: "llvm/Bitcode/BitcodeReader.h (ParseBitcodeFile still present via wrapper)"
+    reason: "Check availability; ParseBitcodeFile may still work in 5.0"
+  - old: "llvm/IR/DerivedTypes.h"
+    new: "Removed in LLVM 3.4+ (already a compat header); types are directly in llvm/IR/Type.h, llvm/IR/Instructions.h"
+    reason: "DerivedTypes.h was deprecated and later removed; getVectorTy etc. moved to CastInst/CmpInst/IntrinsicInst"
+  - old: "llvm/Transforms/Utils/BasicBlockUtils.h"
+    new: "llvm/Transforms/Utils/BasicBlockUtils.h"
+    reason: "Same path; verify appendToGlobalCtors signature"
+
+---
+group: LegacyPassManager
+files:
+  - tools/Tracer/Tracer.cpp
+changing:
+  - old: "PassManager Passes;"
+    new: "legacy::PassManager Passes;"
+    reason: "PassManager moved to legacy:: namespace in LLVM 3.8+"
+  - old: 'Passes.add(new DataLayout(M.get()));'
+    new: "Remove; DataLayout is not a pass. Set via M->setDataLayout(DataLayout(...));"
+    reason: "DataLayout-as-pass removed in LLVM 3.6+"
+  - old: "Passes.add(createVerifierPass())"
+    new: "Passes.add(createVerifierPass()) still works but createVerifierPass returns std::unique_ptr"
+  - old: "Passes.add(createBitcodeWriterPass(RawOut))"
+    new: "WriteBitcodeToFile(M, RawOut)"
+    reason: "createBitcodeWriterPass removed in LLVM 4.0+; use WriteBitcodeToFile directly"
+
+---
+group: ModuleContext
+files:
+  - tools/Tracer/Tracer.cpp
+  - tools/PrintTrace/PrintTrace.cpp
+changes:
+  - old: "LLVMContext &Context = getGlobalContext();"
+    new: "LLVMContext Context;"
+    reason: "getGlobalContext() removed in LLVM 4.0; each module must own its context"
+  - old: "OwningPtr<MemoryBuffer> BuffPtr;"
+    new: 'std::unique_ptr<MemoryBuffer> BuffPtr = MemoryBuffer::getFileOrSTDIN(...).get()'
+    reason: "OwningPtr removed; MemoryBuffer returns ErrorOr<unique_ptr<MemoryBuffer>> in 5.0"
+  - old: "std::auto_ptr<Module> M;"
+    new: "std::unique_ptr<Module> M;"
+    reason: "std::auto_ptr removed in C++14; LLVM 5 requires C++14"
+  - old: "llvm_shutdown_obj"
+    new: "Removed; not needed with LLVM 4.0+ init system"
+    reason: "llvm_shutdown_obj removed in LLVM 4.0+"
+  - old: "sys::PrintStackTraceOnErrorSignal()"
+    new: "sys::PrintStackTraceOnErrorSignal(cl::getProgramName())"
+    reason: "Requires program name argument in LLVM 5"
+  - old: "sys::RemoveFileOnSignal(OutputFilename)"
+    new: "Removed; no direct replacement. Handle cleanup in signal handler or atexit."
+    reason: "sys::RemoveFileOnSignal removed in LLVM 5.0+"
+
+---
+group: DataLayoutAsPass
+files:
+  - include/Giri/Giri.h
+  - lib/Giri/TracingNoGiri.cpp
+  - tools/Tracer/Tracer.cpp
+changes:
+  - old: 'AU.addRequired<DataLayout>()'
+    new: "Remove; DataLayout is not a pass in LLVM 5"
+    reason: "DataLayout-as-pass removed in LLVM 3.6+"
+  - old: "TD = &getAnalysis<DataLayout>();"
+    new: "TD = &F.getParent()->getDataLayout()" or "M.getDataLayout()"
+    reason: "DataLayout is a Module member, not an analysis pass"
+  - old: "const DataLayout *TD;"
+    new: "const DataLayout *DL;" or "const DataLayout &DL"
+    reason: "Variable naming; still use pointer if accessing lazily from Module"
+  - old: "Passes.add(new DataLayout(M.get()));"
+    new: "Remove this line entirely"
+
+---
+group: BasicBlockNumberingMetadata
+files:
+  - lib/Utility/BasicBlockNumbering.cpp
+  - include/Utility/BasicBlockNumbering.h
+  - lib/Utility/LoadStoreNumbering.cpp
+  - include/Utility/LoadStoreNumbering.h
+changes:
+  - old: "MDNode::getWhenValsUnresolved(Context, ArrayRef<Value*>(ID, 2), false)"
+    new: "MDNode::get(Context, {ConstantAsMetadata::get(BB->getGUID()), ConstantAsMetadata::get(ConstantInt::get(...))})"
+    reason: "getWhenValsUnresolved removed in LLVM 3.6; MDNode operands are Metadata* not Value*"
+    design_note: >
+      Critical change: Stop storing BasicBlock* as MDNode operand. MDNode operands
+      can no longer hold Value* directly. Store the BB's GUID (numeric integer) instead
+      of the pointer. On read side, reconstruct BasicBlock* from GUID via bb lookup map.
+      For LoadStoreNumbering, store instruction GUID instead of Instruction*.
+      Recovery: maintain a reverse map from GUID to BasicBlock* in QueryBasicBlockNumbers.
+  - old: "BasicBlock *BB = dyn_cast<BasicBlock>(Node->getOperand(0))"
+    new: "unsigned guid = mdconst::dyn_extract<ConstantInt>(Node->getOperand(0))->getZExtValue()"
+    reason: "MDNode operands are Metadata*, not Value*; need to extract metadata then cast"
+  - old: "ConstantInt *ID = dyn_cast<ConstantInt>(Node->getOperand(1))"
+    new: "uint64_t id = mdconst::extract<ConstantInt>(Node->getOperand(1))->getZExtValue()"
+    reason: "MDNode::getOperand returns Metadata*; use mdconst::extract<>()"
+  - old: "Value *ID[2]; ID[0] = BB; ID[1] = ConstantInt::get(...)"
+    new: "Metadata *MD[] = {ConstantAsMetadata::get(ConstantInt::get(...)), ConstantAsMetadata::get(ConstantInt::get(...))}; return MDNode::get(Context, MD);"
+    reason: "All MDNode operands must be Metadata*"
+  - old: "Instruction *I = dyn_cast<Instruction>(Node->getOperand(0))"
+    new: "unsigned guid = mdconst::dyn_extract<ConstantInt>(Node->getOperand(0))->getZExtValue()"
+    reason: "Same as BB: store GUID, not pointer"
+verification:
+  test: "test/UnitTests/test1"
+  check: "opt -load libdgutility.so -bbnum -dump-bbid=true reproduces old IDs"
+risk: high
+risk_reason: >
+  Changing from pointer-based to GUID-based metadata storage is invasive.
+  QueryBasicBlockNumbers and QueryLoadStoreNumbers must build full lookup tables
+  during runOnModule to map GUID -> BasicBlock*/Instruction*.
+  Must ensure GUID assignment is deterministic across instrumentation and slicing runs.
+
+---
+group: DebugInfo
+files:
+  - lib/Giri/Giri.cpp
+  - lib/Utility/SourceLineMapping.cpp
+  - include/Utility/SourceLineMapping.h
+changes:
+  - old: '#include "llvm/DebugInfo.h"'
+    new: '#include "llvm/IR/DebugInfo.h"'
+    reason: "Header moved in LLVM 3.5+"
+  - old: 'MDNode *N = I->getMetadata("dbg"); DILocation Loc(N);'
+    new: "const DILocation *Loc = dyn_cast<DILocation>(I->getMetadata("dbg")); "
+    reason: "DILocation(MDNode) constructor removed in LLVM 3.5+; cast MDNode to DILocation"
+  - old: "Loc.getDirectory()"
+    new: "Loc->getDirectory()"
+    reason: "DILocation is a pointer type, not value; access via -> not ."
+  - old: "Loc.getFilename()"
+    new: "Loc->getFilename()"
+  - old: "Loc.getLineNumber()"
+    new: "Loc->getLine()"
+    reason: "Method renamed from getLineNumber() to getLine() in LLVM 3.5+"
+verification:
+  test: "test/UnitTests/test10"
+  check: "criterion-loc resolution matches ans-loc-*.txt"
+risk: medium
+risk_reason: "Directory/filename semantics may differ across DI file scope; must verify with tests"
+
+---
+group: PostDominanceFrontier
+files:
+  - include/Utility/PostDominanceFrontier.h
+  - lib/Utility/PostDominatorFrontier.cpp
+changes:
+  - old: '#include "llvm/Analysis/DominanceFrontier.h"'
+    new: "Removed; DominanceFrontier.h and DominanceFrontierBase removed in LLVM 3.8"
+    reason: "DominanceFrontier infrastructure fully removed from LLVM"
+  - old: '#include "llvm/Analysis/DominatorInternals.h"'
+    new: "Removed entirely from LLVM 3.8+"
+  - old: "struct PostDominanceFrontier : public DominanceFrontierBase"
+    new: "struct PostDominanceFrontier : public FunctionPass (self-contained)"
+    reason: "DominanceFrontierBase no longer exists; must implement from scratch"
+    design_note: >
+      Reimplement the standard dominance-frontier algorithm using PostDominatorTree.
+      For each node N in the post-dominator tree:
+      - DF_local(N) = {succ(BB) | BB is a successor of N->getBlock() in CFG
+        and IDom(N) != PostDomTree->properlyDominates(N, succ)}
+      More precisely: for each CFG predecessor P of BB where IDom(P) != N,
+      insert P into frontier. Then propagate up: for each child C of N in
+      the PDT, insert nodes from DF(C) that are not strictly dominated by N.
+      The public surface (runOnFunction, getAnalysisUsage for PostDominatorTree)
+      stays the same; only internals and the base class change.
+  - old: "DomTreeNode::getIDom()"
+    new: "DomTreeNodeBase::getIDom()" (still exists in PostDominatorTree nodes)
+  - old: "DT.properlyDominates()"
+    new: "PDT.dominates() or PDT.properlyDominates()" - verify availability in 5.0
+  - old: "getRoots()"
+    new: "PDT.getRoots() - still available"
+  - old: "Frontiers[BB] member from base class"
+    new: "std::map<BasicBlock *, SmallPtrSetImpl<BasicBlock *>> Frontiers; (owned directly)"
+  - old: 'INITIALIZE_PASS_BEGIN(PostDominanceFrontier, "postdomfrontier", ...)'
+    new: "Removed; use RegisterPass<PostDominanceFrontier> H(\"postdomfrontier\", ..., true, true);"
+    reason: "INITIALIZE_PASS_BEGIN/END macros removed in LLVM 3.4+; RegisterPass handles registration"
+  - old: "INITHALIZE_PASS_DEPENDENCY(PostDominatorTree)"
+    new: "Move dependency to getAnalysisUsage: AU.addRequired<PostDominatorTree>()"
+  - old: "const DominanceFrontier::DomSetType&"
+    new: "const SmallPtrSetImpl<BasicBlock *>&"
+    reason: "DomSetType from DominanceFrontier; replace with SmallPtrSetImpl"
+verification:
+  test: "test/UnitTests/test8, test9"
+  check: "Control-dependence slices match ans-*.txt on branch/loop tests"
+risk: high
+risk_reason: "Requires from-scratch algorithm implementation; correctness proven only against test suite"
+
+---
+group: CallInstChanges
+files:
+  - lib/Giri/TracingNoGiri.cpp
+  - lib/Giri/TraceFile.cpp
+  - include/Utility/SourceLineMapping.h
+  - include/Utility/Utils.h
+changes:
+  - old: "CallInst *CI; Function *CalledFunc = CI->getCalledFunction();"
+    new: "CallInst *CI; Function *CalledFunc = CI->getCalledFunction();"
+    reason: "Still available in LLVM 5 but deprecated; uses CallSite internally. Consider: CI->getCalledOperand()->getFunction()"
+  - old: "CallSite CS(I)"
+    new: "CallSite CS(I) still works in 5.0 (deprecated header warning)"
+  - old: "CS.getArgument(index)"
+    new: "CS.arg_begin()[index] or iterate CS.arg_operands()"
+  - old: "CS.arg_size()"
+    new: "CS.arg_size() still works"
+  - old: "CI->getCalledValue()->stripPointerCasts()"
+    new: "CI->getCalledOperand()->stripPointerCasts()"
+    reason: "getCalledValue() deprecated in LLVM 5; use getCalledOperand()"
+  - old: "isa<DbgInfoIntrinsic>(I)"
+    new: "isa<DbgDeclareInst>(I) || isa<DbgValueIntrinsic>(I)"
+    reason: "DbgInfoIntrinsic base class removed in LLVM 3.5+"
+  - old: '#include "llvm/Support/CallSite.h"'
+    new: '#include "llvm/IR/CallSite.h"'
+    reason: "Header moved"
+
+---
+group: FileIO
+files:
+  - lib/Giri/Giri.cpp
+  - lib/Utility/SourceLineMapping.cpp
+  - tools/Tracer/Tracer.cpp
+  - include/Utility/Utils.h
+changes:
+  - old: "sys::fs::F_Append"
+    new: "sys::fs::FA_Append"
+    reason: "File open flags renamed F_ -> FA_ in LLVM 4.0+"
+  - old: "sys::fs::F_Create"
+    new: "sys::fs::FA_Create"
+    reason: "Same rename"
+  - old: "raw_os_ostream RawOut(*Out)"
+    new: "Wrapped writer or writeBitcodeToFile"
+    reason: "raw_os_ostream wrapper removed in LLVM 4.0/5.0. Use raw_fd_ostream or WriteBitcodeToFile directly"
+  - old: "Passes.add(createBitcodeWriterPass(RawOut))"
+    new: "WriteBitcodeToFile(M, os)"
+    reason: "BitcodeWriterPass removed; use API call directly"
+  - old: 'raw_fd_ostream SliceFile(SliceFilename.c_str(), errinfo, sys::fs::F_Append)'
+    new: 'raw_fd_ostream SliceFile(SliceFilename.c_str(), ec, sys::fs::FA_Append)'
+    reason: "Flag rename; error_code vs string"
+
+---
+group: FunctionAttributeAPI
+files:
+  - lib/Giri/TracingNoGiri.cpp
+  - include/Utility/Utils.h
+changes:
+  - old: "RuntimeCtor->setDoesNotThrow();"
+    new: "RuntimeCtor->addFnAttr(Attribute::NoThrow);"
+    reason: "setDoesNotThrow() removed in LLVM 4.0; use addFnAttr(Attribute::NoThrow)"
+  - old: "isa<InlineAsm>(CI->getCalledValue()->stripPointerCasts())"
+    new: "isa<InlineAsm>(CI->getCalledOperand()->stripPointerCasts())"
+    reason: "getCalledValue() -> getCalledOperand()"
+
+---
+group: PointerType
+files:
+  - lib/Giri/TracingNoGiri.cpp
+  - lib/Giri/TraceFile.cpp
+  - include/Utility/Utils.h
+changes:
+  - old: "PointerType::getUnqual(Int8Type)"
+    new: "Type::getInt8PtrTy(Context)" or "PointerType::getWithAlign(Type::getInt8Ty(Context), 0)"
+    reason: "PointerType::getUnqual signature changed. In LLVM 5, use getInt8PtrTy for i8*"
+  - old: "Type *VoidPtrType = PointerType::getUnqual(Int8Type);"
+    new: "Type *VoidPtrType = Type::getInt8PtrTy(Context);"
+
+---
+group: TimerAPI
+files:
+  - (if any file uses Timer classes)
+changes:
+  - old: "TimerT *T = new TimerT(...)"
+    new: "TimerT T(...)" with Name + Description arguments
+    reason: "Timer API requires both a Name and Description in LLVM 4.0+"
+
+---
+group: WeakVH
+files:
+  - (check if any file uses WeakVH)
+changes:
+  - old: "WeakVH"
+    new: "WeakTrackingVH (or WeakVH with changed semantics)"
+    reason: "WeakVH renamed to WeakTrackingVH in LLVM 5; new WeakVH doesn't track RAUW"
+note: "Giri does not appear to use WeakVH; no action needed unless found during build."
+
+---
+group: BinaryFormat
+files:
+  - (check if any file includes DWARF/ELF headers from Support)
+changes:
+  - old: "llvm/Support/... for file magic, DWARF, ELF types"
+    new: "llvm/BinaryFormat/..."
+    reason: "BinaryFormat library split from Support in LLVM 5.0"
+note: "Giri does not appear to use BinaryFormat; check during build."
+
+---
+group: Miscellaneous
+files:
+  - lib/Giri/TraceFile.cpp
+  - lib/Giri/TracingNoGiri.cpp
+  - lib/Utility/SourceLineMapping.cpp
+  - include/Utility/Utils.h
+  - tools/Tracer/Tracer.cpp
+changes:
+  - old: "Function *F = (Function *)(M->getOrInsertFunction(FName, FType))"
+    new: "Function *F = cast<Function>(M->getOrInsertFunction(FName, FType))"
+    reason: "getOrInsertFunction returns Constant* / ConstantExpr* in LLVM 5; cast to Function*"
+  - old: "ConstantDataArray::getString(Context, Ref, true)"
+    new: "ConstantDataArray::getString(Context, Ref)"
+    reason: "Third parameter (unique) removed in LLVM 5.0"
+  - old: "Function::setLinkage(GlobalValue::InternalLinkage)"
+    new: "Function::setLinkage(GlobalValue::InternalLinkage)"
+    reason: "Still the same in LLVM 5"
+  - old: "CastInst::CreateZExtOrBitCast(V, Ty, Name, InsertPt)"
+    new: "CastInst::CreateZExtOrBitCast(V, Ty, Name, InsertPt)"
+    reason: "Check if insertBefore semantics unchanged"
+  - old: "M->getModuleIdentifier()"
+    new: "M->getName()"
+    reason: "getModuleIdentifier() deprecated; use getName() which returns StringRef"
