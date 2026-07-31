@@ -27,4 +27,4 @@ allows agents to work on different versions in parallel.
 1. Add `porting/llvm-releases/<version>/api-breakings.yaml` and `dockerfile-snippet.yaml` on `master`.
 2. Create `port/llvm-<version>` from `master`.
 3. Update `AGENTS.md` on that branch with the `## Current state` section.
-4. Write task notes in `porting/task-notes/Tasks/` and have agents handle them.
+4. Write task notes in `porting/TaskNotes/Tasks/` and have agents handle them.
