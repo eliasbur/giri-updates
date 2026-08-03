@@ -1,0 +1,40 @@
+# Docker configuration for building/testing Giri against LLVM 5.0.0
+# Used by agents to determine the correct container setup.
+
+base_image: "ubuntu:16.04"
+reason: "Ubuntu 16.04 (Xenial) is the LTS release contemporary with LLVM 5.0 (Sept 2017). Ships CMake 3.5.1, sufficient for Giri build system."
+
+llvm_install:
+  version: "5.0.0"
+  method: "apt_llvm_toolchain"
+  note: "Prebuilt binaries not available from releases.llvm.org for 5.0. Use apt.llvm.org repository or build from source."
+  apt_repository: "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-5.0 main"
+  apt_packages:
+    - "llvm-5.0"
+    - "llvm-5.0-dev"
+    - "clang-5.0"
+    - "llvm-5.0-runtime"
+  install_path: "/usr/lib/llvm-5.0"
+  script: "utils/install_llvm.sh 5.0"
+
+cmake:
+  min_version: "3.0"
+  note: "Ubuntu 16.04 ships CMake 3.5.1. Giri build.sh uses CMake 3.10-compatible syntax (cd build && cmake .., no -S/-B)."
+
+env_vars:
+  LLVM_HOME: "/usr/lib/llvm-5.0"
+  LLVM_DIR: "/usr/lib/llvm-5.0/lib/cmake/llvm"
+  PATH: "/usr/lib/llvm-5.0/bin:$PATH"
+  TEST_PARALLELISM: "seq"
+
+docker_image_name: "giri-llvm5"
+build_command: "docker build -t giri-llvm5 ."
+iterate_command: "docker run -it --rm giri-llvm5 bash"
+
+packages:
+  - wget
+  - software-properties-common
+  - cmake
+  - make
+  - g++
+  - python

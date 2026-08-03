@@ -1,0 +1,105 @@
+# API changes required to port Giri from LLVM 3.4 to LLVM 5.0.0
+# Grouped by Giri subsystem so agents can work on one group at a time.
+#
+# Sources: "LLVM 5.0.0 Release Notes.html" (porting/llvm-releases/5.0.0/)
+#          Cross-referenced against current Giri source tree for impact assessment.
+#
+# How to read:
+#   - "old": the LLVM 3.4 API call / pattern as used in Giri
+#   - "new": the LLVM 5.0 equivalent
+#   - "reason": why the change is needed
+#   - "design_note": if a design decision is required (not just a mechanical rename)
+
+---
+group: CodeScanFindings
+files:
+  - lib/Giri/TraceFile.cpp
+  - lib/Giri/TracingNoGiri.cpp
+  - lib/Giri/Giri.cpp
+  - lib/Utility/BasicBlockNumbering.cpp
+  - lib/Utility/LoadStoreNumbering.cpp
+  - lib/Utility/SourceLineMapping.cpp
+  - lib/Utility/PostDominatorFrontier.cpp
+  - include/Giri/Giri.h
+  - tools/Tracer/Tracer.cpp
+  - include/Utility/Utils.h
+changes:
+  - old: "WeakVH usage"
+    new: "Not used in Giri"
+    reason: "WeakVH renamed to WeakTrackingVH in LLVM 5.0. Scanned all .cpp and .h files: no WeakVH usage found."
+  - old: "BinaryFormat library (file_magic, identify_magic, DWARF/ELF/COFF/WASM/MachO types)"
+    new: "Not used in Giri"
+    reason: "BinaryFormat split from Support in LLVM 5.0. Giri has no BinaryFormat or file-format detection dependencies."
+  - old: "BBVectorize pass"
+    new: "Not used in Giri"
+    reason: "BBVectorize pass removed in LLVM 5.0. Giri does not add this pass anywhere."
+  - old: "llvm-pdbdump tool"
+    new: "Not used in Giri"
+    reason: "Tool renamed to llvm-pdbutil. Giri does not invoke PDB-related tools."
+
+---
+group: InlineAsmRemoval
+files:
+  - lib/Giri/TracingNoGiri.cpp
+changes:
+  - old: "isa<InlineAsm>(CI.getCalledValue()->stripPointerCasts())"
+    new: "Remove the isa<InlineAsm> check entirely"
+    reason: "InlineAsm removed in LLVM 5.0; inline asm values eliminated from the IR model. The check in TracingNoGiri.cpp:557 guards against instrumenting inline assembly calls. Since InlineAsm no longer exists, this branch can never be true."
+    note: "The compound condition becomes: if (isa<GlobalAlias>(CI.getCalledValue()->stripPointerCasts()))"
+
+---
+group: CallSiteDeprecation
+files:
+  - lib/Giri/TraceFile.cpp
+  - lib/Utility/SourceLineMapping.cpp
+changes:
+  - old: '#include "llvm/Support/CallSite.h"'
+    new: '#include "llvm/IR/CallSite.h"  (deprecated in 5.0, removed in 6.0)'
+    reason: "CallSite class deprecated in LLVM 5.0, header moved to llvm/IR/. Giri uses CallSite extensively in TraceFile.cpp and SourceLineMapping.cpp for CallInst/InvokeInst abstraction. Header still available in 5.0 but will generate deprecation warnings."
+  - old: "CallSite CS(I); CS.getCalledFunction(); CS.arg_size(); CS.getArgument(n)"
+    new: "Split into dyn_cast<CallInst>(I) / dyn_cast<InvokeInst>(I) branches"
+    reason: "CallSite deprecated in 5.0; replace with explicit CallInst/InvokeInst handling. Deferral to LLVM 6.0 port is acceptable since header still exists in 5.0."
+    note: "TraceFile.cpp uses CallSite in ~30 lines (lines 1111-1193). SourceLineMapping.cpp uses it in ~5 lines (lines 92-93)."
+
+---
+group: DataLayoutChanges
+files:
+  - include/Giri/Giri.h
+  - lib/Giri/TracingNoGiri.cpp
+  - tools/Tracer/Tracer.cpp
+changes:
+  - old: "DataLayout string alloca address space default"
+    new: "DataLayout string may now specify alloca address space"
+    reason: "LLVM 5.0 allows DataLayout string to indicate non-zero address space for alloca. Giri reads DataLayout via getAnalysis<DataLayout>() but does not construct DataLayout strings. No source change required, but existing DataLayout queries should be verified to accept new alloca-as=... syntax."
+    note: "AU.addRequired<DataLayout>() and Passes.add(new DataLayout(...)) still compile in 5.0 but are deprecated; full removal is tracked in LLVM 8.0 port notes."
+
+---
+group: GlobalContextDeprecation
+files:
+  - tools/Tracer/Tracer.cpp
+changes:
+  - old: "LLVMContext &Context = getGlobalContext();"
+    new: "static LLVMContext Context;"
+    reason: "getGlobalContext() is deprecated in LLVM 5.0. Tracer.cpp:77 uses global context. Replace with local static LLVMContext instance."
+    note: "Other files should be checked for implicit global context usage."
+
+---
+group: MemoryBufferAPI
+files:
+  - tools/Tracer/Tracer.cpp
+changes:
+  - old: 'MemoryBuffer::getFileOrSTDIN(InputFilename, BuffPtr, -1) with error_code'
+    new: "Expected<std::unique_ptr<MemoryBuffer>> MemoryBuffer::getFileOrSTDIN(InputFilename)"
+    reason: "MemoryBuffer::getFileOrSTDIN signature changed in LLVM 5.0 to use Expected<> error handling. OwningPtr usage in same function also needs replacement with std::unique_ptr."
+
+---
+group: DeprecationsInBuild
+files:
+  - tools/Tracer/Tracer.cpp
+changes:
+  - old: "sys::PrintStackTraceOnErrorSignal()"
+    new: "sys::PrintStackTraceOnErrorSignal(argv[0]) / sys::PrintStackTraceWithLocationInformation();"
+    reason: "Signal handler API refined in LLVM 5.0."
+  - old: 'sys::RemoveFileOnSignal(OutputFilename)'
+    new: "sys::RemoveFileOnSignal(argv[0], OutputFilename)"
+    reason: "Signature changed to accept program name for stack trace integration."
