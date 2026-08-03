@@ -1,0 +1,35 @@
+# Docker configuration for building/testing Giri against LLVM 5.0.0
+# Used by agents to determine the correct container setup.
+
+base_image: "ubuntu:16.04"
+reason: "Ubuntu 16.04 is the target platform for LLVM 5.0.0 prebuilt binaries and ships CMake 3.5+"
+
+llvm_install:
+  version: "5.0.0"
+  method: "prebuilt_tarball"
+  tarball: "clang+llvm-5.0.0-x86_64-linux-gnu-ubuntu16.04.tar.xz"
+  url: "https://releases.llvm.org/5.0.0/clang+llvm-5.0.0-x86_64-linux-gnu-ubuntu16.04.tar.xz"
+  install_path: "/usr/local/llvm"
+  script: "utils/install_llvm.sh 5.0.0"
+
+cmake:
+  min_version: "3.5"
+  note: "Ubuntu 16.04 ships CMake 3.5.1; sufficient for basic find_package. Do not use -S/-B flags (require 3.13+)"
+
+env_vars:
+  LLVM_HOME: "/usr/local/llvm"
+  LLVM_DIR: "/usr/local/llvm/lib/cmake/llvm"
+  PATH: "/usr/local/llvm/bin:$PATH"
+  TEST_PARALLELISM: "seq"
+
+docker_image_name: "giri-llvm5"
+build_command: "docker build -t giri-llvm5 ."
+iterate_command: "docker run -it --rm giri-llvm5 bash"
+
+packages:
+  - wget
+  - xz-utils
+  - ca-certificates
+  - cmake
+  - make
+  - g++
