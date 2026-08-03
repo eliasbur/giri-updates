@@ -43,7 +43,7 @@ The value must match a `<NAME>` suffix in the env vars (case-insensitive). Missi
 
 1. **Resolve** the task — repo, backend, branch, blockers:
    ```bash
-   .venv/bin/python3 .claude/skills/handle-task/driver.py resolve porting/TaskNotes/Tasks/<slug>.md
+   /usr/bin/python3 .claude/skills/handle-task/driver.py resolve porting/TaskNotes/Tasks/<slug>.md
    ```
    Prints JSON including `repo`, `backend` (`github`/`gitlab`), `term_mr` (`PR`/`MR`), `term_prefix` (`#`/`!`), `repo_root`, `branch`, `target_branch` (from `TARGET_BRANCH` env or `development`), and `blocked_by` (non-empty ⇒ stop and surface it — don't `--force` past a real blocker).
 
@@ -78,19 +78,19 @@ The value must match a `<NAME>` suffix in the env vars (case-insensitive). Missi
 
 7. **Push** (retries transient flakiness automatically — see Gotchas):
    ```bash
-   .venv/bin/python3 .claude/skills/handle-task/driver.py push porting/TaskNotes/Tasks/<slug>.md
+   /usr/bin/python3 .claude/skills/handle-task/driver.py push porting/TaskNotes/Tasks/<slug>.md
    ```
 
 8. **Open the MR/PR** (uses the `term_mr` from `resolve` output — "MR" for GitLab, "PR" for GitHub):
    ```bash
-   .venv/bin/python3 .claude/skills/handle-task/driver.py open-mr porting/TaskNotes/Tasks/<slug>.md \
+   /usr/bin/python3 .claude/skills/handle-task/driver.py open-mr porting/TaskNotes/Tasks/<slug>.md \
      --title "<imperative summary>" --description "Implements porting/TaskNotes/Tasks/<slug>.md."
    ```
    Prints `{"repo": ..., "type": "MR|PR", "number": ..., "web_url": ...}`. Refuses to run if `resolve` would report unresolved blockers (override with `--force` only if you've confirmed the blocker is actually resolved but not yet struck through in the note).
 
 9. **Finish** — write status/Handoff back into the task note, then commit+push it *onto the task's own feature branch* (the one with the open MR/PR from step 8), so it rides into the target branch through that same MR/PR — never a direct push to a protected branch:
    ```bash
-   .venv/bin/python3 .claude/skills/handle-task/driver.py finish porting/TaskNotes/Tasks/<slug>.md \
+   /usr/bin/python3 .claude/skills/handle-task/driver.py finish porting/TaskNotes/Tasks/<slug>.md \
      --iid <number> --url <web_url> --label <repo-name>
    ```
    This sets `status: done`, adds `completedDate`/updates `dateModified`, and fills in the `## Handoff` handoff line. The format depends on the backend:
