@@ -568,6 +568,147 @@ def cmd_finish(args):
     print(f"updated {path}")
 
 
+def _detect_backend(repo_key: str) -> str:
+    """Lightweight backend detection without full cfg (for list/validate)."""
+    up = str(repo_key).upper()
+    if os.environ.get(f"GITHUB_{up}_TOKEN"):
+        return "github"
+    if os.environ.get(f"GITLAB_{up}_TOKEN"):
+        return "gitlab"
+    return "???"
+
+
+def cmd_validate(args):
+    """Validate all task notes for correctness and consistency."""
+    if not TASKS_DIR.is_dir():
+        sys.exit(f"tasks directory not found: {TASKS_DIR}")
+
+    errors = []
+    warnings = []
+    slugs = []
+
+    for task_file in sorted(TASKS_DIR.glob("*.md")):
+        if task_file.name.startswith("."):
+            continue
+
+        slug = task_file.stem
+
+        # Check for duplicate slugs
+        if slug in slugs:
+            errors.append(f"{slug}: duplicate slug found")
+        slugs.append(slug)
+
+        # Parse frontmatter
+        try:
+            frontmatter, sections, title, _ = parse_task(task_file)
+        except SystemExit as e:
+            errors.append(f"{slug}: {e.code}")
+            continue
+        except Exception as e:
+            errors.append(f"{slug}: failed to parse: {e}")
+            continue
+
+        # Check repo key
+        repo_key = frontmatter.get("repo")
+        if not repo_key:
+            errors.append(f"{slug}: missing 'repo:' in frontmatter")
+            continue
+
+        repo_key = str(repo_key)
+
+        # Check if token exists (warning, not error — file may exist before config is set)
+        up = repo_key.upper()
+        if not os.environ.get(f"GITHUB_{up}_TOKEN") and not os.environ.get(f"GITLAB_{up}_TOKEN"):
+            warnings.append(f"{slug}: no matching token for repo '{repo_key}' (set GITHUB_{up}_TOKEN or GITLAB_{up}_TOKEN)")
+
+        # Check required sections exist
+        for section in ("Goal", "Definition of done", "Files / scope"):
+            if section not in sections:
+                warnings.append(f"{slug}: missing '## {section}' section")
+
+    # Report
+    if errors:
+        for e in errors:
+            print(f"ERROR: {e}", file=sys.stderr)
+        print(f"\nValidation failed with {len(errors)} error(s).", file=sys.stderr)
+        sys.exit(1)
+
+    if warnings:
+        for w in warnings:
+            print(f"WARNING: {w}", file=sys.stderr)
+
+    if not errors and not warnings:
+        print(f"All {len(slugs)} task note(s) validated successfully.")
+    else:
+        print(f"Validation passed ({len(warnings)} warning(s), {len(errors)} error(s)).")
+
+
+def cmd_list(args):
+    """List all task notes with status, backend, branch, and blockers."""
+    if not TASKS_DIR.is_dir():
+        sys.exit(f"tasks directory not found: {TASKS_DIR}")
+
+    rows = []
+    for task_file in sorted(TASKS_DIR.glob("*.md")):
+        if task_file.name.startswith("."):
+            continue
+
+        slug = task_file.stem
+
+        try:
+            frontmatter, sections, title, _ = parse_task(task_file)
+        except SystemExit:
+            rows.append({"slug": slug, "status": "???", "repo": "???", "backend": "???", "branch": "???", "blocked_by": 0})
+            continue
+
+        repo_key = frontmatter.get("repo", "???")
+        backend = _detect_backend(repo_key)
+        blocker_count = len(unresolved_blockers(sections))
+
+        # Determine branch
+        branch = "???"
+        prefix = os.environ.get("AGENT_BRANCH_PREFIX")
+        if prefix:
+            handoff = sections.get("Handoff", "")
+            m = re.search(r"branch `([^`]+)`", handoff)
+            if m:
+                branch = m.group(1)
+            else:
+                branch = f"{prefix}/{slug}"
+
+        rows.append({
+            "slug": slug,
+            "status": frontmatter.get("status", "???"),
+            "repo": repo_key,
+            "backend": backend,
+            "branch": branch,
+            "blocked_by": blocker_count,
+        })
+
+    if not rows:
+        print("No task notes found.")
+        return
+
+    # Print JSON output if --json flag is set, otherwise print table
+    if args.json:
+        print(json.dumps(rows, indent=2))
+        return
+
+    # Print table
+    slug_w = max(len(r["slug"]) for r in rows)
+    slug_w = max(slug_w, 4)  # minimum width for "Slug"
+    status_w = max(len(r["status"]) for r in rows)
+    status_w = max(status_w, 6)  # minimum for "Status"
+
+    header = f"{'Slug':<{slug_w}}  {'Status':<{status_w}}  {'Backend':<8}  {'Repo':<15}  Branch  Blocked"
+    sep = "-" * len(header)
+    print(header)
+    print(sep)
+    for r in rows:
+        blocked = f"+{r['blocked_by']}" if r['blocked_by'] > 0 else "no"
+        print(f"{r['slug']:<{slug_w}}  {r['status']:<{status_w}}  {r['backend']:<8}  {r['repo']:<15}  {r['branch']}  {blocked}")
+
+
 # ── Argument parsing ──────────────────────────────────────────────
 
 def main():
@@ -636,6 +777,15 @@ def main():
     p.add_argument("--no-commit", action="store_true")
     p.add_argument("--no-push", action="store_true")
     p.set_defaults(func=cmd_finish)
+
+    # validate
+    p = sub.add_parser("validate", help="validate all task notes for correctness")
+    p.set_defaults(func=cmd_validate)
+
+    # list
+    p = sub.add_parser("list", help="list all task notes with status and backend")
+    p.add_argument("--json", action="store_true", help="output as JSON")
+    p.set_defaults(func=cmd_list)
 
     args = ap.parse_args()
     args.func(args)
