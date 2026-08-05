@@ -9,6 +9,8 @@ The backend (GitLab vs GitHub) per repo is determined by which env var is set: `
 
 All credential-sensitive mechanics — picking the repo, pushing over HTTPS, opening/closing MRs/PRs via the CLI, and writing the Handoff/status fields back into the task note — go through `.claude/skills/handle-task/driver.py`. Primary operations use the appropriate CLI (`glab` or `gh`) with automatic retry/backoff. Don't hand-roll `git push` with a token in the URL: it leaks the token into `ps` output on this shared host.
 
+**Environment variables:** The driver reads tokens from environment variables. These are automatically available because your devcontainer started with env vars sourced from `.env` (gitignored). You do **not** need to `source .env` manually, and the driver does **not** read `.env` directly. See `.devcontainer/open-code/.env.example` for expected variable names.
+
 ## Setup
 
 ```bash
@@ -33,7 +35,9 @@ No other setup — the driver only needs `git`, `python3`, `pyyaml`, and `glab`/
 
 `<NAME>` is an arbitrary identifier (e.g. `MYPROJECT`). The driver uses whichever token is set to determine the backend for that repo. Both `*_<NAME>_TOKEN` and `*_<NAME>_PATH` must match the same naming key.
 
-**Required task frontmatter** — each task note must include:
+**Required task frontmatter** — each task note must include `repo: <name>` in its YAML frontmatter. The value must match a `<NAME>` suffix in the env vars (case-insensitive). Missing `repo:` causes the driver to exit with an error. See `porting/TaskNotes/Tasks/.task-template.md` for the full template.
+
+Required task frontmatter — each task note must include:
 ```yaml
 repo: myproject
 ```
@@ -109,7 +113,13 @@ Same driver, run by hand instead of by an agent — the commands above are alrea
 
 ## The driver
 
-`driver.py` subcommands: `resolve`, `push`, `open-mr`, `finish`, plus `close-mr <repo> <number>` and `delete-branch <repo> <branch>` (used for cleanup/testing — not part of the normal flow). `askpass.sh` is the GIT_ASKPASS helper `push`/`finish` shell out to.
+`driver.py` subcommands:
+- `resolve`, `push`, `open-mr`, `finish` — normal task workflow
+- `validate` — checks all task notes for valid frontmatter, required sections, and matching tokens
+- `list` — lists all task notes with status, backend, branch, and blockers (add `--json` for machine-readable output)
+- `close-mr <repo> <number>`, `delete-branch <repo> <branch>` — cleanup/testing
+
+`askpass.sh` is the GIT_ASKPASS helper `push`/`finish` shell out to.
 
 **CLI tool selection:** The driver uses whichever CLI tool matches the backend for each repo: `glab` for GitLab, `gh` for GitHub. Both are pre-installed. Use `--no-glab` or `--no-gh` on any command to skip that specific CLI tool (errors if the backend requires it).
 

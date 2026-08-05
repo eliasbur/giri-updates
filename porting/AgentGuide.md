@@ -3,14 +3,18 @@
 Detailed, portable build/test/debugging reference for agents working on any version branch.
 Version-agnostic — does not reference a specific LLVM version.
 
-## The CMake build directly (inside container)
+**All commands below must be run inside the Giri Docker container, never from the agent devcontainer.**
+
+## Building
+
+Use the convenience script (rebuilds modified parts only):
 
 ```bash
-mkdir -p build && cd build
-cmake -DLLVM_DIR=$LLVM_HOME/lib/cmake/llvm ..
-cmake --build . -- -j$(nproc)
-cd ..
+source /giri/utils/build.sh
 ```
+
+Build output is flat: `build/lib` (`.so`/`.a`) and `build/bin` (executables).
+The script runs the full test suite automatically after building. 
 
 ## Testing
 
@@ -20,9 +24,9 @@ runs the instrumented binary to produce a `.trace` file, then slices with `-dgir
 against checked-in `ans-*.txt` golden output.
 
 ```bash
-make -C test test                          # full suite (from auto-tests.txt)
-cd test/UnitTests/test10 && make && make test  # single test
-cd test/UnitTests/test10 && make rebuild && make clean  # clean/rebuild single test
+make -C /giri/test                          # full suite (from auto-tests.txt)
+cd /giri/test/UnitTests/test10 && make && make test  # single test
+cd /giri/test/UnitTests/test10 && make rebuild && make clean  # clean/rebuild single test
 ```
 
 `test/auto-tests.txt` is the authoritative list of test directories. Add new test dirs there
@@ -37,7 +41,6 @@ test infra; it spells out the trace-then-slice pipeline end to end.
 - **`-debug` flag** is wired through test Makefiles; stripped for `make test`.
 - **`prtrace`** (`tools/PrintTrace/`) dumps a `.trace` file's `Entry` records in human-readable form.
 - When debugging a slice that looks wrong, use `prtrace` and the `-debug` flag together.
-- Build output: `build/lib/` (`.so`/`.a`) and `build/bin/` (executables) — flat, not nested.
 
 ## The opt invocation pipeline
 
@@ -69,12 +72,3 @@ opt -load libdgutility.so -load libgiri.so \
     -remove-bbnum -remove-lsnum \
     program.all.bc -o /dev/null
 ```
-
-## Key invariants recap
-
-1. **Numbering determinism** — `-bbnum`/`-lsnum` must assign identical IDs whether run during
-   instrumentation (step 2) or slicing (step 5) on equivalent IR.
-2. **`Entry` struct ABI** — `Runtime.h` size must divide page size; `Tracing.cpp` (writer) and
-   `TraceFile.cpp` (reader) must agree exactly.
-3. **Debug info availability** — `-g` is mandatory for compile steps; debug info maps
-   instructions back to `file:line`.

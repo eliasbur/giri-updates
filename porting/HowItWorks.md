@@ -155,17 +155,3 @@ diffs against the checked-in `ans-*.txt` answer keys.
 3. **Debug info availability and shape.** `SourceLineMapping` depends on `-g` debug info.
 4. **Pass registration and ordering.** Pipeline hard-codes pass ordering via explicit
    `opt -load ... -passname` flags; `getAnalysisUsage` must stay consistent.
-
-## Where to look for what
-
-| Question | File |
-|---|---|
-| How is a BB/load/store numbered? | `include/Utility/BasicBlockNumbering.h`, `LoadStoreNumbering.h` |
-| What gets instrumented, and how? | `lib/Giri/TracingNoGiri.cpp` |
-| What does the runtime actually write? | `runtime/Giri/Tracing.cpp`, `include/Giri/Runtime.h` |
-| How is the trace file parsed? | `lib/Giri/TraceFile.cpp` (~1500 lines, most subtle) |
-| How is the backward slice computed? | `lib/Giri/Giri.cpp` |
-| How does control dependence get computed? | `include/Utility/PostDominanceFrontier.h` + `PostDominatorTree` |
-| How does a slice get back to `file:line`? | `lib/Utility/SourceLineMapping.cpp` |
-| Exact build/trace/slice commands | `test/Makefile.common` |
-| Dump a trace file for debugging | `tools/PrintTrace/` (`prtrace`) |
