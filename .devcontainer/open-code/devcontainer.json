@@ -14,6 +14,11 @@
     "--env-file",
     "${localWorkspaceFolder}/.devcontainer/open-code/.env"
   ],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:4.0.0": {
+      "moby": true
+    }
+  },
   "mounts": [
     "source=${localEnv:HOME}/.local/state/open-code,target=/root/.local/state/open-code,type=bind",
     "source=${localEnv:HOME}/.local/share/open-code,target=/root/.local/share/open-code,type=bind"
