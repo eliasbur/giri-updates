@@ -1,0 +1,823 @@
+---
+# Metadata about this file
+version: "3.6.2"
+sourceUrl: "http://llvm.org/releases/3.6.2/docs/ReleaseNotes.html"
+generatedBy: "opencode-agent"
+generatedDate: "2025-08-05"
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes in this release" — 3.6.2 specific) ---
+
+  - id: mips-362-128-bit-integers
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for 128-bit integers on 64-bit MIPS targets"
+    description: "Added support for 128-bit integers on 64-bit targets."
+    affectedApi:
+      - "128-bit integers"
+      - "MIPS 64-bit"
+    notes: "From Non-comprehensive list of changes in this release (3.6.2 specific)."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-362-n32-n64-small-struct-be
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed remaining N32/N64 calling convention bugs with small structures on big-endian targets"
+    description: "Fixed some remaining N32/N64 calling convention bugs when using small structures on big-endian targets."
+    affectedApi:
+      - "N32 ABI"
+      - "N64 ABI"
+      - "calling convention"
+      - "big-endian"
+    notes: "From Non-comprehensive list of changes in this release (3.6.2 specific)."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-362-n32-n64-sign-extension-libcall
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed missing sign-extensions required by N32/N64 calling convention for library function calls with 32-bit parameters"
+    description: "Fixed missing sign-extensions that are required by the N32/N64 calling convention when generating calls to library functions with 32-bit parameters."
+    affectedApi:
+      - "N32 ABI"
+      - "N64 ABI"
+      - "signext"
+      - "zeroext"
+    notes: "From Non-comprehensive list of changes in this release (3.6.2 specific)."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-362-no-odd-spreg-msa
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "-mno-odd-spreg is now honoured for vector insertion/extraction operations when using -mmsa"
+    description: "-mno-odd-spreg is now honoured for vector insertion/extraction operations when using -mmsa."
+    affectedApi:
+      - "-mno-odd-spreg"
+      - "-mmsa"
+    notes: "From Non-comprehensive list of changes in this release (3.6.2 specific)."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-362-member-func-ptr-micromips
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Corrected the representation of member function pointers for microMIPS targets"
+    description: "Corrected the representation of member function pointers. This makes them usable on microMIPS targets."
+    affectedApi:
+      - "member function pointers"
+      - "microMIPS"
+    notes: "From Non-comprehensive list of changes in this release (3.6.2 specific)."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-362-disasm-segfault-memory-ops
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed multiple segfaults and assertions in the disassembler when disassembling instructions that have memory operands"
+    description: "Fixed multiple segfaults and assertions in the disassembler when disassembling instructions that have memory operands."
+    affectedApi:
+      - "MIPS disassembler"
+    notes: "From Non-comprehensive list of changes in this release (3.6.2 specific)."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-362-zero-register-cgen
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed multiple cases of suboptimal code generation involving $zero"
+    description: "Fixed multiple cases of suboptimal code generation involving $zero."
+    affectedApi:
+      - "$zero"
+      - "MIPS code generation"
+    notes: "From Non-comprehensive list of changes in this release (3.6.2 specific)."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- General changes (top-level "Non-comprehensive list of changes in 3.6.0") ---
+
+  - id: auroraux-removed
+    category: "general"
+    changeType: "removed"
+    severity: "medium"
+    summary: "Support for AuroraUX has been removed"
+    description: "Support for AuroraUX has been removed."
+    affectedApi:
+      - "AuroraUX"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: bitcode-wrapper-native-object
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for a native object file-based bitcode wrapper format"
+    description: "Added support for a native object file-based bitcode wrapper format."
+    affectedApi:
+      - "bitcode wrapper format"
+      - "BitCodeFormat"
+    notes: "Referenced: BitCodeFormat.html#native-object-file"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-vectorcallcc
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "Added support for MSVC's __vectorcall calling convention as x86_vectorcallcc"
+    description: "Added support for MSVC's __vectorcall calling convention as x86_vectorcallcc."
+    affectedApi:
+      - "x86_vectorcallcc"
+      - "__vectorcall"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the LLVM IR (prefix data, metadata, alias syntax, comdat syntax) ---
+
+  - id: prefix-prologue-split
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "The semantics of the prefix attribute have been changed; former behavior renamed to prologue"
+    description: "The semantics of the prefix attribute have been changed. Users that want the previous prefix semantics should instead use prologue. In this release the concept of prefix data has been redefined to be data which occurs immediately before the function entrypoint (i.e. the symbol address). Since prefix data now occurs before the function entrypoint, there is no need for the data to be valid code. The previous notion of prefix data now goes under the name 'prologue data' to emphasize its duality with the function epilogue. The intention here is to handle cases (1) code sanitization metadata and (2) function hot-patching with prologue data and case (3) language runtime metadata with prefix data."
+    affectedApi:
+      - "prefix"
+      - "prologue"
+      - "prefix attribute"
+      - "prologue attribute"
+    notes: "Refactoring arose out of discussions with Reid Kleckner. Three usecases: (1) Code sanitization metadata, (2) Function hot-patching, (3) Language runtime metadata (e.g. GHC tables-next-to-code)."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: metadata-not-a-value
+    category: "llvm-ir"
+    changeType: "removed"
+    severity: "high"
+    summary: "Metadata nodes and strings are no longer values—they have no use-lists, no type, cannot RAUW, and cannot be function-local"
+    description: "Metadata nodes (!{...}) and strings (!\"...\") are no longer values. They have no use-lists, no type, cannot RAUW, and cannot be function-local."
+    affectedApi:
+      - "Metadata"
+      - "Value"
+      - "MDNode"
+      - "MDString"
+      - "RAUW"
+      - "use-lists"
+    notes: "LLVM intrinsics can reference metadata using the metadata type. Function-local metadata is limited to direct arguments to LLVM intrinsics."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: metadata-bridges-value-metadata
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "New bridges between Value and Metadata: intrinsics use metadata type, metadata nodes can reference constant values"
+    description: "LLVM intrinsics can reference metadata using the metadata type, and metadata nodes can reference constant values. Function-local metadata is limited to direct arguments to LLVM intrinsics."
+    affectedApi:
+      - "metadata type"
+      - "LLVM intrinsics"
+      - "MDNode"
+      - "constant values"
+    notes: "Sub-section of 'Metadata is not a Value'."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: metadata-typeless
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "Metadata is typeless; old IR syntax with metadata type wrappers inside nodes is obsolete"
+    description: "The following old IR: metadata !{i32 %v}, metadata !{i32* @global}, metadata !{metadata !\"string\"}, metadata !{metadata !{metadata !1, metadata !\"string\"}}, and metadata !{metadata !1, metadata !2, metadata !3, metadata !\"some string\"} should now be written as: i32 %v, i32* @global, !{!\"string\"}, !{!{!1, !\"string\"}}, and !{!1, !2, !3, !\"some string\"}."
+    affectedApi:
+      - "metadata type"
+      - "MDNode"
+      - "Metadata"
+      - "!{...}"
+    notes: "Old metadata !{type value} syntax replaced with simpler !{value} form, stripping metadata type wrappers inside nodes."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: distinct-metadata-nodes
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "medium"
+    summary: "Metadata nodes can opt-out of uniquing using the 'distinct' keyword"
+    description: "Metadata nodes can opt-out of uniquing, using the keyword distinct. Distinct nodes are still owned by the context, but are stored in a side table, and not uniqued. In LLVM 3.5, metadata nodes would drop uniquing if an operand changed to null during optimizations. This is no longer true. However, if an operand change causes a uniquing collision, they become distinct. Unlike LLVM 3.5, where serializing to assembly or bitcode would re-unique the nodes, they now remain distinct."
+    affectedApi:
+      - "distinct"
+      - "MDNode"
+      - "uniquing"
+    notes: "Self-referencing nodes are implicitly distinct."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: metadata-cyclic-graphs-resolveCycles
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "medium"
+    summary: "Cyclic metadata graphs require calling resolveCycles() to resolve nodes in the cycle"
+    description: "During graph construction, if a metadata node transitively references a forward declaration, the node itself is considered 'unresolved' until the forward declaration resolves. An unresolved node can RAUW itself to support uniquing. Nodes automatically resolve once all their operands have resolved. However, cyclic graphs prevent the nodes from resolving. An API client that constructs a cyclic graph must call resolveCycles() to resolve nodes in the cycle. To save self-references from that burden, self-referencing nodes are implicitly distinct."
+    affectedApi:
+      - "resolveCycles()"
+      - "MDNode"
+      - "unresolved nodes"
+      - "RAUW"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mdlocation-new-metadata
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "high"
+    summary: "New first-class metadata construct MDLocation (aka DebugLoc aka DILocation) for !dbg attachments"
+    description: "There's a new first-class metadata construct called MDLocation (to be followed in subsequent releases by others). It's used for the locations referenced by !dbg metadata attachments. For example, if an old !dbg attachment looked like metadata !{i32 10, i32 3, metadata !2, metadata !1), the new attachment looks like !MDLocation(line: 10, column: 3, scope: !2, inlinedAt: !1). The fields are named, can be reordered, and have sane defaults if left out (although scope: is required)."
+    affectedApi:
+      - "MDLocation"
+      - "DebugLoc"
+      - "DILocation"
+      - "!dbg"
+      - "!MDLocation"
+    notes: "Fields are named (line, column, scope, inlinedAt), can be reordered, and have sane defaults. scope: is required."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: alias-syntax-change
+    category: "llvm-ir"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "The syntax for aliases now has linkage before alias keyword, matching global variables"
+    description: "The syntax for aliases is now closer to what is used for global variables: @a = weak global ...; @b = weak alias .... The order of the alias keyword and the linkage was swapped before."
+    affectedApi:
+      - "alias"
+      - "GlobalAlias"
+      - "linkage"
+      - "weak"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: comdat-syntax-change
+    category: "llvm-ir"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "New comdat syntax with comdat keyword and parentheses"
+    description: "The syntax of comdats was changed to: $c = comdat any; @g = global i32 0, comdat($c); @c = global i32 0, comdat. The version without the parentheses is a syntactic sugar for a comdat with the same name as the global."
+    affectedApi:
+      - "comdat"
+      - "Comdat"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: ir-in-object-files-llvmbc
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "Regular object files can now contain IR in a section named .llvmbc"
+    description: "Regular object files can contain IR in a section named .llvmbc."
+    affectedApi:
+      - ".llvmbc"
+      - "object files"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Removed and changed features ---
+
+  - id: old-jit-removed
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "The old JIT has been removed; all users should transition to MCJIT"
+    description: "All users should transition to MCJIT."
+    affectedApi:
+      - "JIT"
+      - "MCJIT"
+      - "ExecutionEngine"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: object-binary-buffer-ownership
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "object::Binary no longer owns the file buffer; it is now just a wrapper"
+    description: "It is now just a wrapper, which simplifies using object::Binary with other users of the underlying file."
+    affectedApi:
+      - "object::Binary"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: gold-plugin-rewritten-linker
+    category: "general"
+    changeType: "moved"
+    severity: "medium"
+    summary: "The gold plugin rewritten on top of lib/Linker instead of lib/LTO"
+    description: "It is now implemented directly on top of lib/Linker instead of lib/LTO. The API of lib/LTO is sufficiently different from gold's view of the linking process that some cases could not be conveniently implemented. The new implementation is also lazier and has a save-temps option."
+    affectedApi:
+      - "lib/Linker"
+      - "lib/LTO"
+      - "gold plugin"
+      - "save-temps"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: lazy-loaded-functions-isDeclaration
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Lazy loaded functions now correctly return isDeclaration before reading the body"
+    description: "Lazy loaded functions are now represented in a way that isDeclaration returns the correct answer even before reading the body."
+    affectedApi:
+      - "isDeclaration"
+      - "lazy loaded functions"
+      - "MCJIT"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: opt-std-compile-opts-removed
+    category: "general"
+    changeType: "removed"
+    severity: "low"
+    summary: "The opt option -std-compile-opts was removed"
+    description: "It was effectively an alias of -O3."
+    affectedApi:
+      - "-std-compile-opts"
+      - "opt"
+      - "-O3"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: python-2.7-required
+    category: "general"
+    changeType: "default-change"
+    severity: "low"
+    summary: "Python 2.7 is now required"
+    description: "This was done to simplify compatibility with python 3."
+    affectedApi:
+      - "Python"
+      - "Python 2.7"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: leak-detector-removed
+    category: "general"
+    changeType: "removed"
+    severity: "low"
+    summary: "The leak detector has been removed"
+    description: "In practice, tools like asan and valgrind were finding way more bugs than the old leak detector, so it was removed."
+    affectedApi:
+      - "leak detector"
+      - "asan"
+      - "valgrind"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: win64-unwind-info
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "LLVM now obeys Win64 prologue/epilogue conventions; frame pointer walk no longer works on Win64"
+    description: "LLVM now obeys the Win64 prologue and epilogue conventions documented by Microsoft. Unwind information is also emitted into the .xdata section. As a result of the ABI-required prologue changes, it is now no longer possible to unwind the stack using a standard frame pointer walk on Win64. Instead, users should call CaptureStackBackTrace, or implement equivalent functionality by consulting the unwind tables present in the binary."
+    affectedApi:
+      - "Win64 prologue"
+      - "Win64 epilogue"
+      - ".xdata"
+      - "CaptureStackBackTrace"
+      - "frame pointer walk"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: diagnostic-handler-linker-bitcode
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "lib/Linker and lib/Bitcode now use the diagnostic handler to print errors and warnings"
+    description: "These libraries now use the diagnostic handler to print errors and warnings. This provides better error messages and simpler error handling."
+    affectedApi:
+      - "lib/Linker"
+      - "lib/Bitcode"
+      - "DiagnosticHandler"
+      - "diagnostic handler"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the C API ---
+
+  - id: c-api-preservesource-no-op
+    category: "c-api"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "PreserveSource linker mode retained in the C API for source compatibility, but has no effect"
+    description: "The PreserveSource linker mode was removed. It was fairly broken and was removed. The mode is currently still available in the C API for source compatibility, but it doesn't have any effect."
+    affectedApi:
+      - "PreserveSource"
+      - "LlvmLinkerMode"
+      - "LLVMAddModule"
+      - "C API linker"
+    notes: "PreserveSource was removed from the C++ API; the C API enum is retained for source compatibility only."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Garbage Collection ---
+
+  - id: gc-statepoints-new-mechanism
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "New experimental mechanism for describing garbage collection safepoints (statepoints)"
+    description: "A new experimental mechanism for describing a garbage collection safepoint was added to LLVM. The new mechanism was not complete at the point this release was branched so it is recommended that anyone interested in using this mechanism track the ongoing development work on tip of tree. The hope is that these intrinsics will be ready for general use by 3.7."
+    affectedApi:
+      - "statepoints"
+      - "gc safepoint intrinsics"
+    notes: "Documentation at http://llvm.org/docs/Statepoints.html"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: gc-gcroot-continues
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Existing gc.root implementation still supported; GCStrategy features may be removed in 3.7"
+    description: "The existing gc.root implementation is still supported and as fully featured as it ever was. However, two features from GCStrategy will likely be removed in the 3.7 release (performCustomLowering and findCustomSafePoints). We are expecting to migrate away from gc.root in the 3.8 time frame, but both mechanisms will be supported in 3.7."
+    affectedApi:
+      - "gc.root"
+      - "GCStrategy"
+      - "performCustomLowering"
+      - "findCustomSafePoints"
+    notes: "Migrate to statepoints by 3.8."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the MIPS Target (3.6.0 detailed section) ---
+
+  - id: mips-360-milestones
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "medium"
+    summary: "MIPS target gained MIPS-II/MIPS-III support, GCC ABI compatibility for O32/N32/N64, and Linux kernel compilation for 32-bit"
+    description: "During this release the MIPS target has reached a few major milestones. The compiler has gained support for MIPS-II and MIPS-III; become ABI-compatible with GCC for big and little endian O32, N32, and N64; and is now able to compile the Linux kernel for 32-bit targets. Additionally, LLD now supports microMIPS for the O32 ABI on little endian targets, and code generation for microMIPS is almost completely passing the test-suite."
+    affectedApi:
+      - "MIPS-II"
+      - "MIPS-III"
+      - "O32 ABI"
+      - "N32 ABI"
+      - "N64 ABI"
+      - "microMIPS"
+      - "LLD"
+      - "Linux kernel"
+    notes: "Introductory overview from 3.6.0 detailed MIPS section."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-be-n32-n64-abi-bugfixes
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "Large number of bugs fixed for big-endian MIPS N32/N64 ABIs; some bugs still affect IR generated by LLVM 3.5"
+    description: "A large number of bugs have been fixed for big-endian MIPS targets using the N32 and N64 ABI's as well as a small number of bugs affecting other ABI's. Please note that some of these bugs will still affect LLVM-IR generated by LLVM 3.5 since correct code generation depends on appropriate usage of the inreg, signext, and zeroext attributes on all function arguments and returns."
+    affectedApi:
+      - "N32 ABI"
+      - "N64 ABI"
+      - "O32 ABI"
+      - "inreg"
+      - "signext"
+      - "zeroext"
+      - "big-endian"
+    notes: "Some bugs will still affect LLVM 3.5 IR due to missing inreg/signext/zeroext attributes."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-be-n32-n64-gcc-interlink
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "Big-endian N32 and N64 now interlink successfully with GCC compiled code"
+    description: "Big-endian N32 and N64 now interlinks successfully with GCC compiled code. Previously this didn't work for the majority of cases."
+    affectedApi:
+      - "N32 ABI"
+      - "N64 ABI"
+      - "big-endian"
+      - "GCC"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-n32-n64-fp128-return-registers
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "Registers for returning 128-bit FP struct single member on N32/N64 changed from $f0/$f2 to $f0/$f1 to match GCC"
+    description: "The registers used to return a structure containing a single 128-bit floating point member on the N32/N64 ABI's have been changed from those specified by the ABI documentation to match those used by GCC. The documentation specifies that $f0 and $f2 should be used but GCC has used $f0 and $f1 for many years."
+    affectedApi:
+      - "N32 ABI"
+      - "N64 ABI"
+      - "$f0"
+      - "$f1"
+      - "$f2"
+    notes: "Documentation specifies $f0/$f2 but GCC uses $f0/$f1; LLVM now matches GCC."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-zero-byte-struct-o32
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Returning a zero-byte struct no longer causes arguments to be read from wrong registers on O32"
+    description: "Returning a zero-byte struct no longer causes arguments to be read from the wrong registers when using the O32 ABI."
+    affectedApi:
+      - "O32 ABI"
+      - "zero-byte struct"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-64bit-exception-personality
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Exception personality changed for 64-bit MIPS targets to eliminate relocation warnings in read-only section"
+    description: "The exception personality has been changed for 64-bit MIPS targets to eliminate warnings about relocations in a read-only section."
+    affectedApi:
+      - "exception personality"
+      - "64-bit MIPS"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-fastcc-odd-spreg
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed incorrect usage of odd-numbered single-precision FP registers with fastcc and -mno-odd-spreg on 64-bit FPU"
+    description: "Incorrect usage of odd-numbered single-precision floating point registers has been fixed when the fastcc calling convention is used with 64-bit FPU's and -mno-odd-spreg."
+    affectedApi:
+      - "fastcc"
+      - "-mno-odd-spreg"
+      - "single-precision FP registers"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-abicalls-flag
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "medium"
+    summary: "Added -mabicalls and -mno-abicalls flags for Linux kernel compilation"
+    description: "Added -mabicalls and -mno-abicalls. The implementation may not be complete but works sufficiently well for the Linux kernel."
+    affectedApi:
+      - "-mabicalls"
+      - "-mno-abicalls"
+    notes: "From LLVMLinux subsection."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-inlineasm-gcc-compat
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed multiple compatibility issues between LLVM inline assembly and GCC inline assembly"
+    description: "Fixed multiple compatibility issues between LLVM's inline assembly support and GCC's."
+    affectedApi:
+      - "inline assembly"
+      - "GCC compatibility"
+    notes: "From LLVMLinux subsection."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-integrated-as-linux-directives
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for Linux assembler directives to the Integrated Assembler"
+    description: "Added support for a number of directives used by Linux to the Integrated Assembler."
+    affectedApi:
+      - "Integrated Assembler"
+      - "assembler directives"
+    notes: "From LLVMLinux subsection."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-disasm-lwdc-swdc-cache-pref
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Disassembling l[wd]c[23], s[wd]c[23], cache, and pref no longer triggers an assertion"
+    description: "Attempting to disassemble l[wd]c[23], s[wd]c[23], cache, and pref no longer triggers an assertion."
+    affectedApi:
+      - "MIPS disassembler"
+      - "l[wd]c[23]"
+      - "s[wd]c[23]"
+      - "cache"
+      - "pref"
+    notes: "From Miscellaneous subsection."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-uclibc-glibc
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "low"
+    summary: "Added -muclibc and -mglibc flags to support toolchains with both uClibC and GLibC"
+    description: "Added -muclibc and -mglibc to support toolchains that provide both uClibC and GLibC."
+    affectedApi:
+      - "-muclibc"
+      - "-mglibc"
+    notes: "From Miscellaneous subsection."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-sizeof-int128-removed
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "removed"
+    severity: "medium"
+    summary: "__SIZEOF_INT128__ no longer defined for 64-bit MIPS targets since 128-bit integers do not work"
+    description: "__SIZEOF_INT128__ is no longer defined for 64-bit targets since 128-bit integers do not work at this time for this target."
+    affectedApi:
+      - "__SIZEOF_INT128__"
+      - "64-bit MIPS"
+      - "i128"
+    notes: "From Miscellaneous subsection. Note: 3.6.2 top-level added 128-bit integer support on 64-bit targets, this deprecation may be superseded."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-360-t4-t7-deprecated-n32-n64
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "deprecated"
+    severity: "low"
+    summary: "Using $t4-$t7 with N32/N64 ABI deprecated when -fintegrated-as is in use; will be removed in LLVM 3.7"
+    description: "Using $t4-$t7 with the N32 and N64 ABI is deprecated when -fintegrated-as is in use and will be removed in LLVM 3.7. These names have never been supported by the GNU Assembler for these ABI's."
+    affectedApi:
+      - "$t4"
+      - "$t5"
+      - "$t6"
+      - "$t7"
+      - "-fintegrated-as"
+      - "N32 ABI"
+      - "N64 ABI"
+    notes: "From Miscellaneous subsection. Removal in LLVM 3.7."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the PowerPC Target ---
+
+  - id: powerpc-vsx-isa206
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "LLVM now generates VSX instructions from Power ISA version 2.06 for both big- and little-endian targets"
+    description: "LLVM now generates the Vector-Scalar eXtension (VSX) instructions from version 2.06 of the Power ISA, for both big- and little-endian targets."
+    affectedApi:
+      - "VSX"
+      - "Power ISA 2.06"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-power8-scheduling
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "LLVM now has a POWER8 instruction scheduling description"
+    description: "LLVM now has a POWER8 instruction scheduling description."
+    affectedApi:
+      - "POWER8"
+      - "instruction scheduling"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-asan-functional
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "AddressSanitizer (ASan) support is now fully functional on PowerPC"
+    description: "AddressSanitizer (ASan) support is now fully functional."
+    affectedApi:
+      - "AddressSanitizer"
+      - "ASan"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-atomic-access-perf
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Performance of simple atomic accesses has been greatly improved"
+    description: "Performance of simple atomic accesses has been greatly improved."
+    affectedApi:
+      - "atomic accesses"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-atomic-fences-lw-sync
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Atomic fences now use light-weight syncs where possible"
+    description: "Atomic fences now use light-weight syncs where possible, again providing significant performance benefit."
+    affectedApi:
+      - "atomic fences"
+      - "light-weight syncs"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-pic-levels
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC target now supports PIC levels (-fPIC vs. -fpic)"
+    description: "The PowerPC target now supports PIC levels (-fPIC vs. -fpic)."
+    affectedApi:
+      - "-fPIC"
+      - "-fpic"
+      - "PIC levels"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-ppc32-svr4-small-pic
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "PPC32 SVR4 now supports small-model PIC"
+    description: "PPC32 SVR4 now supports small-model PIC."
+    affectedApi:
+      - "PPC32"
+      - "SVR4"
+      - "small-model PIC"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-stackmap-patchpoint-intrinsics
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "Experimental support for the stackmap/patchpoint intrinsics has been added"
+    description: "Experimental support for the stackmap/patchpoint intrinsics has been added."
+    affectedApi:
+      - "stackmap"
+      - "patchpoint"
+      - "LLVM intrinsics"
+    notes: "Experimental."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-bugfixes
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Many smaller bug fixes and performance improvements"
+    description: "There have been many smaller bug fixes and performance improvements."
+    affectedApi:
+      - "PowerPC target"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"

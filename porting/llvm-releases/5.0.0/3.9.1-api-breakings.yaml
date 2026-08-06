@@ -1,0 +1,1123 @@
+---
+version: "3.9.1"
+sourceUrl: "https://releases.llvm.org/3.9.1/docs/ReleaseNotes.html"
+generatedBy: "opencode agent"
+generatedDate: "2025-08-05"
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes in this release") ---
+
+  - id: llvmcontext-discardvaluenames
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "LLVMContext gains new runtime check discardValueNames() to discard Value names"
+    description: "The LLVMContext gains a new runtime check (see LLVMContext::discardValueNames()) that can be set to discard Value names (other than GlobalValue). This is intended to be used in release builds by clients that are interested in saving CPU/memory as much as possible."
+    affectedApi:
+      - "LLVMContext"
+      - "LLVMContext::discardValueNames"
+      - "Value"
+      - "GlobalValue"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: global-context-removed
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "Global context no longer available except for the C API"
+    description: "There is no longer a \"global context\" available in LLVM, except for the C API."
+    affectedApi:
+      - "LLVMContext"
+      - "global context"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: autoconf-removed-cmake-only
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "Autoconf build system removed; CMake 3.4.3+ now required"
+    description: "The autoconf build system has been removed in favor of CMake. LLVM 3.9 requires CMake 3.4.3 or later to build. For information about using CMake please see the documentation on Building LLVM with CMake. For information about the CMake language there is also a CMake Primer document available."
+    affectedApi:
+      - "autoconf"
+      - "CMake"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: targetframelowering-eliminatecallframepseudoinstr-sig-change
+    category: "general"
+    changeType: "renamed"
+    severity: "high"
+    summary: "TargetFrameLowering::eliminateCallFramePseudoInstr now returns iterator instead of void"
+    description: "TargetFrameLowering::eliminateCallFramePseudoInstr now returns an iterator to the next instruction instead of void. Targets that previously did MBB.erase(I); return; now probably want return MBB.erase(I);"
+    affectedApi:
+      - "TargetFrameLowering::eliminateCallFramePseudoInstr"
+      - "MBB::erase"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: selectiondagisel-select-returns-void
+    category: "general"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "SelectionDAGISel::Select now returns void; out-of-tree targets must be updated"
+    description: "SelectionDAGISel::Select now returns void. Out-of-tree targets will need to be updated to replace the argument node and remove any dead nodes in cases where they currently return an SDNode * from this interface."
+    affectedApi:
+      - "SelectionDAGISel::Select"
+      - "SDNode"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: memoryssa-added
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "MemorySSA analysis added to replace MemoryDependenceAnalysis"
+    description: "Added the MemorySSA analysis, which hopes to replace MemoryDependenceAnalysis. It should provide higher-quality results than MemDep, and be algorithmically faster than MemDep. Currently, GVNHoist (which is off by default) makes use of MemorySSA."
+    affectedApi:
+      - "MemorySSA"
+      - "MemoryDependenceAnalysis"
+      - "MemDep"
+      - "GVNHoist"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: jump-table-density-threshold-reduced
+    category: "general"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "Minimum density for lowering switches with jump tables reduced from 40% to 10%"
+    description: "The minimum density for lowering switches with jump tables has been reduced from 40% to 10% for functions which are not marked optsize (that is, compiled with -Os)."
+    affectedApi:
+      - "jump tables"
+      - "optsize"
+      - "-Os"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- C API changes (embedded in top-level list) ---
+
+  - id: c-api-parsebitcode-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "LLVMParseBitcode has been removed"
+    description: "C API functions LLVMParseBitcode, LLVMParseBitcodeInContext, LLVMGetBitcodeModuleInContext and LLVMGetBitcodeModule having been removed. LLVMGetTargetMachineData has been removed (use LLVMGetDataLayout instead)."
+    affectedApi:
+      - "LLVMParseBitcode"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-parsebitcodeincontext-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "LLVMParseBitcodeInContext has been removed"
+    description: "C API functions LLVMParseBitcode, LLVMParseBitcodeInContext, LLVMGetBitcodeModuleInContext and LLVMGetBitcodeModule having been removed. LLVMGetTargetMachineData has been removed (use LLVMGetDataLayout instead)."
+    affectedApi:
+      - "LLVMParseBitcodeInContext"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-getbitcodemoduleincontext-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "LLVMGetBitcodeModuleInContext has been removed"
+    description: "C API functions LLVMParseBitcode, LLVMParseBitcodeInContext, LLVMGetBitcodeModuleInContext and LLVMGetBitcodeModule having been removed. LLVMGetTargetMachineData has been removed (use LLVMGetDataLayout instead)."
+    affectedApi:
+      - "LLVMGetBitcodeModuleInContext"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-getbitcodemodule-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "LLVMGetBitcodeModule has been removed"
+    description: "C API functions LLVMParseBitcode, LLVMParseBitcodeInContext, LLVMGetBitcodeModuleInContext and LLVMGetBitcodeModule having been removed. LLVMGetTargetMachineData has been removed (use LLVMGetDataLayout instead)."
+    affectedApi:
+      - "LLVMGetBitcodeModule"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-gettargetmachinedata-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "LLVMGetTargetMachineData removed; use LLVMGetDataLayout instead"
+    description: "C API functions LLVMParseBitcode, LLVMParseBitcodeInContext, LLVMGetBitcodeModuleInContext and LLVMGetBitcodeModule having been removed. LLVMGetTargetMachineData has been removed (use LLVMGetDataLayout instead)."
+    affectedApi:
+      - "LLVMGetTargetMachineData"
+      - "LLVMGetDataLayout"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-linkmodules-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "LLVMLinkModules has been removed"
+    description: "The C API function LLVMLinkModules has been removed."
+    affectedApi:
+      - "LLVMLinkModules"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-addtargetdata-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "LLVMAddTargetData has been removed"
+    description: "The C API function LLVMAddTargetData has been removed."
+    affectedApi:
+      - "LLVMAddTargetData"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-getdatalayout-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMGetDataLayout deprecated in favor of LLVMGetDataLayoutStr"
+    description: "The C API function LLVMGetDataLayout is deprecated in favor of LLVMGetDataLayoutStr."
+    affectedApi:
+      - "LLVMGetDataLayout"
+      - "LLVMGetDataLayoutStr"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmattribute-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMAttribute enum and associated API deprecated in favor of LLVMAttributeRef API"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API."
+    affectedApi:
+      - "LLVMAttribute"
+      - "LLVMAttributeRef"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmaddfunctionattr-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMAddFunctionAttr deprecated"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API. The deprecated functions are LLVMAddFunctionAttr, LLVMAddTargetDependentFunctionAttr, LLVMRemoveFunctionAttr, LLVMGetFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute and LLVMSetInstrParamAlignment."
+    affectedApi:
+      - "LLVMAddFunctionAttr"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmaddtargetdependentfunctionattr-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMAddTargetDependentFunctionAttr deprecated"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API. The deprecated functions are LLVMAddFunctionAttr, LLVMAddTargetDependentFunctionAttr, LLVMRemoveFunctionAttr, LLVMGetFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute and LLVMSetInstrParamAlignment."
+    affectedApi:
+      - "LLVMAddTargetDependentFunctionAttr"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmremovefunctionattr-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMRemoveFunctionAttr deprecated"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API. The deprecated functions are LLVMAddFunctionAttr, LLVMAddTargetDependentFunctionAttr, LLVMRemoveFunctionAttr, LLVMGetFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute and LLVMSetInstrParamAlignment."
+    affectedApi:
+      - "LLVMRemoveFunctionAttr"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmgetfunctionattr-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMGetFunctionAttr deprecated"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API. The deprecated functions are LLVMAddFunctionAttr, LLVMAddTargetDependentFunctionAttr, LLVMRemoveFunctionAttr, LLVMGetFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute and LLVMSetInstrParamAlignment."
+    affectedApi:
+      - "LLVMGetFunctionAttr"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmaddattribute-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMAddAttribute deprecated"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API. The deprecated functions are LLVMAddFunctionAttr, LLVMAddTargetDependentFunctionAttr, LLVMRemoveFunctionAttr, LLVMGetFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute and LLVMSetInstrParamAlignment."
+    affectedApi:
+      - "LLVMAddAttribute"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmremoveattribute-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMRemoveAttribute deprecated"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API. The deprecated functions are LLVMAddFunctionAttr, LLVMAddTargetDependentFunctionAttr, LLVMRemoveFunctionAttr, LLVMGetFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute and LLVMSetInstrParamAlignment."
+    affectedApi:
+      - "LLVMRemoveAttribute"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmgetattribute-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMGetAttribute deprecated"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API. The deprecated functions are LLVMAddFunctionAttr, LLVMAddTargetDependentFunctionAttr, LLVMRemoveFunctionAttr, LLVMGetFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute and LLVMSetInstrParamAlignment."
+    affectedApi:
+      - "LLVMGetAttribute"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmaddinstrattribute-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMAddInstrAttribute deprecated"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API. The deprecated functions are LLVMAddFunctionAttr, LLVMAddTargetDependentFunctionAttr, LLVMRemoveFunctionAttr, LLVMGetFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute and LLVMSetInstrParamAlignment."
+    affectedApi:
+      - "LLVMAddInstrAttribute"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmremoveinstrattribute-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMRemoveInstrAttribute deprecated"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API. The deprecated functions are LLVMAddFunctionAttr, LLVMAddTargetDependentFunctionAttr, LLVMRemoveFunctionAttr, LLVMGetFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute and LLVMSetInstrParamAlignment."
+    affectedApi:
+      - "LLVMRemoveInstrAttribute"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmsetinstrparamalignment-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMSetInstrParamAlignment deprecated"
+    description: "The C API enum LLVMAttribute and associated API is deprecated in favor of the new LLVMAttributeRef API. The deprecated functions are LLVMAddFunctionAttr, LLVMAddTargetDependentFunctionAttr, LLVMRemoveFunctionAttr, LLVMGetFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute and LLVMSetInstrParamAlignment."
+    affectedApi:
+      - "LLVMSetInstrParamAlignment"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: ir-masked-intrinsics-added
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "New intrinsics llvm.masked.load, llvm.masked.store, llvm.masked.gather, llvm.masked.scatter"
+    description: "New intrinsics llvm.masked.load, llvm.masked.store, llvm.masked.gather and llvm.masked.scatter were introduced to the LLVM IR to allow selective memory access for vector data types."
+    affectedApi:
+      - "llvm.masked.load"
+      - "llvm.masked.store"
+      - "llvm.masked.gather"
+      - "llvm.masked.scatter"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: ir-notail-attribute-added
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "New notail attribute added to prevent tail call optimization"
+    description: "The new notail attribute prevents optimization passes from adding tail or musttail markers to a call. It is used to prevent tail call optimization from being performed on the call."
+    affectedApi:
+      - "notail"
+      - "tail"
+      - "musttail"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the AArch64 Target ---
+
+  - id: aarch64-kryo-vulcan-cpu-support
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "AArch64 gained support for Qualcomm Kryo and Broadcom Vulcan CPUs with scheduling models"
+    description: "Gained support for Qualcomm's Kryo and Broadcom's Vulcan CPUs, including scheduling models."
+    affectedApi:
+      - "Kryo"
+      - "Vulcan"
+      - "scheduling models"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-exynos-m1-scheduling
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "AArch64 landed scheduling model for Samsung Exynos M1"
+    description: "Landed a scheduling model for Samsung's Exynos M1."
+    affectedApi:
+      - "Exynos M1"
+      - "scheduling models"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-globalisel-work
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AArch64 saw significant work on GlobalISel"
+    description: "Seen a lot of work on GlobalISel."
+    affectedApi:
+      - "GlobalISel"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-new-combines
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AArch64 learned more combines: fadd/fmul into fmadd, stack pointer adjustments"
+    description: "Learned a few more useful combines (fadd and fmul into fmadd, adjustments to the stack pointer for callee-save stack memory and local stack memory etc)."
+    affectedApi:
+      - "fadd"
+      - "fmul"
+      - "fmadd"
+      - "stack pointer"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-swift-cc
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "AArch64 gained Swift calling convention support"
+    description: "Gained support for the Swift calling convention."
+    affectedApi:
+      - "Swift calling convention"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-subtargetfeatures
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "AArch64 switched to SubtargetFeatures instead of specific CPU tests"
+    description: "Switched to using SubtargetFeatures rather than testing for specific CPUs and to using TableGen for handling system instruction operands."
+    affectedApi:
+      - "SubtargetFeatures"
+      - "TableGen"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-targetparser
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "AArch64 now using TargetParser; no more StringSwitches for CPU/FPU/feature names"
+    description: "Like ARM, AArch64 is now using the TargetParser, so no more StringSwitches matching CPU, FPU or feature names will be accepted in normal code."
+    affectedApi:
+      - "TargetParser"
+      - "StringSwitch"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-clang-self-host-lld
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Clang can now self-host using LLD on AArch64"
+    description: "Clang can now self-host itself using LLD on AArch64."
+    affectedApi:
+      - "Clang"
+      - "LLD"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-halide-tests
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "AArch64 gained a big batch of tests from Halide"
+    description: "Gained a big batch of tests from Halide."
+    affectedApi:
+      - "Halide"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-lldb-compact-unwind
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "LLDB now supports AArch64 compact unwind tables"
+    description: "Furthermore, LLDB now supports AArch64 compact unwind tables, as used on iOS, tvos and watchos."
+    affectedApi:
+      - "LLDB"
+      - "compact unwind tables"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the ARM Target ---
+
+  - id: arm-armv82a-targeting
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARMv8.2-A can now be targeted directly via Clang flags"
+    description: "ARMv8.2-A can now be targeted directly via Clang flags."
+    affectedApi:
+      - "ARMv8.2-A"
+      - "Clang"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-cortex-r8-support
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM added preliminary support for Cortex-R8"
+    description: "Adding preliminary support for Cortex-R8."
+    affectedApi:
+      - "Cortex-R8"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-lldb-eabi-attributes
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "LLDB can now parse EABI attributes for ELF input"
+    description: "LLDB can now parse EABI attributes for an ELF input."
+    affectedApi:
+      - "LLDB"
+      - "EABI"
+      - "ELF"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-thumb-lld-support
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Initial ARM/Thumb support added to LLD"
+    description: "Initial ARM/Thumb support was added to LLD."
+    affectedApi:
+      - "LLD"
+      - "ARM"
+      - "Thumb"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-executionengine-coff
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "medium"
+    summary: "ExecutionEngine now supports COFF/ARM"
+    description: "The ExecutionEngine now supports COFF/ARM."
+    affectedApi:
+      - "ExecutionEngine"
+      - "COFF"
+      - "ARM"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-swift-cc
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Swift calling convention ported to ARM"
+    description: "Swift calling convention was ported to ARM."
+    affectedApi:
+      - "Swift calling convention"
+      - "ARM"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-codegen-fixes
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "ARM large number of codegen fixes around ARMv8, DSP, relocations, EABI, Windows on ARM, atomics"
+    description: "A large number of codegen fixes around ARMv8, DSP, correct sub-target support, relocations, EABI, EHABI, Windows on ARM, atomics."
+    affectedApi:
+      - "ARMv8"
+      - "DSP"
+      - "EABI"
+      - "EHABI"
+      - "atomics"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-assembler-improvements
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "ARM improved assembler support for Linux/Android/Chromium sub-projects"
+    description: "Improved assembler support for Linux/Android/Chromium sub-projects."
+    affectedApi:
+      - "assembler"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-musl-support
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM initial support for MUSL libc"
+    description: "Initial support for MUSL (libc) on ARM."
+    affectedApi:
+      - "MUSL"
+      - "libc"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-thumb1-libunwind
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM support for Thumb1 targets in libunwind"
+    description: "Support for Thumb1 targets in libunwind."
+    affectedApi:
+      - "Thumb1"
+      - "libunwind"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-halide-tests
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM gained a big batch of tests from Halide"
+    description: "Gained a big batch of tests from Halide."
+    affectedApi:
+      - "Halide"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the MIPS Target ---
+
+  - id: mips-integrated-as-default
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "default-change"
+    severity: "high"
+    summary: "MIPS integrated assembler enabled by default for all mips-* and mipsel-* triples"
+    description: "Enabled the Integrated Assembler by default for all mips-* and mipsel-* triples."
+    affectedApi:
+      - "Integrated Assembler"
+      - "mips-*"
+      - "mipsel-*"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-integrated-as-n64-improved
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "MIPS integrated assembler significantly improved for n64 ABI"
+    description: "Significantly improved the Integrated Assembler support for the n64 ABI."
+    affectedApi:
+      - "Integrated Assembler"
+      - "n64"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-compact-branches-option
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS added Clang frontend -mcompact-branches option"
+    description: "Added the Clang frontend -mcompact-branches={never,optimal,always} option that controls how LLVM generates compact branches for MIPS targets."
+    affectedApi:
+      - "-mcompact-branches"
+      - "Clang"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-large-frame-performance
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "MIPS improved performance and code size for large frame stack pointer adjustments"
+    description: "Improved performance and code size for stack pointer adjustments in functions with large frames."
+    affectedApi:
+      - "stack pointer"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-micromips32r6
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS implemented many instructions from microMIPS32R6 ISA with CodeGen"
+    description: "Implemented many instructions from the microMIPS32R6 ISA and added CodeGen support for most of them."
+    affectedApi:
+      - "microMIPS32R6"
+      - "CodeGen"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-mips64el-debian-stretch
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS added support for mips64el-linux-gnuabi64 triple (Debian Stretch)"
+    description: "Added support for the triple used by Debian Stretch for little endian MIPS64, ie. mips64el-linux-gnuabi64."
+    affectedApi:
+      - "mips64el-linux-gnuabi64"
+      - "MIPS64"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-eabi-removed
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "removed"
+    severity: "medium"
+    summary: "MIPS removed EABI which was neither tested nor properly supported"
+    description: "Removed EABI which was neither tested nor properly supported."
+    affectedApi:
+      - "EABI"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-selfhost-32r6
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS gained ability to self-host on MIPS32R6"
+    description: "Gained the ability to self-host on MIPS32R6."
+    affectedApi:
+      - "MIPS32R6"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-selfhost-64r2-64r6
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS gained ability to self-host on MIPS64R2 and MIPS64R6 with n64 ABI"
+    description: "Gained the ability to self-host on MIPS64R2 and MIPS64R6 when using the n64 ABI."
+    affectedApi:
+      - "MIPS64R2"
+      - "MIPS64R6"
+      - "n64"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-la-macro-pic-o32
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS added LA macro support in PIC mode for o32"
+    description: "Added support for the LA macro in PIC mode for o32."
+    affectedApi:
+      - "LA"
+      - "PIC"
+      - "o32"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-safestack-compiler-rt
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS added support for safestack in compiler-rt"
+    description: "Added support for safestack in compiler-rt."
+    affectedApi:
+      - "safestack"
+      - "compiler-rt"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-n64-lld
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS added n64 ABI support in LLD"
+    description: "Added support for the MIPS n64 ABI in LLD."
+    affectedApi:
+      - "n64"
+      - "LLD"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-tls-relocations-lld
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS added LLD support for TLS relocations for o32 and n64 ABIs"
+    description: "Added LLD support for TLS relocations for both o32 and n64 MIPS ABIs."
+    affectedApi:
+      - "TLS"
+      - "relocations"
+      - "LLD"
+      - "o32"
+      - "n64"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-delay-slots-multi-fill-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MIPS delay slots no longer filled multiple times with -save-temps or -via-file-asm"
+    description: "Delay slots are no longer filled multiple times when either -save-temps or -via-file-asm are used."
+    affectedApi:
+      - "delay slots"
+      - "-save-temps"
+      - "-via-file-asm"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-n32-n64-elf-label-prefix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MIPS n32/n64 updated to follow standard ELF label prefix .L; o32 still uses $"
+    description: "Updated n32 and n64 to follow the standard ELF conventions for label prefixes (.L), whereas o32 still uses its own ($)."
+    affectedApi:
+      - "n32"
+      - "n64"
+      - "o32"
+      - ".L"
+      - "ELF"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-sign-extend-gpr-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MIPS sign-extend values to GPR width for 32-bit instructions on 64-bit ISAs"
+    description: "Properly sign-extend values to GPR width for instructions that expect 32-bit values on 64-bit ISAs."
+    affectedApi:
+      - "GPR"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-delay-slot-filler-fixes
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MIPS several fixes for the delay-slot filler pass including forbidden-slot hazard handling"
+    description: "Several fixes for the delay-slot filler pass, including correct forbidden-slot hazard handling."
+    affectedApi:
+      - "delay-slot filler"
+      - "forbidden-slot"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-machine-verifier-fixes
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "MIPS fixed several errors caught by the machine verifier"
+    description: "Fixed several errors caught by the machine verifier when turned on for MIPS."
+    affectedApi:
+      - "machine verifier"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-select-predicate-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MIPS fixed broken predicate for SELECT patterns in MIPS64"
+    description: "Fixed broken predicate for SELECT patterns in MIPS64."
+    affectedApi:
+      - "SELECT"
+      - "MIPS64"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-ll-sc-truncation-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MIPS fixed wrong truncation of memory address for LL/SC sequences in MIPS64"
+    description: "Fixed wrong truncation of memory address for LL/SC seqeuences in MIPS64."
+    affectedApi:
+      - "LL"
+      - "SC"
+      - "MIPS64"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-cprestore-noat-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MIPS fixed o32/n32/n64 handling of .cprestore inside .set noat region"
+    description: "Fixed the o32, n32 and n64 handling of .cprestore directives when inside a .set noat region by the Integrated Assembler."
+    affectedApi:
+      - ".cprestore"
+      - ".set noat"
+      - "o32"
+      - "n32"
+      - "n64"
+      - "Integrated Assembler"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-hi-lo-relocation-order-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MIPS fixed ordering of HI/LO pairs in the relocation table"
+    description: "Fixed the ordering of HI/LO pairs in the relocation table."
+    affectedApi:
+      - "HI"
+      - "LO"
+      - "relocation table"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-octeon-eflags-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MIPS fixed generated ELF EFlags when Octeon is the target"
+    description: "Fixed the generated ELF EFlags when Octeon is the target."
+    affectedApi:
+      - "EFlags"
+      - "ELF"
+      - "Octeon"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the PowerPC Target ---
+
+  - id: powerpc-o3-to-o2-opts
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "default-change"
+    severity: "low"
+    summary: "PowerPC moved some optimizations from O3 to O2"
+    description: "Moved some optimizations from O3 to O2 (D18562)"
+    affectedApi:
+      - "O3"
+      - "O2"
+    notes: "D18562"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-sibling-call-ppc64
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC enabled sibling call optimization on ppc64 ELFv1/ELFv2 ABI"
+    description: "Enable sibling call optimization on ppc64 ELFv1/ELFv2 abi"
+    affectedApi:
+      - "ppc64"
+      - "ELFv1"
+      - "ELFv2"
+      - "sibling call"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the X86 Target ---
+
+  - id: x86-skylake-avx512
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "X86 added support for Intel Skylake Server with -march=skylake-avx512"
+    description: "LLVM now supports the Intel CPU codenamed Skylake Server with AVX-512 extensions using -march=skylake-avx512. The switch enables the ISA extensions AVX-512{F, CD, VL, BW, DQ}."
+    affectedApi:
+      - "-march=skylake-avx512"
+      - "AVX-512"
+      - "AVX-512F"
+      - "AVX-512CD"
+      - "AVX-512VL"
+      - "AVX-512BW"
+      - "AVX-512DQ"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-knl-avx512
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "X86 added support for Intel Knights Landing with -march=knl"
+    description: "LLVM now supports the Intel CPU codenamed Knights Landing with AVX-512 extensions using -march=knl. The switch enables the ISA extensions AVX-512{F, CD, ER, PF}."
+    affectedApi:
+      - "-march=knl"
+      - "AVX-512"
+      - "AVX-512F"
+      - "AVX-512CD"
+      - "AVX-512ER"
+      - "AVX-512PF"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-push-preference
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "default-change"
+    severity: "low"
+    summary: "X86 now prefers PUSH over %esp-relative MOV for function calls at -O1 and above"
+    description: "LLVM will now prefer PUSH instructions rather than %esp-relative MOV instructions for function calls at all optimization levels greater than -O0. Previously this transformation only occurred at -Os."
+    affectedApi:
+      - "PUSH"
+      - "MOV"
+      - "%esp"
+      - "-O0"
+      - "-Os"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the AMDGPU Target ---
+
+  - id: amdgpu-opengl-shader-extensions
+    category: "target-amdgpu"
+    targetName: "amdgpu"
+    changeType: "added"
+    severity: "low"
+    summary: "AMDGPU added backend support for OpenGL shader extensions (since Mesa 12)"
+    description: "Added backend support for OpenGL shader image, buffer storage, atomic counter, and compute shader extensions (supported since Mesa 12)"
+    affectedApi:
+      - "OpenGL"
+      - "Mesa"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: amdgpu-mesa11-dropped
+    category: "target-amdgpu"
+    targetName: "amdgpu"
+    changeType: "removed"
+    severity: "medium"
+    summary: "AMDGPU no longer supports Mesa 11.0.x"
+    description: "Mesa 11.0.x is no longer supported"
+    affectedApi:
+      - "Mesa"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"

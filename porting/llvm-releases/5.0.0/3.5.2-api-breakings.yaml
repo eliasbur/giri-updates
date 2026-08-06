@@ -1,0 +1,731 @@
+---
+version: "3.5.2"
+sourceUrl: "https://releases.llvm.org/3.5.2/docs/ReleaseNotes.html"
+generatedBy: "opencode agent"
+generatedDate: "2025-08-05"
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes in 3.5") ---
+
+  - id: mc-asm-printer-only
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "Non-MC asm printer support removed; all backends use MC asm printer"
+    description: "All backends have been changed to use the MC asm printer and support for the non MC one has been removed."
+    affectedApi:
+      - "MC asm printer"
+      - "non-MC asm printer"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: clang-sparc64-self-host
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Clang can self-host on Linux/Sparc64 and FreeBSD/Sparc64"
+    description: "Clang can now successfully self-host itself on Linux/Sparc64 and on FreeBSD/Sparc64."
+    affectedApi:
+      - "Clang"
+      - "Sparc64"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: debug-loc-directive
+    category: "general"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "LLVM now requires assembler .loc support for debug info; old llc debug printing removed"
+    description: "LLVM now assumes the assembler supports .loc for generating debug line numbers. The old support for printing the debug line info directly was only used by llc and has been removed."
+    affectedApi:
+      - ".loc"
+      - "llc"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: inline-as-integrated-as
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Inline assembly now always parsed by integrated assembler, including asm output"
+    description: "All inline assembly is parsed by the integrated assembler when it is enabled. Previously this was only the case for object-file output. It is now the case for assembly output as well. The integrated assembler can be disabled with the -no-integrated-as option."
+    affectedApi:
+      - "integrated assembler"
+      - "-no-integrated-as"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: llvm-ar-ir-files
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "llvm-ar now handles IR files like regular object files with symbol table"
+    description: "llvm-ar now handles IR files like regular object files. In particular, a regular symbol table is created for symbols defined in IR files, including those in file scope inline assembly."
+    affectedApi:
+      - "llvm-ar"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: cfi-stack-unwinding
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "LLVM now always uses CFI directives for producing most stack unwinding information"
+    description: "LLVM now always uses cfi directives for producing most stack unwinding information."
+    affectedApi:
+      - "cfi directives"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: vectorizer-metadata-renamed
+    category: "general"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "Loop vectorizer hint metadata prefix changed and unroll metadata renamed"
+    description: "The prefix for loop vectorizer hint metadata has been changed from llvm.vectorizer to llvm.loop.vectorize. In addition, llvm.vectorizer.unroll metadata has been renamed llvm.loop.interleave.count."
+    affectedApi:
+      - "llvm.vectorizer"
+      - "llvm.loop.vectorize"
+      - "llvm.vectorizer.unroll"
+      - "llvm.loop.interleave.count"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: atomic-nand-semantics
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Atomic NAND semantics changed to ~(x & y) to match GCC 4.4+"
+    description: "Some backends previously implemented Atomic NAND(x,y) as x & ~y. Now all backends implement it as ~(x & y), matching the semantics of GCC 4.4 and later."
+    affectedApi:
+      - "Atomic NAND"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the MIPS Target (3.5.2 release) ---
+
+  - id: mips352-inline-asm-assembler-opts
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Inline assembly now uses same assembler options as GCC (.set reorder, .set nomacro, .set noat)"
+    description: "Corrected inline assembly to use the same assembler options as GCC for the duration of the inline assembly block. Particularly, .set reorder, .set nomacro, and .set noat are now correct."
+    affectedApi:
+      - ".set reorder"
+      - ".set nomacro"
+      - ".set noat"
+    notes: "From 3.5.2 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips352-gp-named-register
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added ability to specify $gp as a named register global variable"
+    description: "Added ability to specify $gp as a named register global variable."
+    affectedApi:
+      - "$gp"
+    notes: "From 3.5.2 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips352-set-push-pop
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for .set push and .set pop"
+    description: "Added support for .set push and .set pop."
+    affectedApi:
+      - ".set push"
+      - ".set pop"
+    notes: "From 3.5.2 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips352-comparison-bug-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed code generation bug in comparison operators for MIPS32r6/MIPS64r6 (< vs <=)"
+    description: "Fixed a code generation bug in the comparison operators for MIPS32r6/MIPS64r6 where the compiler would use < when it should have used <=."
+    affectedApi:
+      - "MIPS32r6"
+      - "MIPS64r6"
+    notes: "From 3.5.2 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips352-128bit-int-assertions
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed various assertions when using 128-bit integers on 64-bit targets"
+    description: "Fixed various assertions when using 128-bit integers on 64-bit targets."
+    affectedApi:
+      - "128-bit integers"
+    notes: "From 3.5.2 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips352-odd-spreg-msa-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed invalid use of odd-numbered single-precision FPU register with -mno-odd-spreg and -msa"
+    description: "Fixed invalid use of an odd-numbered single-precision floating point register when using -mno-odd-spreg with -msa."
+    affectedApi:
+      - "-mno-odd-spreg"
+      - "-msa"
+    notes: "From 3.5.2 release"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the MIPS Target (3.5.1 release) ---
+
+  - id: mips351-be-n32-n64-bugfixes
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "Many bugs fixed for big-endian MIPS targets using N32 and N64 ABIs"
+    description: "A large number of bugs have been fixed for big-endian Mips targets using the N32 and N64 ABI's. Please note that some of these bugs will still affect LLVM-IR generated by LLVM 3.5 since correct code generation depends on appropriate usage of the inreg, signext, and zeroext attributes on all function arguments and returns."
+    affectedApi:
+      - "N32"
+      - "N64"
+      - "inreg"
+      - "signext"
+      - "zeroext"
+    notes: "From 3.5.1 release; bugs may still affect IR generated by LLVM 3.5"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips351-n32-n64-fp-return-registers
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "Registers for returning 128-bit FP struct changed from $f0/$f2 to $f0/$f1 on N32/N64 to match GCC"
+    description: "The registers used to return a structure containing a single 128-bit floating point member on the N32/N64 ABI's have been changed from those specified by the ABI documentation to match those used by GCC. The documentation specifies that $f0 and $f2 should be used but GCC has used $f0 and $f1 for many years."
+    affectedApi:
+      - "N32"
+      - "N64"
+      - "$f0"
+      - "$f1"
+      - "$f2"
+    notes: "From 3.5.1 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips351-zero-byte-struct-o32
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Returning zero-byte struct no longer causes incorrect code generation with O32 ABI"
+    description: "Returning a zero-byte struct no longer causes incorrect code generation when using the O32 ABI."
+    affectedApi:
+      - "O32"
+    notes: "From 3.5.1 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips351-small-struct-o32-be
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed passing structures of less than 32-bits using O32 ABI on big-endian"
+    description: "Passing structures of less than 32-bits using the O32 ABI on a big-endian target has been fixed."
+    affectedApi:
+      - "O32"
+    notes: "From 3.5.1 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips351-exception-personality-mips64
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Exception personality changed for 64-bit MIPS targets to eliminate relocation warnings"
+    description: "The exception personality has been changed for 64-bit Mips targets to eliminate warnings about relocations in a read-only section."
+    affectedApi:
+      - "exception personality"
+    notes: "From 3.5.1 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips351-fastcc-odd-spreg-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed incorrect usage of odd-numbered single-precision FP registers with fastcc and -mno-odd-spreg"
+    description: "Incorrect usage of odd-numbered single-precision floating point registers has been fixed when the fastcc calling convention is used with 64-bit FPU's and -mno-odd-spreg."
+    affectedApi:
+      - "fastcc"
+      - "-mno-odd-spreg"
+    notes: "From 3.5.1 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips351-inline-asm-z-modifier
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "The 'z' print-modifier for inline assembly can now be used on non-immediate values"
+    description: "For inline assembly, the 'z' print-modifier print modifier can now be used on non-immediate values."
+    affectedApi:
+      - "'z' print-modifier"
+    notes: "From 3.5.1 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips351-disasm-assertion-fix
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Disassembling l[wd]c[23], s[wd]c[23], cache, and pref no longer triggers assertion"
+    description: "Attempting to disassemble l[wd]c[23], s[wd]c[23], cache, and pref no longer triggers an assertion."
+    affectedApi:
+      - "disassembler"
+    notes: "From 3.5.1 release"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the ARM Backend (3.5 release) ---
+
+  - id: arm-integrated-as-default
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "default-change"
+    severity: "high"
+    summary: "ARM integrated assembler (IAS) enabled by default; validates all inline ASM"
+    description: "The IAS received a lot of GNU extensions and directives, as well as some specific pre-UAL instructions. Not all remaining directives will be implemented, as we made judgement calls on the need versus the complexity, and have chosen simplicity and future compatibility where hard decisions had to be made. The major difference is, as stated above, the IAS validates all inline ASM, not just for object emission, and that cause trouble with some uses of inline ASM as pre-processor magic. So, while the IAS is good enough to compile large projects (including most of the Linux kernel), there are a few things that we can't (and probably won't) do. For those cases, please use -fno-integrated-as in Clang."
+    affectedApi:
+      - "integrated assembler"
+      - "-fno-integrated-as"
+      - "pre-UAL"
+    notes: "From 3.5 release; use -fno-integrated-as as workaround for problematic inline ASM"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-ehabi-default
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "default-change"
+    severity: "high"
+    summary: "EHABI exception handling enabled by default; old enable options removed"
+    description: "Exception handling is another big change. After extensive testing and changes to cooperate with Dwarf unwinding, EHABI is enabled by default. The options -arm-enable-ehabi and -arm-enable-ehabi-descriptors, which were used to enable EHABI in the previous releases, are removed now."
+    affectedApi:
+      - "-arm-enable-ehabi"
+      - "-arm-enable-ehabi-descriptors"
+      - "EHABI"
+      - "Dwarf"
+    notes: "From 3.5 release; old options are now removed entirely"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-eh-unwind-tables-emitted
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "All ARM code emits EH unwind tables or CFI unwinding; C code also emits EH tables"
+    description: "This means all ARM code will emit EH unwind tables, or CFI unwinding (for debug/profiling), or both. To avoid run-time inconsistencies, C code will also emit EH tables (in case they interoperate with C++ code), as is the case for other architectures (ex. x86_64)."
+    affectedApi:
+      - "EH unwind tables"
+      - "CFI unwinding"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the MIPS Target (3.5 release) ---
+
+  - id: mips32r6-mips64r6-support
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "medium"
+    summary: "Added support for Release 6 of MIPS32 and MIPS64 architecture"
+    description: "Added support for Release 6 of the MIPS32 and MIPS64 architecture (MIPS32r6 and MIPS64r6). Release 6 makes a number of significant changes to the MIPS32 and MIPS64 architectures. For example, FPU registers are always 64-bits wide, FPU NaN values conform to IEEE 754 (2008), and the unaligned memory instructions (such as lwl and lwr) have been replaced with a requirement for ordinary memory operations to support unaligned operations."
+    affectedApi:
+      - "MIPS32r6"
+      - "MIPS64r6"
+      - "lwl"
+      - "lwr"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-mips-iv-cn-cavium-support
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added experimental support for MIPS-IV, cnMIPS, and Cavium Octeon CPUs"
+    description: "This release also adds experimental support for MIPS-IV, cnMIPS, and Cavium Octeon CPU's."
+    affectedApi:
+      - "MIPS-IV"
+      - "cnMIPS"
+      - "Cavium Octeon"
+    notes: "From 3.5 release; experimental support"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-msa-mips64
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MSA support improved to support MSA on MIPS64"
+    description: "Support for the MIPS SIMD Architecture (MSA) has been improved to support MSA on MIPS64."
+    affectedApi:
+      - "MSA"
+      - "MIPS64"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-ieee754-nan
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for IEEE 754 (2008) NaN values has been added"
+    description: "Support for IEEE 754 (2008) NaN values has been added."
+    affectedApi:
+      - "IEEE 754"
+      - "NaN"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-n32-abi
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "medium"
+    summary: "N32 ABI implemented in LLVM"
+    description: "There has also been considerable ABI work since the 3.4 release. This release adds support for the N32 ABI, the O32-FPXX ABI Extension, the O32-FP64 ABI Extension, and the O32-FP64A ABI Extension."
+    affectedApi:
+      - "N32"
+      - "O32-FPXX"
+      - "O32-FP64"
+      - "O32-FP64A"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-n64-default-abi
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "N64 remains default 64-bit ABI in LLVM, differs from GCC where N32 is default"
+    description: "The N32 ABI is an existing ABI that has now been implemented in LLVM. It is a 64-bit ABI that is similar to N64 but retains 32-bit pointers. N64 remains the default 64-bit ABI in LLVM. This differs from GCC where N32 is the default 64-bit ABI."
+    affectedApi:
+      - "N32"
+      - "N64"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-o32-fpxx-abi
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "medium"
+    summary: "O32-FPXX ABI Extension added and enabled by default for certain triples"
+    description: "The O32-FPXX ABI Extension is 100% compatible with the O32-ABI and the O32-FP64 ABI Extension and may be linked with either but may not be linked with both of these simultaneously. It extends the O32 ABI to allow the same code to execute without modification on processors with 32-bit FPU registers as well as 64-bit FPU registers. The O32-FPXX ABI Extension is enabled by default for the O32 ABI on mips*-img-linux-gnu and mips*-mti-linux-gnu triples and is selected with -mfpxx."
+    affectedApi:
+      - "O32-FPXX"
+      - "O32"
+      - "-mfpxx"
+    notes: "From 3.5 release; expected to be enabled for all O32 triples in future releases"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-o32-fp64-abi
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "medium"
+    summary: "O32-FP64 ABI Extension replaces undocumented extension, enabled with -mfp64"
+    description: "The O32-FP64 ABI Extension is an extension to the O32 ABI to fully exploit FPU's with 64-bit registers and is enabled with -mfp64. This replaces an undocumented and unsupported O32 extension which was previously enabled with -mfp64. It is 100% compatible with the O32-FPXX ABI Extension."
+    affectedApi:
+      - "O32-FP64"
+      - "O32"
+      - "-mfp64"
+    notes: "From 3.5 release; replaces undocumented extension"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-o32-fp64a-abi
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "medium"
+    summary: "O32-FP64A ABI Extension added as restricted form of O32-FP64"
+    description: "The O32-FP64A ABI Extension is a restricted form of the O32-FP64 ABI Extension which allows interlinking with unmodified binaries that use the base O32 ABI."
+    affectedApi:
+      - "O32-FP64A"
+      - "O32-FP64"
+      - "O32"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-integrated-as-overhaul
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "MIPS integrated assembler substantially overhauled with parser rewrite; not ready for general use"
+    description: "The MIPS Integrated Assembler has undergone a substantial overhaul including a rewrite of the assembly parser. It's not ready for general use in this release but adventurous users may wish to enable it using -fintegrated-as."
+    affectedApi:
+      - "MIPS integrated assembler"
+      - "-fintegrated-as"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-integrated-as-supports
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS integrated assembler supports majority of MIPS instruction sets and directives"
+    description: "In this release, the integrated assembler supports the majority of MIPS-I, MIPS-II, MIPS-III, MIPS-IV, MIPS-V, MIPS32, MIPS32r2, MIPS32r6, MIPS64, MIPS64r2, and MIPS64r6 as well as some of the Application Specific Extensions such as MSA. It also supports several of the MIPS specific assembler directives such as .set, .module, .cpload, etc."
+    affectedApi:
+      - "MIPS-I"
+      - "MIPS-II"
+      - "MIPS-III"
+      - "MIPS-IV"
+      - "MIPS-V"
+      - "MIPS32"
+      - "MIPS32r2"
+      - "MIPS32r6"
+      - "MIPS64"
+      - "MIPS64r2"
+      - "MIPS64r6"
+      - "MSA"
+      - ".set"
+      - ".module"
+      - ".cpload"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the AArch64 Target (3.5 release) ---
+
+  - id: aarch64-backend-merge
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "AArch64 target based on substantially different code from LLVM 3.4; merged from Apple backend"
+    description: "The AArch64 target in LLVM 3.5 is based on substantially different code to the one in LLVM 3.4, having been created as the result of merging code released by Apple for targetting iOS with the previously existing backend."
+    affectedApi:
+      - "AArch64"
+    notes: "From 3.5 release; old AArch64 directory removed, ARM64 renamed into its place"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-faster-code
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AArch64 should produce faster code from combined optimisations and ideas from both sources"
+    description: "We should produce faster code, having combined optimisations and ideas from both sources in the final backend."
+    affectedApi:
+      - "AArch64"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-fastisel
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "FastISel for AArch64 added to improve compile time for debug builds"
+    description: "We have a FastISel for AArch64, which should compile time for debug builds (at -O0)."
+    affectedApi:
+      - "FastISel"
+      - "AArch64"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-ios-support
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "AArch64 can now target iOS platforms using arm64-apple-ios7.0 triple"
+    description: "We can now target iOS platforms (using the triple arm64-apple-ios7.0)."
+    affectedApi:
+      - "arm64-apple-ios7.0"
+      - "AArch64"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the PowerPC Target (3.5 release) ---
+
+  - id: powerpc64le-full-support
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC 64-bit Little Endian subtarget now fully supported including Altivec"
+    description: "The PowerPC 64-bit Little Endian subtarget (powerpc64le-unknown-linux-gnu) is now fully supported. This includes support for the Altivec instruction set."
+    affectedApi:
+      - "powerpc64le-unknown-linux-gnu"
+      - "Altivec"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-elfv2-default
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "ELFv2 ABI now default for PowerPC Little Endian; ELFv1 remains default for Big Endian"
+    description: "The Power Architecture 64-Bit ELFv2 ABI Specification is now supported, and is the default ABI for Little Endian. The ELFv1 ABI remains the default ABI for Big Endian. Currently, it is not possible to override these defaults. That capability will be available (albeit not recommended) in a future release."
+    affectedApi:
+      - "ELFv2"
+      - "ELFv1"
+    notes: "From 3.5 release; cannot override defaults in this release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-vsx
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Experimental VSX instruction set support via -mvsx; disabled for Little Endian"
+    description: "Experimental support for the VSX instruction set introduced with ISA 2.06 is now available using the -mvsx switch. Work remains on this, so it is not recommended for production use. VSX is disabled for Little Endian regardless of this switch setting."
+    affectedApi:
+      - "-mvsx"
+      - "VSX"
+      - "ISA 2.06"
+    notes: "From 3.5 release; experimental, not recommended for production"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-load-store-cost-estimates
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Load/store cost estimates have been improved"
+    description: "Load/store cost estimates have been improved."
+    affectedApi:
+      - "PowerPC cost model"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-constant-hoisting
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Constant hoisting has been enabled for PowerPC"
+    description: "Constant hoisting has been enabled."
+    affectedApi:
+      - "constant hoisting"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-global-named-register
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Global named register support has been enabled for PowerPC"
+    description: "Global named register support has been enabled."
+    affectedApi:
+      - "global named register"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-pic-32bit-elf
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Initial PIC code support added for 32-bit ELF PowerPC subtarget"
+    description: "Initial support for PIC code has been added for the 32-bit ELF subtarget. Further support will be available in a future release."
+    affectedApi:
+      - "PIC"
+      - "32-bit ELF"
+    notes: "From 3.5 release; initial support only"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to CMake build system (3.5 release) ---
+
+  - id: cmake-sphinx-docs
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "LLVM, Clang and lld sphinx documentation can now be built and installed via CMake"
+    description: "Building and installing LLVM, Clang and lld sphinx documentation can now be done in CMake builds. If LLVM_ENABLE_SPHINX is enabled the docs-<project>-html and docs-<project>-man targets (e.g. docs-llvm-html) become available which can be invoked directly (e.g. make docs-llvm-html) to build only the relevant sphinx documentation. If LLVM_BUILD_DOCS is enabled then the sphinx documentation will also be built as part of the normal build. Enabling this variable also means that if the install target is invoked then the built documentation will be installed."
+    affectedApi:
+      - "LLVM_ENABLE_SPHINX"
+      - "LLVM_BUILD_DOCS"
+      - "docs-llvm-html"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: cmake-llvm-config-export
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "Both Autoconf/Makefile and CMake now generate LLVMConfig.cmake to export installed libraries"
+    description: "Both the Autoconf/Makefile and CMake build systems now generate LLVMConfig.cmake (and other files) to export installed libraries. This means that projects using CMake to build against LLVM libraries can now build against an installed LLVM built by the Autoconf/Makefile system."
+    affectedApi:
+      - "LLVMConfig.cmake"
+    notes: "From 3.5 release"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: cmake-llvm-map-components-deprecated
+    category: "general"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "llvm_map_components_to_libraries() deprecated; replaced by llvm_map_components_to_libnames()"
+    description: "Use of llvm_map_components_to_libraries() by external projects is deprecated and the new llvm_map_components_to_libnames() should be used instead."
+    affectedApi:
+      - "llvm_map_components_to_libraries"
+      - "llvm_map_components_to_libnames"
+    notes: "From 3.5 release; direct API rename for CMake integration"
+    relevance: "unknown"
+    status: "pending"

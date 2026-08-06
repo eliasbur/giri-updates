@@ -1,0 +1,965 @@
+---
+version: "5.0.0"
+sourceUrl: "https://releases.llvm.org/5.0.0/docs/ReleaseNotes.html"
+generatedBy: "opencode agent"
+generatedDate: "2025-08-05"
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes in this release") ---
+
+  - id: weakvh-renamed
+    category: "general"
+    changeType: "renamed"
+    severity: "high"
+    summary: "WeakVH renamed to WeakTrackingVH; new WeakVH introduced with different semantics"
+    description: "LLVM's WeakVH has been renamed to WeakTrackingVH and a new WeakVH has been introduced.  The new WeakVH nulls itself out on deletion, but does not track values across RAUW."
+    affectedApi:
+      - "WeakVH"
+      - "WeakTrackingVH"
+      - "RAUW"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: binaryformat-library
+    category: "general"
+    changeType: "moved"
+    severity: "high"
+    summary: "New BinaryFormat library created; code moved out of Support"
+    description: "A new library named BinaryFormat has been created which holds a collection of code which previously lived in Support.  This includes the file_magic structure and identify_magic functions, as well as all the structure and type definitions for DWARF, ELF, COFF, WASM, and MachO file formats."
+    affectedApi:
+      - "BinaryFormat"
+      - "Support"
+      - "file_magic"
+      - "identify_magic"
+      - "DWARF"
+      - "ELF"
+      - "COFF"
+      - "WASM"
+      - "MachO"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: llvm-pdbdump-renamed
+    category: "general"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "llvm-pdbdump tool renamed to llvm-pdbutil"
+    description: "The tool llvm-pdbdump has been renamed llvm-pdbutil to better reflect its nature as a general purpose PDB manipulation / diagnostics tool that does more than just dumping contents."
+    affectedApi:
+      - "llvm-pdbdump"
+      - "llvm-pdbutil"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: bbvectorize-removed
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "BBVectorize pass removed; replaced by SLP vectorizer"
+    description: "The BBVectorize pass has been removed. It was fully replaced and no longer used back in 2014 but we did not get around to removing it. Now it is gone. The SLP vectorizer is the suggested non-loop vectorization pass."
+    affectedApi:
+      - "BBVectorize"
+      - "SLP vectorizer"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: opt-viewer-py-added
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "New opt-viewer.py tool added to visualize optimization remarks in HTML"
+    description: "A new tool opt-viewer.py has been added to visualize optimization remarks in HTML.  The tool processes the YAML files produced by clang with the -fsave-optimization-record option."
+    affectedApi:
+      - "opt-viewer.py"
+      - "-fsave-optimization-record"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: llvm-reverse-iteration-cmake
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "New CMake macro LLVM_REVERSE_ITERATION added for reverse iteration of unordered containers"
+    description: "A new CMake macro LLVM_REVERSE_ITERATION has been added. If enabled, all supported unordered LLVM containers would be iterated in reverse order. This is useful for uncovering non-determinism caused by iteration of unordered containers. Currently, it supports reverse iteration of SmallPtrSet and DenseMap."
+    affectedApi:
+      - "LLVM_REVERSE_ITERATION"
+      - "SmallPtrSet"
+      - "DenseMap"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: llvm-dlltool-added
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "New llvm-dlltool added to create short import libraries from GNU style definition files"
+    description: "A new tool llvm-dlltool has been added to create short import libraries from GNU style definition files. The tool utilizes the PE COFF SPEC Import Library Format and PE COFF Auxiliary Weak Externals Format to achieve compatibility with LLD and MSVC LINK."
+    affectedApi:
+      - "llvm-dlltool"
+      - "PE COFF SPEC Import Library Format"
+      - "PE COFF Auxiliary Weak Externals Format"
+      - "LLD"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: datalayout-alloca-address-space
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "medium"
+    summary: "Datalayout string may now indicate address space for alloca pointer type"
+    description: "The datalayout string may now indicate an address space to use for the pointer type of alloca rather than the default of 0."
+    affectedApi:
+      - "datalayout"
+      - "alloca"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: speculatable-attribute
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "medium"
+    summary: "Added speculatable attribute for functions with no side-effects inhibiting hoisting"
+    description: "Added speculatable attribute indicating a function which has no side-effects which could inhibit hoisting of calls."
+    affectedApi:
+      - "speculatable"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the Arm Targets ---
+
+  - id: aarch64-global-isel-o0
+    category: "target-arm"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Much improved Global ISel at O0"
+    description: "A much improved Global ISel at O0."
+    affectedApi:
+      - "Global ISel"
+      - "O0"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-armv8-1-8-3
+    category: "target-arm"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for ARMv8.1, 8.2, and 8.3 instructions"
+    description: "Support for ARMv8.1, 8.2 and 8.3 instructions."
+    affectedApi:
+      - "ARMv8.1"
+      - "ARMv8.2"
+      - "ARMv8.3"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-thunderx2-scheduler
+    category: "target-arm"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "New scheduler information for ThunderX2"
+    description: "New scheduler information for ThunderX2."
+    affectedApi:
+      - "ThunderX2"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-sve-type-changes
+    category: "target-arm"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "SVE type changes"
+    description: "Some SVE type changes but not much more than that."
+    affectedApi:
+      - "SVE"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-instruction-fusion
+    category: "target-arm"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "More aggressive instruction fusion with AES improvements; AArch64MacroFusion moved to generic MacroFusion"
+    description: "Made instruction fusion more aggressive, resulting in speedups for code making use of AArch64 AES instructions. AES fusion has been enabled for most Cortex-A cores and the AArch64MacroFusion pass was moved to the generic MacroFusion pass."
+    affectedApi:
+      - "AArch64MacroFusion"
+      - "MacroFusion"
+      - "AES"
+      - "Cortex-A"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-preferred-function-alignments
+    category: "target-arm"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Added preferred function alignments for most Cortex-A cores"
+    description: "Added preferred function alignments for most Cortex-A cores."
+    affectedApi:
+      - "Cortex-A"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-openmp-offload-to-self
+    category: "target-arm"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "OpenMP offload-to-self base support"
+    description: "OpenMP offload-to-self base support."
+    affectedApi:
+      - "OpenMP"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-global-isel
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Improved Global ISel for ARM (still mostly broken)"
+    description: "Improved, but still mostly broken, Global ISel."
+    affectedApi:
+      - "Global ISel"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-scheduling-models-cortex-a57
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Scheduling models updated; new schedule for Cortex-A57"
+    description: "Scheduling models update, new schedule for Cortex-A57."
+    affectedApi:
+      - "Cortex-A57"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-hardware-breakpoint-lldb
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Hardware breakpoint support in LLDB"
+    description: "Hardware breakpoint support in LLDB."
+    affectedApi:
+      - "LLDB"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-assembler-error-handling
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "New assembler error handling with spelling corrections and fix suggestions"
+    description: "New assembler error handling, with spelling corrections and multiple suggestions on how to fix problems."
+    affectedApi:
+      - "assembler"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-mixed-arm-thumb-codegen
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Improved mixed ARM/Thumb code generation; wrong relocations fixed"
+    description: "Improved mixed ARM/Thumb code generation. Some cases in which wrong relocations were emitted have been fixed."
+    affectedApi:
+      - "ARM"
+      - "Thumb"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-mixed-arm-thumb-lto
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Initial support for mixed ARM/Thumb link-time optimization using thumb-mode target feature"
+    description: "Added initial support for mixed ARM/Thumb link-time optimization, using the thumb-mode target feature."
+    affectedApi:
+      - "thumb-mode"
+      - "ARM"
+      - "Thumb"
+      - "LTO"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the MIPS Target ---
+
+  - id: mips-micromips64r6-deprecated
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "deprecated"
+    severity: "high"
+    summary: "microMIPS64R6 backend deprecated; will be removed in next release"
+    description: "The microMIPS64R6 backend is deprecated and will be removed in the next release."
+    affectedApi:
+      - "microMIPS64R6"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-vector-types
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MIPS backend directly supports vector types for arguments and return values"
+    description: "The MIPS backend now directly supports vector types for arguments and return values (previously this required ABI specific LLVM IR)."
+    affectedApi:
+      - "MIPS"
+      - "vector types"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-address-lowering-doc
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added documentation for how MIPS backend handles address lowering"
+    description: "Added documentation for how the MIPS backend handles address lowering."
+    affectedApi:
+      - "MIPS"
+    notes: "documentation only"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-madd4-option
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added GCC compatible option -m(no-)madd4 to control four-operand MULADD generation"
+    description: "Added a GCC compatible option -m(no-)madd4 to control the generation of four operand multiply addition/subtraction instructions."
+    affectedApi:
+      - "-mmadd4"
+      - "-mno-madd4"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-xray-support
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added basic support for XRay instrumentation system"
+    description: "Added basic support for the XRay instrumentation system."
+    affectedApi:
+      - "XRay"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-assembly-aliases
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for more assembly aliases and macros"
+    description: "Added support for more assembly aliases and macros."
+    affectedApi:
+      - "MIPS"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-micromips-function-attributes
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added micromips and nomicromips function attributes for per-function code generation control"
+    description: "Added support for the micromips and nomicromips function attributes which control micromips code generation on a per function basis."
+    affectedApi:
+      - "micromips"
+      - "nomicromips"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-long-calls-feature
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added long-calls feature for non-pic environments"
+    description: "Added the long-calls feature for non-pic environments. This feature is used where the callee is out of range of the caller using a standard call sequence. It must be enabled specifically."
+    affectedApi:
+      - "long-calls"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-micromips-function-attrs
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for performing microMIPS code generation via function attributes"
+    description: "Added support for performing microMIPS code generation via function attributes."
+    affectedApi:
+      - "microMIPS"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-static-relocation-n64
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Experimental static relocation model support for N64 ABI"
+    description: "Added experimental support for the static relocation model for the N64 ABI."
+    affectedApi:
+      - "N64"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-mt-ase
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added partial support for MT ASE"
+    description: "Added partial support for the MT ASE."
+    affectedApi:
+      - "MT ASE"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-code-size-reduction
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added basic support for code size reduction for microMIPS"
+    description: "Added basic support for code size reduction for microMIPS."
+    affectedApi:
+      - "microMIPS"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-bugfixes
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed numerous bugs: multi-precision arithmetic, vectorization, debug info, disassembly crashes"
+    description: "Fixed numerous bugs including: multi-precision arithmetic support, various vectorization bugs, debug information for thread local variables, debug sections lacking the correct flags, crashing when disassembling sections whose size is not a multiple of two or four."
+    affectedApi:
+      - "multi-precision arithmetic"
+      - "vectorization"
+      - "debug information"
+      - "disassembler"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the PowerPC Target ---
+
+  - id: powerpc-isa-3.0
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Additional support and exploitation of POWER ISA 3.0 instructions"
+    description: "Additional support and exploitation of POWER ISA 3.0: vabsdub, vabsduh, vabsduw, modsw, moduw, modsd, modud, lxv, stxv, vextublx, vextubrx, vextuhlx, vextuhrx, vextuwlx, vextuwrx, vextsb2w, vextsb2d, vextsh2w, vextsh2d, and vextsw2d"
+    affectedApi:
+      - "POWER ISA 3.0"
+      - "vabsdub"
+      - "vabsduh"
+      - "vabsduw"
+      - "modsw"
+      - "moduw"
+      - "modsd"
+      - "modud"
+      - "lxv"
+      - "stxv"
+      - "vextublx"
+      - "vextubrx"
+      - "vextuhlx"
+      - "vextuhrx"
+      - "vextuwlx"
+      - "vextuwrx"
+      - "vextsb2w"
+      - "vextsb2d"
+      - "vextsh2w"
+      - "vextsh2d"
+      - "vextsw2d"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-optimal-code-sequences
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Implemented Optimal Code Sequences from The PowerPC Compiler Writer's Guide"
+    description: "Implemented Optimal Code Sequences from The PowerPC Compiler Writer's Guide."
+    affectedApi:
+      - "PowerPC"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-omit-frame-pointer-default
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "default-change"
+    severity: "high"
+    summary: "-fomit-frame-pointer enabled by default for PowerPC"
+    description: "Enable -fomit-frame-pointer by default."
+    affectedApi:
+      - "-fomit-frame-pointer"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-bit-reverse-intrinsic
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved handling of bit reverse intrinsic"
+    description: "Improved handling of bit reverse intrinsic."
+    affectedApi:
+      - "bit reverse intrinsic"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-memcpy-memcmp
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved handling of memcpy and memcmp functions"
+    description: "Improved handling of memcpy and memcmp functions."
+    affectedApi:
+      - "memcpy"
+      - "memcmp"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-static-branch-hints
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved handling of branches with static branch hints"
+    description: "Improved handling of branches with static branch hints."
+    affectedApi:
+      - "static branch hints"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-atomic-load-acquire
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved codegen for atomic load_acquire"
+    description: "Improved codegen for atomic load_acquire."
+    affectedApi:
+      - "load_acquire"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-block-placement
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved block placement during code layout"
+    description: "Improved block placement during code layout"
+    affectedApi:
+      - "PowerPC"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-isel-improvements
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Many improvements to instruction selection and code generation"
+    description: "Many improvements to instruction selection and code generation"
+    affectedApi:
+      - "PowerPC"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the X86 Target ---
+
+  - id: x86-ryzen-znver1-scheduler
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Added initial AMD Ryzen (znver1) scheduler support"
+    description: "Added initial AMD Ryzen (znver1) scheduler support."
+    affectedApi:
+      - "znver1"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-goldmont-support
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for Intel Goldmont CPUs"
+    description: "Added support for Intel Goldmont CPUs."
+    affectedApi:
+      - "Goldmont"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-avx512vpopcntdq
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Add support for avx512vpopcntdq instructions"
+    description: "Add support for avx512vpopcntdq instructions."
+    affectedApi:
+      - "avx512vpopcntdq"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-cmov-branch-heuristics
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Added heuristics to convert CMOV into branches when profitable"
+    description: "Added heuristics to convert CMOV into branches when it may be profitable."
+    affectedApi:
+      - "CMOV"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-memcmp-inlining
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "More aggressive inlining of memcmp calls"
+    description: "More aggressive inlining of memcmp calls."
+    affectedApi:
+      - "memcmp"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-vxi64-shuffles-32bit
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved vXi64 shuffles on 32-bit targets"
+    description: "Improve vXi64 shuffles on 32-bit targets."
+    affectedApi:
+      - "vXi64"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-pmovmskb-reductions
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved use of PMOVMSKB for any_of/all_of comparison reductions"
+    description: "Improved use of PMOVMSKB for any_of/all_of comparision reductions."
+    affectedApi:
+      - "PMOVMSKB"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-scheduler-improvements
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Improved Silvermont, Sandybridge, and Jaguar (btver2) schedulers"
+    description: "Improved Silvermont, Sandybridge, and Jaguar (btver2) schedulers."
+    affectedApi:
+      - "Silvermont"
+      - "Sandybridge"
+      - "Jaguar"
+      - "btver2"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-avx512-rotations
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved support for AVX512 vector rotations"
+    description: "Improved support for AVX512 vector rotations."
+    affectedApi:
+      - "AVX512"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-amd-lwp
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for AMD Lightweight Profiling (LWP) instructions"
+    description: "Added support for AMD Lightweight Profiling (LWP) instructions."
+    affectedApi:
+      - "LWP"
+      - "AMD Lightweight Profiling"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-avoid-slow-lea
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Avoid using slow LEA instructions"
+    description: "Avoid using slow LEA instructions."
+    affectedApi:
+      - "LEA"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-multiply-constant
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Use alternative sequences for multiply by constant"
+    description: "Use alternative sequences for multiply by constant."
+    affectedApi:
+      - "x86"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-strided-shuffles
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved lowering of strided shuffles"
+    description: "Improved lowering of strided shuffles."
+    affectedApi:
+      - "x86"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-avx512-cost-model
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved AVX512 cost model used by the vectorizer"
+    description: "Improved the AVX512 cost model used by the vectorizer."
+    affectedApi:
+      - "AVX512"
+      - "vectorizer"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-avx512-scalar-i1
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fix scalar code performance when AVX512 enabled by making i1's illegal"
+    description: "Fix scalar code performance when AVX512 is enabled by making i1's illegal."
+    affectedApi:
+      - "AVX512"
+      - "i1"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-inline-asm-bugfixes
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed many inline assembly bugs"
+    description: "Fixed many inline assembly bugs."
+    affectedApi:
+      - "inline assembly"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-netbsd-lldb
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Preliminary support for tracing NetBSD processes and core files with single thread in LLDB"
+    description: "Preliminary support for tracing NetBSD processes and core files with a single thread in LLDB."
+    affectedApi:
+      - "NetBSD"
+      - "LLDB"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the AMDGPU Target ---
+
+  - id: amdgpu-gfx9
+    category: "target-amdgpu"
+    targetName: "amdgpu"
+    changeType: "added"
+    severity: "low"
+    summary: "Initial gfx9 support"
+    description: "Initial gfx9 support"
+    affectedApi:
+      - "gfx9"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the AVR Target ---
+
+  - id: avr-branch-relaxation
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Enabled branch relaxation pass to prevent crashes on large stack load/stores"
+    description: "Enable the branch relaxation pass so that we don't crash on large stack load/stores"
+    affectedApi:
+      - "branch relaxation"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-bit-rotations
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for lowering bit-rotations to native ror and rol instructions"
+    description: "Add support for lowering bit-rotations to the native ror and rol instructions"
+    affectedApi:
+      - "ror"
+      - "rol"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-function-pointers
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "Fixed function pointers treated as RAM pointers instead of program memory pointers"
+    description: "Fix bug where function pointers were treated as pointers to RAM and not pointers to program memory"
+    affectedApi:
+      - "function pointers"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-shift-by-variable
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed broken code generation for shift-by-variable expressions"
+    description: "Fix broken code generation for shift-by-variable expressions"
+    affectedApi:
+      - "AVR"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-zero-sized-types
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "added"
+    severity: "medium"
+    summary: "Support zero-sized types in argument lists for Rust compatibility"
+    description: "Support zero-sized types in argument lists; this is impossible in C, but possible in Rust"
+    affectedApi:
+      - "AVR"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the C API ---
+
+  - id: llvmbbvectorize-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "high"
+    summary: "LLVMAddBBVectorizePass deprecated; LLVMAddSLPVectorizePass is the replacement"
+    description: "Deprecated the LLVMAddBBVectorizePass interface since the BBVectorize pass has been removed. It is now a no-op and will be removed in the next release. Use LLVMAddSLPVectorizePass instead to get the supported SLP vectorizer."
+    affectedApi:
+      - "LLVMAddBBVectorizePass"
+      - "LLVMAddSLPVectorizePass"
+      - "BBVectorize"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"

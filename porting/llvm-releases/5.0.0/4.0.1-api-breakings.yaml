@@ -1,0 +1,957 @@
+---
+version: "4.0.0"
+sourceUrl: "https://releases.llvm.org/4.0.0/docs/ReleaseNotes.html"
+generatedBy: "opencode agent"
+generatedDate: "2025-08-05"
+# NOTE: Source HTML file is named "LLVM 4.0.1 Release Notes.html" but the HTML content
+#       is for LLVM 4.0.0 (title: "LLVM 4.0.0 Release Notes"). Version set to 4.0.0 per content.
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes in this release") ---
+
+  - id: min-compiler-version-bump
+    category: "general"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "Minimum compiler version required for building LLVM raised to GCC 4.8 and VS 2015"
+    description: "The minimum compiler version required for building LLVM has been raised to 4.8 for GCC and 2015 for Visual Studio."
+    affectedApi:
+      - "GCC 4.8"
+      - "Visual Studio 2015"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-attribute-functions-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "C API attribute functions LLVMAddFunctionAttr, LLVMGetFunctionAttr, LLVMRemoveFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute, LLVMRemoveInstrAttribute removed"
+    description: "The C API functions LLVMAddFunctionAttr, LLVMGetFunctionAttr, LLVMRemoveFunctionAttr, LLVMAddAttribute, LLVMRemoveAttribute, LLVMGetAttribute, LLVMAddInstrAttribute and LLVMRemoveInstrAttribute have been removed."
+    affectedApi:
+      - "LLVMAddFunctionAttr"
+      - "LLVMGetFunctionAttr"
+      - "LLVMRemoveFunctionAttr"
+      - "LLVMAddAttribute"
+      - "LLVMRemoveAttribute"
+      - "LLVMGetAttribute"
+      - "LLVMAddInstrAttribute"
+      - "LLVMRemoveInstrAttribute"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: c-api-llvmattribute-enum-deleted
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "C API enum LLVMAttribute deleted"
+    description: "The C API enum LLVMAttribute has been deleted."
+    affectedApi:
+      - "LLVMAttribute"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: unused-result-attribute-renamed
+    category: "general"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "LLVM_ATTRIBUTE_UNUSED_RESULT replaced with LLVM_NODISCARD, matching C++17 [[nodiscard]] semantics"
+    description: "The definition and uses of LLVM_ATTRIBUTE_UNUSED_RESULT in the LLVM source were replaced with LLVM_NODISCARD, which matches the C++17 [[nodiscard]] semantics rather than gcc's __attribute__((warn_unused_result))."
+    affectedApi:
+      - "LLVM_ATTRIBUTE_UNUSED_RESULT"
+      - "LLVM_NODISCARD"
+      - "__attribute__((warn_unused_result))"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: timer-apis-name-description
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Timer related APIs now expect a Name and Description parameter"
+    description: "The Timer related APIs now expect a Name and Description. When upgrading code the previously used names should become descriptions and a short name in the style of a programming language identifier should be added."
+    affectedApi:
+      - "Timer"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: invariant-group-cross-bb
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "LLVM now handles invariant.group across different basic blocks, enabling devirtualization of virtual calls inside loops"
+    description: "LLVM now handles invariant.group across different basic blocks, which makes it possible to devirtualize virtual calls inside loops."
+    affectedApi:
+      - "invariant.group"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: adce-removes-branches
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "ADCE phase now removes branches that don't affect program behavior; new -adce-remove-loops option to also remove loops"
+    description: "The aggressive dead code elimination phase ('adce') now removes branches which do not effect program behavior. Loops are retained by default since they may be infinite but these can also be removed with LLVM option -adce-remove-loops when the loop body otherwise has no live operations."
+    affectedApi:
+      - "adce"
+      - "-adce-remove-loops"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: llvm-cov-json-html
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "llvm-cov tool can now export coverage data as json; html output mode improved"
+    description: "The llvm-cov tool can now export coverage data as json. Its html output mode has also improved."
+    affectedApi:
+      - "llvm-cov"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Intrusive list API overhaul ---
+
+  - id: intrusive-list-simple-ilist
+    category: "general"
+    changeType: "added"
+    severity: "high"
+    summary: "simple_ilist<T> introduced as lower-level intrusive list that never takes ownership of its nodes"
+    description: "simple_ilist<T> is a lower-level intrusive list that never takes ownership of its nodes. New intrusive-list clients should consider using it instead of ilist<T>."
+    affectedApi:
+      - "simple_ilist"
+      - "ilist"
+    notes: "Part of extensive intrusive list API overhaul"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-ilist-tag
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "ilist_tag<class> allows a single data type to be inserted into two parallel intrusive lists"
+    description: "ilist_tag<class> allows a single data type to be inserted into two parallel intrusive lists. A type can inherit twice from ilist_node, first using ilist_node<T,ilist_tag<A>> (enabling insertion into simple_ilist<T,ilist_tag<A>>) and second using ilist_node<T,ilist_tag<B>> (enabling insertion into simple_ilist<T,ilist_tag<B>>), where A and B are arbitrary types."
+    affectedApi:
+      - "ilist_tag"
+      - "ilist_node"
+      - "simple_ilist"
+    notes: "Part of intrusive list API overhaul"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-ilist-sentinel-tracking
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "ilist_sentinel_tracking<bool> controls whether an iterator knows whether it's pointing at the sentinel (end()); enables iterator::isEnd()"
+    description: "ilist_sentinel_tracking<bool> controls whether an iterator knows whether it's pointing at the sentinel (end()). By default, sentinel tracking is on when ABI-breaking checks are enabled, and off otherwise; this is used for an assertion when dereferencing end() (this assertion triggered often in practice, and many backend bugs were fixed). Explicitly turning on sentinel tracking also enables iterator::isEnd(). This is used by MachineInstrBundleIterator to iterate over bundles."
+    affectedApi:
+      - "ilist_sentinel_tracking"
+      - "end()"
+      - "iterator::isEnd()"
+      - "MachineInstrBundleIterator"
+    notes: "Part of intrusive list API overhaul"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-ilist-no-allocation
+    category: "general"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "ilist<T> now built on simple_ilist<T>, no longer supports allocating nodes, equivalent to iplist<T>"
+    description: "ilist<T> is built on top of simple_ilist<T>, and supports the same configuration options. As before (and unlike simple_ilist<T>), ilist<T> takes ownership of its nodes. However, it no longer supports allocating nodes, and is now equivalent to iplist<T>."
+    affectedApi:
+      - "ilist"
+      - "simple_ilist"
+      - "iplist"
+    notes: "Part of intrusive list API overhaul"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-iplist-deprecated
+    category: "general"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "iplist<T> deprecated and will likely be removed (now equivalent to ilist<T>)"
+    description: "iplist<T> will likely be removed in the future."
+    affectedApi:
+      - "iplist"
+      - "ilist"
+    notes: "Follows from ilist<T> now being equivalent to iplist<T>"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-traits-specialization
+    category: "general"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "ilist<T> now always uses ilist_traits<T> via specialization; clients must specialize traits rather than pass template parameter"
+    description: "ilist<T> now always uses ilist_traits<T>. Instead of passing a custom traits class in via a template parameter, clients that want to customize the traits should specialize ilist_traits<T>. Clients that want to avoid ownership can specialize ilist_alloc_traits<T> to inherit from ilist_noalloc_traits<T> (or to do something funky); clients that need callbacks can specialize ilist_callback_traits<T> directly."
+    affectedApi:
+      - "ilist_traits"
+      - "ilist_alloc_traits"
+      - "ilist_noalloc_traits"
+      - "ilist_callback_traits"
+      - "ilist"
+    notes: "Part of intrusive list API overhaul; old template parameter approach no longer works"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-linked-list-structure
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Underlying intrusive list data structure is now a simple recursive linked list; sentinel stored in same allocation as simple_ilist<T>"
+    description: "The underlying data structure is now a simple recursive linked list. The sentinel node contains only a 'next' (begin()) and 'prev' (rbegin()) pointer and is stored in the same allocation as simple_ilist<T>. Previously, it was malloc-allocated on-demand by default, although the now-defunct ilist_sentinel_traits<T> was sometimes specialized to avoid this."
+    affectedApi:
+      - "simple_ilist"
+      - "ilist_sentinel_traits"
+      - "begin()"
+      - "rbegin()"
+    notes: "Part of intrusive list API overhaul"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-reverse-iterator-rewrite
+    category: "general"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "reverse_iterator class no longer uses std::reverse_iterator; has handle to same node it dereferences; same invalidation semantics as forward iterators"
+    description: "The reverse_iterator class no longer uses std::reverse_iterator. Instead, it now has a handle to the same node that it dereferences to. Reverse iterators now have the same iterator invalidation semantics as forward iterators."
+    affectedApi:
+      - "reverse_iterator"
+      - "std::reverse_iterator"
+    notes: "Part of intrusive list API overhaul"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-iterator-conversion-constructors
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "iterator and reverse_iterator have explicit conversion constructors matching std::reverse_iterator's off-by-one semantics; reverse_iterator(begin()) equals rend()"
+    description: "iterator and reverse_iterator have explicit conversion constructors that match std::reverse_iterator's off-by-one semantics, so that reversing the endpoints of an iterator range results in the same range (albeit in reverse). I.e., reverse_iterator(begin()) equals rend()."
+    affectedApi:
+      - "iterator"
+      - "reverse_iterator"
+      - "begin()"
+      - "rend()"
+      - "std::reverse_iterator"
+    notes: "Part of intrusive list API overhaul"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-iterator-get-reverse
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "iterator::getReverse() and reverse_iterator::getReverse() return an iterator that dereferences to the same node; begin().getReverse() equals --rend()"
+    description: "iterator::getReverse() and reverse_iterator::getReverse() return an iterator that dereferences to the same node. I.e., begin().getReverse() equals --rend()."
+    affectedApi:
+      - "iterator::getReverse()"
+      - "reverse_iterator::getReverse()"
+      - "begin()"
+      - "rend()"
+    notes: "Part of intrusive list API overhaul"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-node-get-iterators
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "ilist_node<T>::getIterator() and ilist_node<T>::getReverseIterator() return forward/reverse iterators that dereference to the current node"
+    description: "ilist_node<T>::getIterator() and ilist_node<T>::getReverseIterator() return the forward and reverse iterators that dereference to the current node. I.e., begin()->getIterator() equals begin() and rbegin()->getReverseIterator() equals rbegin()."
+    affectedApi:
+      - "ilist_node::getIterator()"
+      - "ilist_node::getReverseIterator()"
+      - "begin()"
+      - "rbegin()"
+    notes: "Part of intrusive list API overhaul"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: intrusive-list-iterator-stores-node-base
+    category: "general"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "iterator now stores an ilist_node_base* instead of a T*; implicit conversions between ilist<T>::iterator and T* removed"
+    description: "iterator now stores an ilist_node_base* instead of a T*. The implicit conversions between ilist<T>::iterator and T* have been removed. Clients may use N->getIterator() (if not nullptr) or &*I (if not end()); alternatively, clients may refactor to use references for known-good nodes."
+    affectedApi:
+      - "ilist_node_base"
+      - "ilist"
+      - "iterator"
+      - "N->getIterator()"
+      - "end()"
+    notes: "Part of intrusive list API overhaul; breaking change for code relying on implicit iterator-to-pointer conversions"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- LLVM Coroutines ---
+
+  - id: coroutines-support
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Experimental support for Coroutines in LLVM added, enabled with -enable-coroutines in opt"
+    description: "Experimental support for Coroutines in LLVM was added, which can be enabled with -enable-coroutines in opt the command tool or using the addCoroutinePassesToExtensionPoints API when building the optimization pipeline."
+    affectedApi:
+      - "addCoroutinePassesToExtensionPoints"
+      - "-enable-coroutines"
+      - "opt"
+    notes: "Experimental feature"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Regcall and Vectorcall Calling Conventions ---
+
+  - id: regcall-calling-convention
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Support added for _regcall calling convention, introduced by Intel to optimize parameter transfer on function call"
+    description: "Support was added for _regcall calling convention. The __regcall calling convention was introduced by Intel to optimize parameter transfer on function call. This calling convention ensures that as many values as possible are passed or returned in registers."
+    affectedApi:
+      - "_regcall"
+      - "__regcall"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: vectorcall-hva-support
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "__vectorcall calling convention support extended to include correct handling of HVAs"
+    description: "Existing __vectorcall calling convention support was extended to include correct handling of HVAs. The __vectorcall calling convention was introduced by Microsoft to enhance register usage when passing parameters."
+    affectedApi:
+      - "__vectorcall"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the ARM Targets ---
+
+  - id: aarch64-ilp32-relocations
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "AArch64 target gained support for ILP32 relocations"
+    description: "Gained support for ILP32 relocations."
+    affectedApi:
+      - "ILP32"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-xray
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "AArch64 target gained support for XRay"
+    description: "Gained support for XRay."
+    affectedApi:
+      - "XRay"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-globalisel-progress
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AArch64 made more progress on GlobalISel, still not production-ready"
+    description: "Made even more progress on GlobalISel. There is still some work left before it is production-ready though."
+    affectedApi:
+      - "GlobalISel"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-falkor-exynos
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AArch64 refined support for Qualcomm's Falkor and Samsung's Exynos CPUs"
+    description: "Refined the support for Qualcomm's Falkor and Samsung's Exynos CPUs."
+    affectedApi:
+      - "Falkor"
+      - "Exynos"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: aarch64-mul-constant-lowering
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AArch64 learned new tricks for lowering multiplications by constants, folding spilled/refilled copies"
+    description: "Learned a few new tricks for lowering multiplications by constants, folding spilled/refilled copies etc."
+    affectedApi:
+      - "multiplication lowering"
+      - "spilled/refilled copies"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-ropi-rwpi
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM gained support for ROPI and RWPI, which can remove the need for a dynamic linker"
+    description: "Gained support for ROPI (read-only position independence) and RWPI (read-write position independence), which can be used to remove the need for a dynamic linker."
+    affectedApi:
+      - "ROPI"
+      - "RWPI"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-execute-only-code
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM gained support for execute-only code placed in pages without read permissions"
+    description: "Gained support for execute-only code, which is placed in pages without read permissions."
+    affectedApi:
+      - "execute-only"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-cortex-r52-scheduler
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM gained a machine scheduler for Cortex-R52"
+    description: "Gained a machine scheduler for Cortex-R52."
+    affectedApi:
+      - "Cortex-R52"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-xray
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM gained support for XRay"
+    description: "Gained support for XRay."
+    affectedApi:
+      - "XRay"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-thumb1-compiler-rt
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM gained Thumb1 implementations for several compiler-rt builtins and some support for building builtins for HF targets"
+    description: "Gained Thumb1 implementations for several compiler-rt builtins. It also has some support for building the builtins for HF targets."
+    affectedApi:
+      - "Thumb1"
+      - "compiler-rt"
+      - "HF targets"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-bitreverse-intrinsic
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "ARM started using the generic bitreverse intrinsic instead of rbit"
+    description: "Started using the generic bitreverse intrinsic instead of rbit."
+    affectedApi:
+      - "bitreverse"
+      - "rbit"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-globalisel-basic
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM gained very basic support for GlobalISel"
+    description: "Gained very basic support for GlobalISel."
+    affectedApi:
+      - "GlobalISel"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: arm-vulcan-rename-warning
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "'vulcan' target will be renamed to 'thunderx2t99' in 5.0; 4.0 is the last release accepting 'vulcan'"
+    description: "From the next release (5.0), the 'vulcan' target will be renamed to 'thunderx2t99', including command line options, assembly directives, etc. This release (4.0) will be the last one to accept 'vulcan' as its name."
+    affectedApi:
+      - "vulcan"
+      - "thunderx2t99"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the AVR Target ---
+
+  - id: avr-backend-merge
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "moved"
+    severity: "low"
+    summary: "AVR backend completely merged from a fork into LLVM trunk; marked experimental but generally usable"
+    description: "This marks the first release where the AVR backend has been completely merged from a fork into LLVM trunk. The backend is still marked experimental, but is generally quite usable. All downstream development has halted on GitHub, and changes now go directly into LLVM trunk."
+    affectedApi:
+      - "AVR backend"
+    notes: "Development previously at https://github.com/avr-llvm/llvm"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-instruction-selector
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "added"
+    severity: "low"
+    summary: "AVR instruction selector and pseudo instruction expansion pass landed"
+    description: "Instruction selector and pseudo instruction expansion pass landed"
+    affectedApi:
+      - "AVR instruction selector"
+      - "pseudo instruction expansion"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-read-write-register
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "added"
+    severity: "low"
+    summary: "AVR read_register and write_register intrinsics are now supported"
+    description: "read_register and write_register intrinsics are now supported"
+    affectedApi:
+      - "read_register"
+      - "write_register"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-stack-stores-63-bytes
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AVR supports stack stores greater than 63-bytes from the bottom of the stack"
+    description: "Support stack stores greater than 63-bytes from the bottom of the stack"
+    affectedApi:
+      - "AVR stack stores"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-assertion-fixes
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "AVR backend fixed a number of assertion errors"
+    description: "A number of assertion errors have been fixed"
+    affectedApi:
+      - "AVR backend"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-undef-stores
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AVR supports stores to undef locations"
+    description: "Support stores to undef locations"
+    affectedApi:
+      - "undef"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-clang-support
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "added"
+    severity: "low"
+    summary: "Very basic support for AVR target added to clang"
+    description: "Very basic support for the target has been added to clang"
+    affectedApi:
+      - "clang"
+      - "AVR"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: avr-16bit-boolean-optimizations
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AVR has small optimizations to some 16-bit boolean expressions"
+    description: "Small optimizations to some 16-bit boolean expressions"
+    affectedApi:
+      - "16-bit boolean"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the MIPS Target ---
+
+  - id: mips-ias-default-debian-mips64el
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "IAS (integrated assembler) enabled by default for Debian mips64el"
+    description: "IAS is now enabled by default for Debian mips64el."
+    affectedApi:
+      - "IAS"
+      - "mips64el"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-two-operand-form
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for the two operand form for many MIPS instructions"
+    description: "Added support for the two operand form for many instructions."
+    affectedApi:
+      - "MIPS instructions"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-new-macros
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added macros: unaligned load/store, seq, double word load/store for O32"
+    description: "Added the following macros: unaligned load/store, seq, double word load/store for O32."
+    affectedApi:
+      - "unaligned load"
+      - "unaligned store"
+      - "seq"
+      - "double word load"
+      - "double word store"
+      - "O32"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-memory-offset-parsing
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved the parsing of complex memory offset expressions for MIPS"
+    description: "Improved the parsing of complex memory offset expressions."
+    affectedApi:
+      - "memory offset"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-integrated-as-default-debian
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "Integrated assembler enabled by default for Debian mips64el"
+    description: "Enabled the integrated assembler by default for Debian mips64el."
+    affectedApi:
+      - "integrated assembler"
+      - "mips64el"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-interaptiv-scheduler
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added a generic scheduler based on the interAptiv CPU"
+    description: "Added a generic scheduler based on the interAptiv CPU."
+    affectedApi:
+      - "interAptiv"
+      - "scheduler"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-thread-local-relocations
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for thread local relocations on MIPS"
+    description: "Added support for thread local relocations."
+    affectedApi:
+      - "thread local"
+      - "relocations"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-ias-new-instructions
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Added recip, rsqrt, evp, dvp, synci instructions in IAS"
+    description: "Added recip, rsqrt, evp, dvp, synci instructions in IAS."
+    affectedApi:
+      - "recip"
+      - "rsqrt"
+      - "evp"
+      - "dvp"
+      - "synci"
+      - "IAS"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-constant-generation-opt
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Optimized the generation of constants from some cases for MIPS"
+    description: "Optimized the generation of constants from some cases."
+    affectedApi:
+      - "constant generation"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-thread-local-debug-info
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Thread local debug information is now correctly recorded for MIPS"
+    description: "Thread local debug information is correctly recorded."
+    affectedApi:
+      - "thread local"
+      - "debug information"
+    notes: "Bug fix"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-msa-range-check
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "MSA intrinsics are now range checked"
+    description: "MSA intrinsics are now range checked."
+    affectedApi:
+      - "MSA"
+    notes: "Bug fix"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-msa-no-odd-spreg
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed an issue with MSA and the no-odd-spreg abi on MIPS"
+    description: "Fixed an issue with MSA and the no-odd-spreg abi."
+    affectedApi:
+      - "MSA"
+      - "no-odd-spreg"
+    notes: "Bug fix"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-mipsr6-forbidden-slots
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed some corner cases in handling forbidden slots for MIPSR6"
+    description: "Fixed some corner cases in handling forbidden slots for MIPSR6."
+    affectedApi:
+      - "MIPSR6"
+    notes: "Bug fix"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-jumps-relative-branches
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed an issue with jumps not being converted to relative branches for assembly on MIPS"
+    description: "Fixed an issue with jumps not being converted to relative branches for assembly."
+    affectedApi:
+      - "jumps"
+      - "relative branches"
+    notes: "Bug fix"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-local-symbols-jal
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed the handling of local symbols and jal instruction on MIPS"
+    description: "Fixed the handling of local symbols and jal instruction."
+    affectedApi:
+      - "local symbols"
+      - "jal"
+    notes: "Bug fix"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-n32-n64-relocation-sorting
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "N32/N64 no longer have their relocation tables sorted as per their ABIs"
+    description: "N32/N64 no longer have their relocation tables sorted as per their ABIs."
+    affectedApi:
+      - "N32"
+      - "N64"
+      - "relocation tables"
+    notes: "Bug fix"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-msa-half-precision-crash
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed a crash when half-precision floating point conversion MSA intrinsics are used"
+    description: "Fixed a crash when half-precision floating point conversion MSA intrinsics are used."
+    affectedApi:
+      - "MSA"
+      - "half-precision"
+    notes: "Bug fix; crash fix"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-fastisel-crashes
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed several crashes involving FastISel on MIPS"
+    description: "Fixed several crashes involving FastISel."
+    affectedApi:
+      - "FastISel"
+    notes: "Bug fix; crash fix"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-mipsr6-aui-dau-defs
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Corrected the definitions for aui/daui/dahi/dati for MIPSR6"
+    description: "Corrected the corrected definitions for aui/daui/dahi/dati for MIPSR6."
+    affectedApi:
+      - "aui"
+      - "daui"
+      - "dahi"
+      - "dati"
+      - "MIPSR6"
+    notes: "Bug fix"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the X86 Target ---
+
+  - id: x86-ryzen-znver1
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for AMD Ryzen (znver1) CPUs"
+    description: "Added support AMD Ryzen (znver1) CPUs."
+    affectedApi:
+      - "znver1"
+      - "Ryzen"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-vex-avx512
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "X86 gained support for using VEX encoding on AVX-512 CPUs to reduce code size when possible"
+    description: "Gained support for using VEX encoding on AVX-512 CPUs to reduce code size when possible."
+    affectedApi:
+      - "VEX encoding"
+      - "AVX-512"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-avx512-codegen
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved AVX-512 codegen for X86"
+    description: "Improved AVX-512 codegen."
+    affectedApi:
+      - "AVX-512"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the OCaml Bindings ---
+
+  - id: ocaml-attribute-api-overhauled
+    category: "general"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "OCaml bindings attribute API completely overhauled, following the C API changes"
+    description: "The attribute API was completely overhauled, following the changes to the C API."
+    affectedApi:
+      - "OCaml bindings"
+      - "attribute API"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"

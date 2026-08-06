@@ -1,0 +1,829 @@
+---
+# Metadata about this file
+version: "3.7.1"
+sourceUrl: "http://llvm.org/releases/3.7.1/docs/ReleaseNotes.html"
+generatedBy: "opencode-agent"
+generatedDate: "2025-01-29"
+
+changes:
+
+  # --- Major changes in 3.7.1 (C API ABI fix) ---
+
+  - id: llvmbuildlandingpad-signature-restored
+    category: "c-api"
+    changeType: "renamed"
+    severity: "high"
+    summary: "LLVMBuildLandingPad C API signature restored to 3.6.2 form; 3.7.0 ABI incompatible with 3.7.1"
+    description: "3.7.0 was released with an inadvertent change to the signature of the C API function: LLVMBuildLandingPad, which made the C API incompatible with prior releases. This has been corrected in LLVM 3.7.1. As a result of this change, 3.7.0 is not ABI compatible with 3.7.1."
+    affectedApi:
+      - "LLVMBuildLandingPad"
+    notes: "3.6.2 and prior: LLVMBuildLandingPad(LLVMBuilderRef, LLVMTypeRef, LLVMValueRef, unsigned, const char*). 3.7.0 removed LLVMValueRef param. 3.7.1 restores 3.6.2 signature."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- General changes (top-level "Non-comprehensive list of changes in 3.7.0") ---
+
+  - id: visual-studio-2013-update4-min
+    category: "general"
+    changeType: "default-change"
+    severity: "low"
+    summary: "Minimum Visual Studio version for building LLVM raised to 2013 Update 4"
+    description: "The minimum required Visual Studio version for building LLVM is now 2013 Update 4."
+    affectedApi: []
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: datalayout-required
+    category: "general"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "DataLayout is no longer optional; API changed from pointer to reference"
+    description: "The DataLayout is no longer optional. All the IR level optimizations expects it to be present and the API has been changed to use a reference instead of a pointer to make it explicit. The Module owns the datalayout and it has to match the one attached to the TargetMachine for generating code. In 3.6, a pass was inserted in the pipeline to make the DataLayout accessible: MyPassManager->add(new DataLayoutPass(MyTargetMachine->getDataLayout())); In 3.7, you don't need a pass, you set the DataLayout on the Module: MyModule->setDataLayout(MyTargetMachine->createDataLayout());"
+    affectedApi:
+      - "DataLayout"
+      - "DataLayoutPass"
+      - "Module::setDataLayout"
+      - "TargetMachine::createDataLayout"
+      - "TargetMachine::getDataLayout"
+    notes: "LLVMGetTargetMachineData deprecated in favor of Module-owned DataLayout."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: llvmgettargetmachinedata-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMGetTargetMachineData deprecated; will be removed in 3.8"
+    description: "The LLVM C API LLVMGetTargetMachineData is deprecated to reflect the fact that it won't be available anymore from TargetMachine in 3.8."
+    affectedApi:
+      - "LLVMGetTargetMachineData"
+    notes: "Part of the DataLayout-required change (see datalayout-required)."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: comdats-orthogonal-linkage
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Comdats now orthogonal to linkage; LLVM no longer creates comdats for weak linkage globals"
+    description: "Comdats are now orthogonal to the linkage. LLVM will not create comdats for weak linkage globals and the frontends are responsible for explicitly adding them."
+    affectedApi:
+      - "Comdat"
+      - "weak linkage"
+      - "GlobalValue"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: elf-multiple-sections-same-name
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "ELF support for multiple sections with same name and comdat"
+    description: "On ELF we now support multiple sections with the same name and comdat. This allows for smaller object files since multiple sections can have a simple name (.text, .rodata, etc)."
+    affectedApi:
+      - "ELF"
+      - "Comdat"
+      - ".sections"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: lazy-metadata-loading
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "LLVM now lazily loads metadata in some cases; debug info archive creation 25X faster"
+    description: "LLVM now lazily loads metadata in some cases. Creating archives with IR files with debug info is now 25X faster."
+    affectedApi:
+      - "Metadata"
+      - "MDNode"
+      - "lazy loading"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: llvm-ar-bsd-format
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "llvm-ar can create archives in BSD format used by OS X"
+    description: "llvm-ar can create archives in the BSD format used by OS X."
+    affectedApi:
+      - "llvm-ar"
+      - "BSD archive format"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: bpf-backend-added
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "BPF backend target for extended Berkely Packet Filter added"
+    description: "LLVM received a backend for the extended Berkely Packet Filter instruction set that can be dynamically loaded into the Linux kernel via the bpf(2) syscall. Support for BPF has been present in the kernel for some time, but starting from 3.18 has been extended with such features as: 64-bit registers, 8 additional registers, conditional backwards jumps, call instruction, shift instructions, map (hash table, array, etc.), 1-8 byte load/store from stack, and more. The BPF target is now available by default, and options exist in both Clang (-target bpf) or llc (-march=bpf) to pick eBPF as a backend."
+    affectedApi:
+      - "BPF target"
+      - "eBPF"
+      - "bpf(2)"
+      - "-target bpf"
+      - "-march=bpf"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: switch-case-lowering-rewrite
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Switch-case lowering rewritten to avoid unbalanced trees and use profile info"
+    description: "Switch-case lowering was rewritten to avoid generating unbalanced search trees (PR22262) and to exploit profile information when available. Some lowering strategies are now disabled when optimizations are turned off, to save compile time."
+    affectedApi:
+      - "switch-case lowering"
+      - "ProfileInfo"
+    notes: "PR22262"
+    relevance: "unknown"
+    status: "pending"
+
+  - id: debug-info-metadata-inheritance
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "Debug info IR class hierarchy now inherits from Metadata; verifier merged with main verifier"
+    description: "The debug info IR class hierarchy now inherits from Metadata and has its own bitcode records and assembly syntax (documented in LangRef). The debug info verifier has been merged with the main verifier."
+    affectedApi:
+      - "Metadata"
+      - "MDNode"
+      - "DINode"
+      - "debug info verifier"
+      - "Verifier"
+      - "DILocation"
+      - "DISubprogram"
+      - "DILexicalBlock"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: opaque-pointer-transition
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "LLVM IR transitioning toward opaque (typeless) pointers; APIs modified for explicit types"
+    description: "LLVM IR and APIs are in a period of transition to aid in the removal of pointer types (the end goal being that pointers are typeless/opaque - void*, if you will). Some APIs and IR constructs have been modified to take explicit types that are currently checked to match the target type of their pre-existing pointer type operands. Further changes are still needed, but the more you can avoid using PointerType::getPointeeType, the easier the migration will be."
+    affectedApi:
+      - "PointerType::getPointeeType"
+      - "PointerType"
+    notes: "End goal is opaque/void* pointers; transitional phase started in 3.7."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: subtarget-argless-removed
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "Argument-less TargetMachine::getSubtarget and TargetMachine::getSubtargetImpl removed"
+    description: "Argument-less TargetMachine::getSubtarget and TargetMachine::getSubtargetImpl have been removed from the tree. Updating out of tree ports is as simple as implementing a non-virtual version in the target, but implementing full Function based TargetSubtargetInfo support is recommended."
+    affectedApi:
+      - "TargetMachine::getSubtarget"
+      - "TargetMachine::getSubtargetImpl"
+      - "TargetSubtargetInfo"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: windows-xp-vista-last-release
+    category: "general"
+    changeType: "default-change"
+    severity: "low"
+    summary: "Last major LLVM release supporting Windows XP and Vista"
+    description: "This is expected to be the last major release of LLVM that supports being run on Windows XP and Windows Vista. For the next major release the minimum Windows version requirement will be Windows 7."
+    affectedApi: []
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the JIT APIs ---
+
+  - id: orc-jit-api-added
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "New C++ JIT API called On Request Compilation (ORC) added"
+    description: "Added a new C++ JIT API called On Request Compilation, or ORC. ORC is a new JIT API inspired by MCJIT but designed to be more testable, and easier to extend with new features. A key new feature already in tree is lazy, function-at-a-time compilation for X86. Also included is a reimplementation of MCJIT's API and behavior (OrcMCJITReplacement). MCJIT itself remains in tree, and continues to be the default JIT ExecutionEngine, though new users are encouraged to try ORC out for their projects."
+    affectedApi:
+      - "ORC"
+      - "OrcMCJITReplacement"
+      - "MCJIT"
+      - "ExecutionEngine"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the MIPS Target ---
+
+  - id: mips-new-isas-microMIPS32
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for MIPS32R3, MIPS32R5, and microMIPS32"
+    description: "Added support for MIPS32R3, MIPS32R5, MIPS32R3, MIPS32R5, and microMIPS32."
+    affectedApi:
+      - "MIPS32R3"
+      - "MIPS32R5"
+      - "microMIPS32"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-dynamic-stack-realignment
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for dynamic stack realignment, important for MSA on 32-bit O32 ABI"
+    description: "Added support for dynamic stack realignment. This is of particular importance to MSA on 32-bit subtargets since vectors always exceed the stack alignment on the O32 ABI."
+    affectedApi:
+      - "dynamic stack realignment"
+      - "MSA"
+      - "O32 ABI"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-compiler-rt-sanitizers
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "low"
+    summary: "Added compiler-rt support: ASan/UBSan for all subtargets, DFGsan/Msan for 64-bit, Profiler for all"
+    description: "Added support for compiler-rt including: Support for the Address, and Undefined Behaviour Sanitizers for all MIPS subtargets. Support for the Data Flow, and Memory Sanitizer for 64-bit subtargets. Support for the Profiler for all MIPS subtargets."
+    affectedApi:
+      - "compiler-rt"
+      - "ASan"
+      - "UBSan"
+      - "Data Flow Sanitizer"
+      - "Memory Sanitizer"
+      - "Profiler"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-libcxx-libcxxabi
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for libcxx and libcxxabi"
+    description: "Added support for libcxx, and libcxxabi."
+    affectedApi:
+      - "libc++"
+      - "libc++abi"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-inline-asm-constraints
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved inline assembly support: memory constraints use address offsets; ZC constraint added"
+    description: "Improved inline assembly support such that memory constraints may now make use of the appropriate address offsets available to the instructions. Also, added support for the ZC constraint."
+    affectedApi:
+      - "inline assembly"
+      - "memory constraints"
+      - "ZC constraint"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-128bit-ints-16bit-fp
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for 128-bit integers on 64-bit subtargets and 16-bit floating point conversions on all"
+    description: "Added support for 128-bit integers on 64-bit subtargets and 16-bit floating point conversions on all subtargets."
+    affectedApi:
+      - "i128"
+      - "bfloat"
+      - "16-bit floating point"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-readonly-eh-frame
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for read-only .eh_frame sections by storing type info indirectly"
+    description: "Added support for read-only .eh_frame sections by storing type information indirectly."
+    affectedApi:
+      - ".eh_frame"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-mcjit-64bit-r6
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for MCJIT on all 64-bit subtargets and MIPS32R6"
+    description: "Added support for MCJIT on all 64-bit subtargets as well as MIPS32R6."
+    affectedApi:
+      - "MCJIT"
+      - "MIPS32R6"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-fast-isel-pic
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for fast instruction selection on MIPS32 and MIPS32R2 with PIC"
+    description: "Added support for fast instruction selection on MIPS32 and MIPS32R2 with PIC."
+    affectedApi:
+      - "fast selection"
+      - "MIPS32"
+      - "MIPS32R2"
+      - "PIC"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-debug-line-info-calls
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed 'jumpy' debug line info around calls where address calculation changed line number"
+    description: "Fixed 'jumpy' debug line info around calls where calculation of the address of the function would inappropriately change the line number."
+    affectedApi:
+      - "debug line info"
+      - "DILocation"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-mips_isa_rev-macro
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed missing __mips_isa_rev macro on MIPS32R6 subtargets"
+    description: "Fixed missing __mips_isa_rev macro on the MIPS32R6 and MIPS32R6 subtargets."
+    affectedApi:
+      - "__mips_isa_rev"
+      - "MIPS32R6"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-nan-encoding-fixes
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed NaN representation for IEEE754-2008 compatible systems"
+    description: "Fixed representation of NaN when targeting systems using traditional encodings. Traditionally, MIPS has used NaN encodings that were compatible with IEEE754-1985 but would later be found incompatible with IEEE754-2008."
+    affectedApi:
+      - "NaN"
+      - "IEEE754-2008"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-disasm-segfault-fix
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed segfaults and assertions in disassembler with memory operand instructions"
+    description: "Fixed multiple segfaults and assertions in the disassembler when disassembling instructions that have memory operands."
+    affectedApi:
+      - "MIPS disassembler"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-zero-register-cgen-fix
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed suboptimal code generation involving $zero"
+    description: "Fixed multiple cases of suboptimal code generation involving $zero."
+    affectedApi:
+      - "MIPS code generation"
+      - "$zero"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-128bit-shifts-fix
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed code generation of 128-bit shifts on 64-bit subtargets"
+    description: "Fixed code generation of 128-bit shifts on 64-bit subtargets."
+    affectedApi:
+      - "128-bit shifts"
+      - "i128"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-delay-slot-ra-fix
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Prevented delay slot filler from using instructions that modify or use $ra in call delay slots"
+    description: "Prevented the delay slot filler from filling call delay slots with instructions that modify or use $ra."
+    affectedApi:
+      - "delay slot filler"
+      - "$ra"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-n32-n64-small-struct-fix
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed N32/N64 calling convention bugs with small structures on big-endian subtargets"
+    description: "Fixed some remaining N32/N64 calling convention bugs when using small structures on big-endian subtargets."
+    affectedApi:
+      - "N32 ABI"
+      - "N64 ABI"
+      - "calling convention"
+      - "big-endian"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-n32-n64-signext-fix
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed missing sign-extensions required by N32/N64 calling convention for 32-bit parameters"
+    description: "Fixed missing sign-extensions that are required by the N32/N64 calling convention when generating calls to library functions with 32-bit parameters."
+    affectedApi:
+      - "N32 ABI"
+      - "N64 ABI"
+      - "signext"
+      - "zeroext"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-int64-typedef-n64
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Corrected int64_t typedef to be long for N64"
+    description: "Corrected the int64_t typedef to be long for N64."
+    affectedApi:
+      - "int64_t"
+      - "N64 ABI"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-mno-odd-spreg-msa
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "-mno-odd-spreg now honoured for vector insertion/extraction with -mmsa"
+    description: "-mno-odd-spreg is now honoured for vector insertion/extraction operations when using -mmsa."
+    affectedApi:
+      - "-mno-odd-spreg"
+      - "-mmsa"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-vector-insert-extract-64
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed vector insertion and extraction for MSA on 64-bit subtargets"
+    description: "Fixed vector insertion and extraction for MSA on 64-bit subtargets."
+    affectedApi:
+      - "MSA"
+      - "vector insertion"
+      - "vector extraction"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: mips-member-func-ptr-fix
+    category: "target-mips"
+    targetName: "MIPS"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Corrected representation of member function pointers for microMIPS subtargets"
+    description: "Corrected the representation of member function pointers. This makes them usable on microMIPS subtargets."
+    affectedApi:
+      - "member function pointers"
+      - "microMIPS"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the PowerPC Target ---
+
+  - id: powerpc-isa207b-power8
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for ISA 2.07B (POWER8) including GPR-VR moves and HTM"
+    description: "LLVM now supports the ISA 2.07B (POWER8) instruction set, including direct moves between general registers and vector registers, and built-in support for hardware transactional memory (HTM). Some missing instructions from ISA 2.06 (POWER7) were also added."
+    affectedApi:
+      - "ISA 2.07B"
+      - "POWER8"
+      - "ISA 2.06"
+      - "POWER7"
+      - "HTM"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-tls-improved
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved code generation for local-dynamic and global-dynamic TLS models"
+    description: "Code generation for the local-dynamic and global-dynamic thread-local storage models has been improved."
+    affectedApi:
+      - "TLS"
+      - "local-dynamic"
+      - "global-dynamic"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-preinc-loop-restructure
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Loops may be restructured to leverage pre-increment loads and stores"
+    description: "Loops may be restructured to leverage pre-increment loads and stores."
+    affectedApi: []
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-qpx
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "QPX vector instruction set for IBM Blue Gene/Q now supported"
+    description: "QPX - The vector instruction set used by the IBM Blue Gene/Q supercomputers is now supported."
+    affectedApi:
+      - "QPX"
+      - "Blue Gene/Q"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-toc-load-invariant
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Loads from TOC area now correctly treated as invariant"
+    description: "Loads from the TOC area are now correctly treated as invariant."
+    affectedApi:
+      - "TOC"
+      - "invariant loads"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-i128-v1i128
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for i128 and v1i128 types; differ in register passing for ELFv2 ABI"
+    description: "PowerPC now has support for i128 and v1i128 types. The types differ in how they are passed in registers for the ELFv2 ABI."
+    affectedApi:
+      - "i128"
+      - "v1i128"
+      - "ELFv2 ABI"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-shorter-mnemonics
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Disassembly now prints shorter mnemonic aliases when available"
+    description: "Disassembly will now print shorter mnemonic aliases when available."
+    affectedApi:
+      - "disassembler"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-vsx-qpx-prefixes
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "Optional register name prefixes for VSX and QPX registers supported in assembly parser"
+    description: "Optional register name prefixes for VSX and QPX registers are now supported in the assembly parser."
+    affectedApi:
+      - "VSX"
+      - "QPX"
+      - "assembly parser"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: power8-vector-swap-removal
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "Backend pass to remove unnecessary vector swaps from POWER8 little-endian code"
+    description: "The back end now contains a pass to remove unnecessary vector swaps from POWER8 little-endian code generation. Additional improvements are planned for release 3.8."
+    affectedApi:
+      - "POWER8"
+      - "little-endian"
+      - "vector swaps"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-ubsan
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "Undefined-behavior sanitizer (UBSan) now supported for PowerPC"
+    description: "The undefined-behavior sanitizer (UBSan) is now supported for PowerPC."
+    affectedApi:
+      - "UBSan"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-altivec-apis
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "Many new vector programming APIs added to altivec.h"
+    description: "Many new vector programming APIs have been added to altivec.h. Additional ones are planned for release 3.8."
+    affectedApi:
+      - "altivec.h"
+      - "altivec"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-static-chain
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC now supports __builtin_call_with_static_chain"
+    description: "PowerPC now supports __builtin_call_with_static_chain."
+    affectedApi:
+      - "__builtin_call_with_static_chain"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-mrecip
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "added"
+    severity: "low"
+    summary: "Revised -mrecip option with finer control over reciprocal estimates"
+    description: "PowerPC now supports the revised -mrecip option that permits finer control over reciprocal estimates."
+    affectedApi:
+      - "-mrecip"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: powerpc-bugfixes
+    category: "target-powerpc"
+    targetName: "PowerPC"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Many bugs identified and fixed in PowerPC target"
+    description: "Many bugs have been identified and fixed."
+    affectedApi:
+      - "PowerPC target"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the SystemZ Target ---
+
+  - id: systemz-host-cpu-auto-detect-removed
+    category: "target-systemz"
+    targetName: "SystemZ"
+    changeType: "removed"
+    severity: "low"
+    summary: "Automatic host CPU detection removed when invoked natively"
+    description: "LLVM no longer attempts to automatically detect the current host CPU when invoked natively."
+    affectedApi: []
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: systemz-all-tls-models
+    category: "target-systemz"
+    targetName: "SystemZ"
+    changeType: "added"
+    severity: "low"
+    summary: "All thread-local storage models now supported (previously only local-exec)"
+    description: "Support for all thread-local storage models. (Previous releases would support only the local-exec TLS model.)"
+    affectedApi:
+      - "TLS"
+      - "local-exec"
+      - "local-dynamic"
+      - "global-dynamic"
+      - "initial-exec"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: systemz-popcnt
+    category: "target-systemz"
+    targetName: "SystemZ"
+    changeType: "added"
+    severity: "low"
+    summary: "POPCNT instruction now used on z196 and above"
+    description: "The POPCNT instruction is now used on z196 and above."
+    affectedApi:
+      - "POPCNT"
+      - "z196"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: systemz-risbgn
+    category: "target-systemz"
+    targetName: "SystemZ"
+    changeType: "added"
+    severity: "low"
+    summary: "RISBGN instruction now used on zEC12 and above"
+    description: "The RISBGN instruction is now used on zEC12 and above."
+    affectedApi:
+      - "RISBGN"
+      - "zEC12"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: systemz-transactional-execution
+    category: "target-systemz"
+    targetName: "SystemZ"
+    changeType: "added"
+    severity: "low"
+    summary: "Transactional-execution facility now supported on zEC12 and above"
+    description: "Support for the transactional-execution facility on zEC12 and above."
+    affectedApi:
+      - "transactional-execution"
+      - "zEC12"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"
+
+  - id: systemz-z13-vector
+    category: "target-systemz"
+    targetName: "SystemZ"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for z13 processor and vector facility"
+    description: "Support for the z13 processor and its vector facility."
+    affectedApi:
+      - "z13"
+      - "vector facility"
+    notes: ""
+    relevance: "unknown"
+    status: "pending"

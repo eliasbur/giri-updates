@@ -1,0 +1,123 @@
+# LLVM Release Notes — API Changes Template
+# Purpose: Capture API-breaking and porting-relevant changes from LLVM release notes
+#   in a structured format that future agents can filter by relevance to Giri.
+#
+# Instructions for the agent populating this file:
+#   1. Replace all <...> placeholders with values from the release notes HTML.
+#   2. Extract every change item from the release notes under the sections:
+#        - "Non-comprehensive list of changes in this release" (top-level)
+#        - "Changes to the LLVM IR"
+#        - "Changes to the C API"
+#        - "Changes to the <Target> Target" (any target; one node per target)
+#   3. Skip sections that are purely informational (Introduction, External Projects,
+#      Additional Information).
+#   4. Do NOT yet compare changes to Giri source code. Record everything as-is.
+#   5. Set relevance to "unknown" for all items — a future agent will triage.
+#
+# Instructions for the agent triaging this file:
+#   - Search Giri source for each entry's affectedApi entries.
+#   - Set relevance to "affected", "unlikely", or "irrelevant" accordingly.
+#   - Remove items with relevance "irrelevant" or merge them.
+#   - Update status from "pending" to "resolved" or "mitigated".
+
+---
+# Metadata about this file
+version: "<llvm-version, e.g. 5.0.0>"
+sourceUrl: "<url to the release notes HTML/PDF>"
+generatedBy: "<agent or human who created this file>"
+generatedDate: "<YYYY-MM-DD>"
+
+# Ordered list of API changes.
+# Each entry represents a distinct change item from the release notes.
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes") ---
+
+  - id: "<short-identifier, e.g. weakvh-renamed>"
+    category: "general"
+    changeType: "<renamed | removed | deprecated | added | behavior-change | moved | default-change>"
+    severity: "<high | medium | low>"
+    summary: "<one-line summary of the change>"
+    description: "<full verbatim text from the release notes for this change item>"
+    affectedApi:
+      - "<API symbol, type, function, header, or library affected>"
+    notes: "<any additional context extracted from the release notes>"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: "<short-identifier>"
+    category: "llvm-ir"
+    changeType: "<...>"
+    severity: "<...>"
+    summary: "<...>"
+    description: "<...>"
+    affectedApi:
+      - "<...>"
+    notes: "<...>"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the C API ---
+
+  - id: "<short-identifier>"
+    category: "c-api"
+    changeType: "<...>"
+    severity: "<...>"
+    summary: "<...>"
+    description: "<...>"
+    affectedApi:
+      - "<...>"
+    notes: "<...>"
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to <Target> Target (repeat block per target present) ---
+
+  - id: "<short-identifier>"
+    category: "target-<target-name>"
+    targetName: "<target, e.g. x86, arm, aarch64>"
+    changeType: "<...>"
+    severity: "<...>"
+    summary: "<...>"
+    description: "<...>"
+    affectedApi:
+      - "<...>"
+    notes: "<...>"
+    relevance: "unknown"
+    status: "pending"
+
+# --- Allowed values ---
+#
+# changeType:
+#   renamed         — symbol/class/type/tool was renamed
+#   removed         — symbol/class/type/tool was removed
+#   deprecated      — symbol/class/type/tool is deprecated
+#   added           — new symbol/class/type/tool added (may require adaptation)
+#   behavior-change — existing API now behaves differently
+#   moved           — code moved between libraries, headers, or namespaces
+#   default-change  — default behavior or flag value changed
+#
+# category:
+#   general         — top-level changes not specific to a subsystem
+#   llvm-ir         — changes to the LLVM IR
+#   c-api           — changes to the C API
+#   target-<name>   — changes specific to a target backend
+#
+# severity:
+#   high  — likely breaks compilation or runtime behavior of existing code
+#   medium — may require code changes or has subtle behavior implications
+#   low   — informational, new feature, or unlikely to require changes
+#
+# relevance:
+#   unknown    — not yet checked against Giri source (initial state)
+#   affected   — Giri uses this API; the port must address this change
+#   unlikely   — Giri does not appear to use this API; may still need review
+#   irrelevant — confirmed not used by Giri; safe to remove from the list
+#
+# status:
+#   pending   — not yet addressed in the port
+#   addressed — code has been updated to handle this change
+#   mitigated — work-around applied; not a full fix
+#   skipped   — intentionally left for a future pass
