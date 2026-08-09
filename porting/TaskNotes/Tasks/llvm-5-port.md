@@ -1,7 +1,7 @@
 ---
 title: Port Giri to LLVM version 5.0.2.
 repo: giriupdates
-status: open
+status: in-progress
 priority: high # low | medium | high
 contexts: [] # e.g. dev, cockpit, gpu1
 projects: [ giriupdates ] # e.g. mythllm-client, irt-study
@@ -9,7 +9,39 @@ tags:
 - task
 timeEstimate: 0 # minutes
 dateCreated: 2026-08-06
+dateModified: 2026-08-08
 ---
+## Current state (as of 2026-08-08)
+
+**Committed work on branch `agent/llvm-5-port`:** commit `0e21c2d`.
+
+### Completed
+- **Phase 1** — `utils/install_llvm.sh` has working `5.0.2` case using prebuilt tarball; `3.4` case preserved
+- **Phase 1** — `Dockerfile` updated: CMake 3.12.4 installed, plus `xz-utils`, `libtinfo-dev`, `zlib1g-dev`, `libncurses5-dev`, `libedit-dev`; `PATH` includes `/usr/local/llvm/bin`
+- **Phase 2** — CMake build system created: 6 `CMakeLists.txt` files (top-level, `lib/Giri`, `lib/Utility`, `runtime/Giri`, `tools/Tracer`, `tools/PrintTrace`)
+- **Phase 2** — `utils/build.sh` rewritten for CMake; test Makefiles updated for flat `build/{lib,bin}` layout
+- **Phase 2** — Autoconf build machinery preserved in Makefiles (CMake drives them, not standalone)
+- **Phase 3 (source fixes)** — All header moves fixed (`InstVisitor.h`, `CallSite.h`, `CFG.h`, `DebugInfo.h`, `Verifier.h`)
+- **Phase 3** — `PostDominanceFrontier` completely rewritten (no longer inherits removed `DominanceFrontierBase`)
+- **Phase 3** — `BasicBlockNumbering` and `LoadStoreNumbering` rewritten for deterministic iteration (no `Value*` stored in `MDNode`)
+- **Phase 3** — Debug info access updated: `getDebugLoc()`, `DILocation`, `getInstruction()` on `MDNode`
+- **Phase 3** — `getOrInsertFunction` return type / `CallInst::Create` signatures / `DataLayout` from `Module` / `raw_fd_ostream` constructors / `getPassName()` → `StringRef`
+- **Phase 3** — `Value::dump()` → `->print(errs()); errs() << "\n"`
+- **Phase 3** — `tracer` built with `-fexceptions` (needs try/catch)
+
+### Blocker (needs next agent)
+Shared library linking fails when building `libdgutility.so`:
+  - `raw_fd_ostream::raw_fd_ostream(...)` undefined reference from `SourceLineMapping.cpp`
+  - `report_fatal_error(...)` undefined reference from `CountSrcLines.cpp`
+  Root cause: the `-Wl,--allow-shlib-undefined` linker flag set via `CMAKE_SHARED_LINKER_FLAGS_INIT` is not being respected by CMake. The shared libraries must keep unresolved LLVM symbols (they're resolved by `opt` at load time). If the flag doesn't work, options include: (a) using `CMAKE_CXX_SHARED_LINKER_FLAGS` instead, (b) adding `--no-as-needed` before LLVM libraries, (c) refactoring `SourceLineMapping.cpp` and `CountSrcLines.cpp` to avoid `raw_fd_ostream` and `report_fatal_error` from LLVM's Support library.
+
+Next steps for the continuing agent:
+1. Fix the shared library linker issue so `libdgutility.so` and `libgiri.so` build successfully
+2. Verify `opt -load build/lib/libdgutility.so -load build/lib/libgiri.so -help` lists all GIRI passes (no "registered more than once" error)
+3. Run `make -C /giri/test` and document pass/fail with root causes
+4. Update `porting/llvm-releases/5.0.0/api-breakings.yaml` for all touched entries
+5. Update `AGENTS.md` and `porting/AgentGuide.md`
+6. Push branch, open MR/PR into `port/llvm-5.0.2`
 ## Goal
 A Giri source tree on `port/llvm-5.0.2` that builds cleanly against LLVM/Clang 5.0.2 inside its
 Docker image and runs the full test suite, with every remaining test failure root-caused and
