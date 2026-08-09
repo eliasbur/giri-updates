@@ -14,39 +14,51 @@
 #ifndef LLVM_ANALYSIS_POST_DOMINANCE_FRONTIER_H
 #define LLVM_ANALYSIS_POST_DOMINANCE_FRONTIER_H
 
-#include <iostream>
-
-#include "llvm/Analysis/DominanceFrontier.h"
+#include <set>
+#include "llvm/IR/Function.h"
+#include "llvm/Pass.h"
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
-/// PostDominanceFrontier Class - Concrete subclass of DominanceFrontier that is
-/// used to compute the a post-dominance frontier.
-struct PostDominanceFrontier : public DominanceFrontierBase {
-  static char ID;
-  PostDominanceFrontier()
-    : DominanceFrontierBase(ID, true) {
-    //initializePostDominanceFrontierPass(*PassRegistry::getPassRegistry());
-    }
+struct PostDominanceFrontier : public FunctionPass {
+  typedef FunctionPass SuperClass;
+  typedef std::set<BasicBlock*> DomSetType;
+  typedef DenseMap<BasicBlock*, DomSetType> DomSetMap;
 
-  virtual bool runOnFunction(Function &F) {
+  static char ID;
+  PostDominanceFrontier() : FunctionPass(ID) {}
+
+  virtual bool runOnFunction(Function &F) override {
     Frontiers.clear();
-    PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
-    Roots = DT.getRoots();
+    PostDominatorTreeWrapperPass *PDP = getAnalysisIfAvailable<PostDominatorTreeWrapperPass>();
+    if (!PDP) return false;
+    PostDominatorTree &DT = PDP->getPostDomTree();
     if (const DomTreeNode *Root = DT.getRootNode())
       calculate(DT, Root);
     return false;
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
-    AU.addRequired<PostDominatorTree>();
+    AU.addRequired<PostDominatorTreeWrapperPass>();
+  }
+
+  const DomSetType &getFrontier(BasicBlock *BB) const {
+    static const DomSetType emptySet;
+    DomSetMap::const_iterator I = Frontiers.find(BB);
+    return I != Frontiers.end() ? I->second : emptySet;
+  }
+
+  static FunctionPass *createPostDomFrontier() {
+    return new PostDominanceFrontier();
   }
 
 private:
-  const DomSetType &calculate(const PostDominatorTree &DT,
-                              const DomTreeNode *Node);
+  DomSetMap Frontiers;
+
+  const DomSetType &calculate(const PostDominatorTree &DT, const DomTreeNode *Node);
 };
 
 FunctionPass* createPostDomFrontier();

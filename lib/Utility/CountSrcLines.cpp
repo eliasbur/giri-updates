@@ -69,7 +69,7 @@ void CountSrcLines::countLines(const string &bbrecord_file) {
      BasicBlock *BB = bbNumPass->getBlock(*curr);
      NumStaticInst += BB->size();
      for (BasicBlock::iterator it = BB->begin(); it != BB->end(); ++it) {
-       string srcLineInfo = SourceLineMappingPass::locateSrcInfo(it);
+       string srcLineInfo = SourceLineMappingPass::locateSrcInfo(&*it);
        if (srcLineInfo.empty()) // Ignored instructions without source lines
          NumWithoutSrcLines++;
        else if (srcLineInfo == "NIL") { // No source line found using debug info

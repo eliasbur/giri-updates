@@ -10,8 +10,8 @@ NAME ?= hello-world
 
 CC = clang
 CXX = clang++
-GIRI_LIB_DIR = $(GIRI_DIR)/$(BuildMode)/lib
-GIRI_BIN_DIR = $(GIRI_DIR)/$(BuildMode)/bin
+GIRI_LIB_DIR = $(GIRI_DIR)/lib
+GIRI_BIN_DIR = $(GIRI_DIR)/bin
 
 .PHONY: all lib
 
