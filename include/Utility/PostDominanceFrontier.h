@@ -55,6 +55,12 @@ struct PostDominanceFrontier : public FunctionPass {
     return new PostDominanceFrontier();
   }
 
+  void computeFrontiers(const PostDominatorTree &DT) {
+    Frontiers.clear();
+    if (const DomTreeNode *Root = DT.getRootNode())
+      calculate(DT, Root);
+  }
+
 private:
   DomSetMap Frontiers;
 

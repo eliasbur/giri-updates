@@ -167,8 +167,9 @@ public:
     AU.addRequiredTransitive<QueryBasicBlockNumbers>();
     AU.addRequiredTransitive<QueryLoadStoreNumbers>();
 
-    AU.addRequired<PostDominatorTreeWrapperPass>();
-    AU.addRequired<PostDominanceFrontier>();
+    // PostDominatorTree and PostDominanceFrontier are computed inline per-function
+    // in ensurePostDomFrontierComputed since they are FunctionPasses
+    // and this is a ModulePass.
 
     // This pass is an analysis pass, so it does not modify anything
     AU.setPreservesAll();
@@ -240,6 +241,10 @@ private:
   ///                 control-dependent on the entry block if the entry block
   ///                 is in bbNums).
   bool findExecForcers(BasicBlock *BB, std::set<unsigned> &bbNums);
+  
+  void ensurePostDomFrontierComputed(Function &F);
+  llvm::DenseMap<Function*, PostDominanceFrontier*> FunctionPDFFrontiers;
+  llvm::DenseMap<Function*, PostDominatorTreeWrapperPass*> FunctionPDTWP;
 
   void initDataFlowFitler(void);
 

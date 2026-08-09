@@ -1,7 +1,7 @@
 ##===- giri/test/UnitTests/Makefile.common -----------------*- Makefile -*-===##
 #
 
-DEBUGFLAGS ?= -debug
+DEBUGFLAGS ?=
 CFLAGS ?= -g -O0 -c -emit-llvm
 LDFLAGS ?=
 BuildMode ?= Release+Debug+Asserts

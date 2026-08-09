@@ -9,7 +9,7 @@ include(AddLLVM)
 include(HandleLLVMOptions)
 
 # Allow unresolved symbols in .so files (resolved by `opt` at load time)
-set(CMAKE_SHARED_LINKER_FLAGS_INIT "-Wl,--allow-shlib-undefined")
+set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--allow-shlib-undefined" CACHE STRING "" FORCE)
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--allow-shlib-undefined")
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 

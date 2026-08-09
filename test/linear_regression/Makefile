@@ -3,7 +3,7 @@
 TEST_PARALLELISM ?= pthread
 CRITERION ?= "-criterion-loc=loc-$(TEST_PARALLELISM).txt"
 #CRITERION ?= "-criterion-inst=inst-$(TEST_PARALLELISM).txt"
-DEBUGFLAGS ?= -debug
+DEBUGFLAGS ?=
 INPUT ?= 4
 
 ###### Don't modify the following unless you know exactly what you'r doing #####

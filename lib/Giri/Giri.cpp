@@ -64,9 +64,26 @@ char DynamicGiri::ID = 0;
 
 static RegisterPass<DynamicGiri> X("dgiri", "Dynamic Backwards Slice Analysis");
 
+void DynamicGiri::ensurePostDomFrontierComputed(Function &F) {
+  if (FunctionPDTWP.find(&F) != FunctionPDTWP.end())
+    return;
+  
+  PostDominatorTreeWrapperPass *PDTWP = new PostDominatorTreeWrapperPass();
+  PDTWP->runOnFunction(F);
+  FunctionPDTWP[&F] = PDTWP;
+  
+  PostDominanceFrontier *PDF = new PostDominanceFrontier();
+  PDF->computeFrontiers(PDTWP->getPostDomTree());
+  FunctionPDFFrontiers[&F] = PDF;
+}
+
 bool DynamicGiri::findExecForcers(BasicBlock *BB,
-                                   std::set<unsigned> &bbNums) {
+                                    std::set<unsigned> &bbNums) {
   Function *F = BB->getParent();
+  ensurePostDomFrontierComputed(*F);
+
+  PostDominatorTree &PDT = FunctionPDTWP[F]->getPostDomTree();
+  PostDominanceFrontier &PDF = *FunctionPDFFrontiers[F];
 
   if (ForceExecCache.find(BB) != ForceExecCache.end()) {
     for (unsigned index = 0; index < ForceExecCache[BB].size(); ++index) {
@@ -75,11 +92,6 @@ bool DynamicGiri::findExecForcers(BasicBlock *BB,
     }
     return ForceAtLeastOnceCache[BB];
   }
-
-  PostDominanceFrontier &PDF = getAnalysis<PostDominanceFrontier>(*F);
-  PostDominatorTreeWrapperPass *PDP = getAnalysisIfAvailable<PostDominatorTreeWrapperPass>();
-  assert(PDP && "PostDominatorTreeWrapperPass not available");
-  PostDominatorTree &PDT = PDP->getPostDomTree();
 
   for (Function::iterator bb = F->begin(); bb != F->end(); ++bb) {
     const PostDominanceFrontier::DomSetType &CDSet = PDF.getFrontier(&*bb);
