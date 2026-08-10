@@ -75,6 +75,21 @@ def get_repo_cfg(repo_key: str) -> dict:
     local_path_str = os.environ.get(local_env, ".")
     local_root = REPO_ROOT / local_path_str if local_path_str != "." else REPO_ROOT
 
+    # Split checkouts are not supported: cmd_finish commits the task note in
+    # REPO_ROOT but pushes from local_root, so with two different repos the note
+    # commit is never pushed and the protected-branch guard checks the wrong
+    # branch. Refuse the layout instead of silently half-doing the work.
+    if local_root.resolve() != REPO_ROOT:
+        sys.exit(
+            f"{local_env}={local_path_str!r}: split checkouts are not supported.\n"
+            f"  task notes: {REPO_ROOT}\n"
+            f"  code:       {local_root}\n"
+            "The driver assumes both are the same git repo, so that a task note and the "
+            "code it describes ride the same branch into the same MR/PR. Set "
+            f"{local_env}=. , or teach cmd_finish/push_branch to take a separate repo "
+            "key for the notes repo before using a nested checkout."
+        )
+
     cfg = {
         "repo_key": repo_key,
         "backend": backend,
@@ -620,6 +635,17 @@ def cmd_validate(args):
         up = repo_key.upper()
         if not os.environ.get(f"GITHUB_{up}_TOKEN") and not os.environ.get(f"GITLAB_{up}_TOKEN"):
             warnings.append(f"{slug}: no matching token for repo '{repo_key}' (set GITHUB_{up}_TOKEN or GITLAB_{up}_TOKEN)")
+
+        # Split checkouts are not supported (see get_repo_cfg). Checked here too so
+        # `validate` reports the layout without needing a token to build the cfg.
+        for prefix in ("GITHUB", "GITLAB"):
+            local_env = f"{prefix}_{up}_LOCAL_PATH"
+            local_path_str = os.environ.get(local_env)
+            if local_path_str is not None and local_path_str != ".":
+                errors.append(
+                    f"{slug}: {local_env}={local_path_str!r} — split checkouts are not "
+                    "supported; the task note must live in the same repo as the code"
+                )
 
         # Check required sections exist
         for section in ("Goal", "Definition of done", "Files / scope"):
