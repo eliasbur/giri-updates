@@ -38,9 +38,9 @@ test infra; it spells out the trace-then-slice pipeline end to end.
 
 ## Debugging
 
-- **`-debug` flag** is wired through test Makefiles; stripped for `make test`.
+- **`DEBUGFLAGS`** in test Makefiles controls extra `opt` flags (set to empty string for LLVM 5+).
 - **`prtrace`** (`tools/PrintTrace/`) dumps a `.trace` file's `Entry` records in human-readable form.
-- When debugging a slice that looks wrong, use `prtrace` and the `-debug` flag together.
+- When debugging a slice that looks wrong, use `prtrace` to inspect the trace file.
 
 ## The opt invocation pipeline
 

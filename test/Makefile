@@ -16,7 +16,7 @@ test:: lib
 	  do\
 	      printf "\033[37m%-20s" "$$t";\
 	  	  make clean -s -C $$t > /dev/null 2>&1;\
-		  make -s -C $$t > /dev/null 2>&1;\
+		  make -s -C $$t DEBUGFLAGS= > /dev/null 2>&1;\
 		  make test -s -C $$t DEBUGFLAGS= >> $(TEST_LOG) 2>&1;\
 		  if [ $$? -eq 0 ]; then\
 		  	  printf "\033[34m[PASS]\033[0m\n";\

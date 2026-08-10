@@ -35,8 +35,8 @@ changes:
       - "autoconf"
     versions: [3.8.1, 3.9.1]
     originalIds: [autoconf-deprecated, autoconf-removed-cmake-only]
-    relevance: "unknown"
-    status: "pending"
+    relevance: "affected"
+    status: "addressed"
 
   - id: "bbvectorize-removed"
     category: "general"
@@ -150,8 +150,8 @@ changes:
     originalIds: [datalayout-required]
     notes: |-
       LLVMGetTargetMachineData deprecated in favor of Module-owned DataLayout.
-    relevance: "unknown"
-    status: "pending"
+    relevance: "affected"
+    status: "addressed"
 
   - id: "debug-loc-directive"
     category: "general"
@@ -207,8 +207,8 @@ changes:
     originalIds: [ilist-iterator-pointer-conversion-removed, intrusive-list-iterator-stores-node-base]
     notes: |-
       This is a compile-time breaking change affecting any code relying on implicit iterator/pointer conversion.
-    relevance: "unknown"
-    status: "pending"
+    relevance: "affected"
+    status: "addressed"
 
   - id: "ilist-node-next-prev-compile-time-fail"
     category: "general"
@@ -230,8 +230,8 @@ changes:
       - "rbegin()"
     versions: [3.8.1, 4.0.0]
     originalIds: [ilist-node-next-prev-compile-time-fail, intrusive-list-node-get-iterators]
-    relevance: "unknown"
-    status: "pending"
+    relevance: "affected"
+    status: "addressed"
 
   - id: "intrusive-list-api-overhaul"
     category: "general"
