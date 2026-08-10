@@ -13,5 +13,17 @@ build/
 cscope.*
 autom4te.cache
 
+# runtime artifacts
+core.*
+*.loc
+
+# CMake build artifacts (should only live in build/)
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles/
+bin/
+cmake/
+
+# Agent workspace artifacts
 .env
 .claude
