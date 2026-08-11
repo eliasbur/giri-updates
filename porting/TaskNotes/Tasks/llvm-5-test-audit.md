@@ -267,8 +267,8 @@ changing the slice algorithm or the golden file>
 - [x] `llvm-5-port.md`'s "Root cause of failures" paragraph corrected to match the findings
 - [x] Follow-up note `porting/TaskNotes/Tasks/llvm-5-test-fixes.md` created, listing each confirmed defect with `file:line` and proposed fix
 - [x] No source, golden file, test Makefile or build file modified by this task (`git diff --stat` touches only `porting/`)
-- [ ] Container removed and test tree cleaned at the end
-- [ ] PR opened into `port/llvm-5.0.2` and linked below
+- [x] Container removed and test tree cleaned at the end
+- [x] PR opened into `port/llvm-5.0.2` and linked below
 
 ## Files / scope
 - `porting/TestAudit/llvm-5.0.2/SUMMARY.md` (new)
