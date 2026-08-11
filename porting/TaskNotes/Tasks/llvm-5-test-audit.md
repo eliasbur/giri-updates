@@ -1,6 +1,6 @@
 ---
 title: Audit every test case on the LLVM 5 port and root-cause every diagnostic and diff.
-status: open
+status: done
 priority: high # low | medium | high
 repo: giriupdates
 contexts: [] # e.g. dev, cockpit, gpu1
@@ -9,6 +9,8 @@ tags:
 - task
 timeEstimate: 0 # minutes
 dateCreated: 2026-08-10
+dateModified: 2026-08-11T10:24:32.504+02:00
+completedDate: 2026-08-11
 ---
 
 ## Goal
@@ -284,6 +286,7 @@ changing the slice algorithm or the golden file>
 - 2026-08-11 — Phase 0: Built Docker image, started shared container, ran baseline suite (13 PASS / 9 FAIL, matches llvm-5-port.md). Phase 1: Audited all 22 tests in 5 batches of 4 sub-agents each. Phase 2: Verified PostDominatorFrontier suspects against master (suspect 1 CONFIRMED, suspect 2 structural diff noted). Wrote 22 per-test reports + SUMMARY.md. Corrected llvm-5-port.md root cause. Created llvm-5-test-fixes.md follow-up task.
 
 ## Handoff
+- PR: giriupdates #6 https://github.com/eliasbur/giri-updates/pull/6
 - branch: (driver-resolved)
 Refs: `porting/TaskNotes/Tasks/llvm-5-port.md`, `AGENTS.md`, `porting/AgentGuide.md`,
 `porting/HowItWorks.md`, `porting/llvm-releases/5.0.0/api-breakings.yaml`,
