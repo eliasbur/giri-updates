@@ -211,6 +211,7 @@ hand instead:
 - ~~llvm-5-test-audit~~
 
 ## Progress log
+- 2026-08-11 `TOBEFILLED` — Fix Defect 1: restored `if (BB)` guard around predecessor loop and `DomTreeNode` properlyDominates overload in `PostDominatorFrontier.cpp`. Fix Defect 2: changed `nestID` from instruction ID to BB ID in `TraceFile.cpp:579` call to `findNextNestedID` (passing `storeBBID` makes nesting inert — first matching BB returns immediately, which is correct since we only need "find the next BB record with this ID" for the forward search). TODO: build and test.
 
 ## Handoff
 - branch: (driver-resolved)

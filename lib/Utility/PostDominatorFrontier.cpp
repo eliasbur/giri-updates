@@ -34,13 +34,13 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
   BasicBlock *BB = Node->getBlock();
   DomSetType &S = Frontiers[BB];
 
-  if (!BB) return S;
-
-  for (pred_iterator SI = pred_begin(BB), SE = pred_end(BB); SI != SE; ++SI) {
-    BasicBlock *P = *SI;
-    DomTreeNode *SINode = DT.getNode(P);
-    if (SINode && SINode->getIDom() != Node)
-      S.insert(P);
+  if (BB) {
+    for (pred_iterator SI = pred_begin(BB), SE = pred_end(BB); SI != SE; ++SI) {
+      BasicBlock *P = *SI;
+      DomTreeNode *SINode = DT.getNode(P);
+      if (SINode && SINode->getIDom() != Node)
+        S.insert(P);
+    }
   }
 
   for (DomTreeNode::const_iterator NI = Node->begin(), NE = Node->end(); NI != NE; ++NI) {
@@ -49,7 +49,7 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
 
     for (DomSetType::const_iterator CDFI = ChildDF.begin(), CDFE = ChildDF.end();
          CDFI != CDFE; ++CDFI) {
-      if (!DT.properlyDominates(Node->getBlock(), *CDFI))
+      if (!DT.properlyDominates(Node, DT.getNode(*CDFI)))
         S.insert(*CDFI);
     }
   }
