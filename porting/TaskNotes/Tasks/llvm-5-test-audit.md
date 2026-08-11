@@ -252,19 +252,19 @@ changing the slice algorithm or the golden file>
   `driver.py open-mr porting/TaskNotes/Tasks/llvm-5-test-audit.md --target port/llvm-5.0.2 …`.
 
 ## Definition of done
-- [ ] Image built once and a single shared `giri-audit` container used for the whole audit; no per-test rebuilds
-- [ ] Baseline suite run captured and compared against the 13 PASS / 9 FAIL split recorded in `llvm-5-port.md`; any drift recorded
-- [ ] All 22 tests from `test/auto-tests.txt` audited, one sub-agent each, batched, with only summaries returned to the parent
-- [ ] `porting/TestAudit/llvm-5.0.2/<slug>.md` exists for all 22 tests and follows the report schema
-- [ ] Every non-routine message in every **passing** test is explained with its emitting `file:line` and triggering condition — no unexplained output left in a `PASS-NOISY` report
-- [ ] Every diff line in every **failing** test is attributed to a specific root cause; no test is left with "same as the others"
-- [ ] Each root cause classified `FAIL-EXPECTED` / `FAIL-BUG` / `FAIL-HARNESS` with the evidence the table above requires
-- [ ] The two `PostDominanceFrontier` suspects and the `ensurePostDomFrontierComputed` construction checked explicitly, with the finding written down either way
-- [ ] The blanket "all 9 failures share one root cause" claim explicitly confirmed or refuted in `SUMMARY.md`, with the per-test split
-- [ ] Non-suite test directories (`test6`, `test7`, `test22`, `HelloWorld`, `histogram`, `linear_regression`, `word_count`) each given a one-line exclusion reason in `SUMMARY.md`
-- [ ] `llvm-5-port.md`'s "Root cause of failures" paragraph corrected to match the findings
-- [ ] Follow-up note `porting/TaskNotes/Tasks/llvm-5-test-fixes.md` created, listing each confirmed defect with `file:line` and proposed fix
-- [ ] No source, golden file, test Makefile or build file modified by this task (`git diff --stat` touches only `porting/`)
+- [x] Image built once and a single shared `giri-audit` container used for the whole audit; no per-test rebuilds
+- [x] Baseline suite run captured and compared against the 13 PASS / 9 FAIL split recorded in `llvm-5-port.md`; any drift recorded
+- [x] All 22 tests from `test/auto-tests.txt` audited, one sub-agent each, batched, with only summaries returned to the parent
+- [x] `porting/TestAudit/llvm-5.0.2/<slug>.md` exists for all 22 tests and follows the report schema
+- [x] Every non-routine message in every **passing** test is explained with its emitting `file:line` and triggering condition — no unexplained output left in a `PASS-NOISY` report
+- [x] Every diff line in every **failing** test is attributed to a specific root cause; no test is left with "same as the others"
+- [x] Each root cause classified `FAIL-EXPECTED` / `FAIL-BUG` / `FAIL-HARNESS` with the evidence the table above requires
+- [x] The two `PostDominanceFrontier` suspects and the `ensurePostDomFrontierComputed` construction checked explicitly, with the finding written down either way
+- [x] The blanket "all 9 failures share one root cause" claim explicitly confirmed or refuted in `SUMMARY.md`, with the per-test split
+- [x] Non-suite test directories (`test6`, `test7`, `test22`, `HelloWorld`, `histogram`, `linear_regression`, `word_count`) each given a one-line exclusion reason in `SUMMARY.md`
+- [x] `llvm-5-port.md`'s "Root cause of failures" paragraph corrected to match the findings
+- [x] Follow-up note `porting/TaskNotes/Tasks/llvm-5-test-fixes.md` created, listing each confirmed defect with `file:line` and proposed fix
+- [x] No source, golden file, test Makefile or build file modified by this task (`git diff --stat` touches only `porting/`)
 - [ ] Container removed and test tree cleaned at the end
 - [ ] PR opened into `port/llvm-5.0.2` and linked below
 
@@ -281,6 +281,7 @@ changing the slice algorithm or the golden file>
 - ~~llvm-5-port~~
 
 ## Progress log
+- 2026-08-11 — Phase 0: Built Docker image, started shared container, ran baseline suite (13 PASS / 9 FAIL, matches llvm-5-port.md). Phase 1: Audited all 22 tests in 5 batches of 4 sub-agents each. Phase 2: Verified PostDominatorFrontier suspects against master (suspect 1 CONFIRMED, suspect 2 structural diff noted). Wrote 22 per-test reports + SUMMARY.md. Corrected llvm-5-port.md root cause. Created llvm-5-test-fixes.md follow-up task.
 
 ## Handoff
 - branch: (driver-resolved)
