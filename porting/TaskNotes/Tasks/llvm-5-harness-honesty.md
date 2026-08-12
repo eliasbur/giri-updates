@@ -26,7 +26,7 @@ around that by running the pipeline stages by hand:
 - `test/Makefile:19-20` — the build stage runs as `make -s -C $$t DEBUGFLAGS= > /dev/null 2>&1`, so
   **all stdout and stderr of every pipeline stage is discarded**, including `LLVM ERROR`,
   `Could not find Control-dep …` and clang warnings.
-- `test/Makefile.common:45` — `- ./$<` $(INPUT)` runs the instrumented binary with a leading `-`, so
+- `test/Makefile.common:45` — `- ./$< $(INPUT)` runs the instrumented binary with a leading `-`, so
   make ignores a non-zero exit: a crashed or truncated tracing run does not fail the test.
 - Consequence, from the audit: **test16 was scored PASS in the baseline sweep while `opt -dgiri`
   died with `LLVM ERROR`**, and `kmeans` is scored PASS today while its pthread variant aborts on an

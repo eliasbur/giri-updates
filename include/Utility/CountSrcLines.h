@@ -19,7 +19,7 @@
 #include "Utility/LoadStoreNumbering.h"
 
 #include "llvm/Pass.h"
-#include "llvm/InstVisitor.h"
+#include "llvm/IR/InstVisitor.h"
 
 #include <deque>
 #include <set>
@@ -46,7 +46,7 @@ public:
   /// @return false - The module was not modified.
   virtual bool runOnModule(Module &M);
 
-  const char *getPassName() const {
+  StringRef getPassName() const override {
     return "Count static #SourceLines/LLVM Insts in a trace";
   }
 

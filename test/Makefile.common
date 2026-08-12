@@ -3,7 +3,7 @@
 
 ########################### User defined variables ###########################
 NAME ?= main
-DEBUGFLAGS ?= -debug
+DEBUGFLAGS ?=
 GIRI_DIR ?= ../../../build/
 BuildMode ?= Release+Debug+Asserts
 SRC_FILES ?= $(wildcard *.c)
@@ -17,8 +17,8 @@ MAPPING ?=
 CC = clang
 CXX = clang++
 CFLAGS += -g -O0 -c -emit-llvm
-GIRI_LIB_DIR = $(GIRI_DIR)/$(BuildMode)/lib
-GIRI_BIN_DIR = $(GIRI_DIR)/$(BuildMode)/bin
+GIRI_LIB_DIR = $(GIRI_DIR)/lib
+GIRI_BIN_DIR = $(GIRI_DIR)/bin
 
 .PHONY: all lib
 

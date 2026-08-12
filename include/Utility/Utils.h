@@ -14,6 +14,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
@@ -65,7 +66,7 @@ static inline Instruction *skipAllocas (BasicBlock &BB) {
   for (BasicBlock::iterator I = BB.begin(); I != BB.end(); ++I) {
     if (isa<AllocaInst>(I))
       continue;
-    return I;
+    return &*I;
   }
 
   return BB.getTerminator();
@@ -144,8 +145,8 @@ static inline CallInst *getCallInst(const Type *RetTy,
   ArrayRef<Type*> Params(formalArgs);
   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
   Module *M = before->getParent()->getParent()->getParent();
-  Function *F = (Function *) (M->getOrInsertFunction(FName, FType));
-  ArrayRef<Value *> ActualArgs(args);
+  Function *F = cast<Function>(M->getOrInsertFunction(FName, FType));
+  SmallVector<Value*, 8> ActualArgs(args.begin(), args.end());
   return CallInst::Create(F, ActualArgs, Twine(Name), before);
 }
 
@@ -236,8 +237,9 @@ static inline CallInst *getCallInst(Type* RetTy,
   ArrayRef<Type *> Params;
   FunctionType *FType = FunctionType::get(RetTy, Params, false);
   Module *M = InsertAtEnd->getParent()->getParent();
-  Function *F = (Function *) (M->getOrInsertFunction(FName, FType));
-  return CallInst::Create(F, Twine(Name), InsertAtEnd);
+  Function *F = cast<Function>(M->getOrInsertFunction(FName, FType));
+  SmallVector<Value*, 0> ActualArgs;
+  return CallInst::Create(F, ActualArgs, Twine(Name), InsertAtEnd);
 }
 
 //===----------------------------------------------------------------------===//

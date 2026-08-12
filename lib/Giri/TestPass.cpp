@@ -58,7 +58,7 @@ public:
           std::cerr << "Trace for: ";
           I->print(llvm::errs ());
           std::cerr << std::endl;
-          Giri.getBackwardsSlice (I, mySliceOfLife, myDynSliceOfLife, myDataFlowGraph);
+          Giri.getBackwardsSlice (&*I, mySliceOfLife, myDynSliceOfLife, myDataFlowGraph);
           break;
         }
       }
@@ -68,7 +68,7 @@ public:
     return false;
   }
 
-  const char *getPassName() const {
+  StringRef getPassName() const override {
     return "Dynamic Backwards Slice Testing Pass";
   }
 

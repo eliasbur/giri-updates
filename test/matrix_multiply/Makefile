@@ -2,7 +2,7 @@
 
 TEST_PARALLELISM ?= pthread
 CRITERION_TYPE ?= inst
-DEBUGFLAGS ?= -debug
+DEBUGFLAGS ?=
 INPUT ?= 4
 
 ###### Don't modify the following unless you know exactly what you'r doing #####

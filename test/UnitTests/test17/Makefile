@@ -1,6 +1,6 @@
 ##===- giri/test/UnitTests/test4/Makefile ------------------*- Makefile -*-===##
 
-DEBUGFLAGS ?= -debug
+DEBUGFLAGS ?=
 NAME = plower
 LDFLAGS = -lpthread
 INPUT ?= 4

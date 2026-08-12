@@ -19,10 +19,10 @@
 #include "Utility/LoadStoreNumbering.h"
 #include "Utility/PostDominanceFrontier.h"
 
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
-#include "llvm/InstVisitor.h"
+#include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/DataLayout.h"
 
 #include <deque>
@@ -56,7 +56,6 @@ public:
   virtual bool runOnBasicBlock(BasicBlock &BB);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<DataLayout>();
     AU.addRequired<QueryBasicBlockNumbers>();
     AU.addPreserved<QueryBasicBlockNumbers>();
 
@@ -168,8 +167,9 @@ public:
     AU.addRequiredTransitive<QueryBasicBlockNumbers>();
     AU.addRequiredTransitive<QueryLoadStoreNumbers>();
 
-    AU.addRequired<PostDominatorTree>();
-    AU.addRequired<PostDominanceFrontier>();
+    // PostDominatorTree and PostDominanceFrontier are computed inline per-function
+    // in ensurePostDomFrontierComputed since they are FunctionPasses
+    // and this is a ModulePass.
 
     // This pass is an analysis pass, so it does not modify anything
     AU.setPreservesAll();
@@ -241,6 +241,10 @@ private:
   ///                 control-dependent on the entry block if the entry block
   ///                 is in bbNums).
   bool findExecForcers(BasicBlock *BB, std::set<unsigned> &bbNums);
+  
+  void ensurePostDomFrontierComputed(Function &F);
+  llvm::DenseMap<Function*, PostDominanceFrontier*> FunctionPDFFrontiers;
+  llvm::DenseMap<Function*, PostDominatorTreeWrapperPass*> FunctionPDTWP;
 
   void initDataFlowFitler(void);
 
