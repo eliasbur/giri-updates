@@ -57,6 +57,26 @@ that passed under the old suppressive harness now fail, look at the per-test log
 that failed:
 - `make[1]: *** [<name>.trace] Error N` means the traced binary exited with code `N`.
 - Compiler errors and `opt` crashes appear in the build portion of the log.
+- Per-test logs include stage markers (`=== STAGE: BUILD ===`, `=== STAGE: TEST ===`) to
+  distinguish build output from test output.
+- A failing test leaves its artifacts (`.bc`, `.trace`, `.trace.bc`) behind for post-mortem;
+  only passing tests are cleaned.
+
+### Declaring an acceptable exit status
+
+Some traced programs naturally return non-zero from `main()`. The harness supports two
+per-test declarations in the test's Makefile (before `include ../../Makefile.common`):
+
+- **`EXPECTED_EXIT = N`** — the traced binary is expected to exit with code `N`. The
+  Makefile checks the actual exit and only proceeds if it matches. Add a commented one-liner
+  explaining the derivation, e.g. `# fibonacci(15) = 610 → 610 & 0xFF = 98`.
+- **`EXIT_UNCHECKED = 1`** — the exit code is inherently unpredictable (undefined behaviour,
+  platform-dependent). Set this only when `EXPECTED_EXIT` cannot be used; the trace is still
+  generated and sliced, but the exit code is not checked.
+
+With no declaration (default), a non-zero exit from the traced binary causes `[FAIL build]`.
+A crash (signal death, `opt` segfault) always produces `[FAIL]` regardless of these settings.
+A deliberately wrong `EXPECTED_EXIT` also produces `[FAIL build]` with a diagnostic message.
 
 ## Debugging
 

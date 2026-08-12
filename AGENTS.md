@@ -8,33 +8,23 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 
 ## Current state
 
-As of `3f54fb1` (2026-08-12), the test harness (`llvm-5-harness-honesty`) has been made honest:
-it no longer suppresses non-zero exits from traced binaries and retains per-test stage logs.
-Under the honest harness, `port/llvm-5.0.2` reports 7 PASS / 15 FAIL (vs the previously
-recorded 21 PASS / 1 FAIL). All 15 newly-failing UnitTests fail at trace generation because
-the traced binary exits non-zero — these were previously hidden by error suppression in the
-Makefiles. The 7 that do pass (test5, test17, test20, test21, matrix_multiply, pca, kmeans)
-complete the full trace/slice/diff pipeline successfully. The 15 failures require diagnosis
-of whether the non-zero exits are inherent program behavior under instrumentation.
+As of this entry, `port/llvm-5.0.2` has an honest harness with per-test exit status
+opt-in (`EXPECTED_EXIT`/`EXIT_UNCHECKED` in `test/Makefile.common`). The suite reports
+**21 PASS / 1 FAIL**. The single failure is `matrix_multiply-seq`, which segfaults in
+`PostDominanceFrontier::calculate` during the slicing stage (null `BasicBlock*` inserted
+into an `std::set`). The `matrix_multiply-pthread` variant passes the full pipeline.
+pca and kmeans pass in both configurations.
 
-As of `3b26ea6` (2026-08-12), `port/llvm-5.0.2` builds cleanly with CMake against the prebuilt
-LLVM/Clang 5.0.2 toolchain and the suite reports 21 of 22 tests passing. The port itself
-(`porting/TaskNotes/Tasks/llvm-5-port.md`) and the full-suite audit (`llvm-5-test-audit`, reports
-under `porting/TestAudit/llvm-5.0.2/`) are done, and the two defects the audit found are fixed
-(`llvm-5-test-fixes`): the rewritten `PostDominanceFrontier::calculate` returned before recursing
-into its children at the post-dominator tree's virtual root, which emptied the frontier map for
-every function with multiple exits (10 tests), and `findAllStoresForLoad` passed an instruction ID
-where `findNextNestedID` expects a basic-block ID (test16). Three things remain open:
-`matrix_multiply` still fails in the sequential configuration the suite actually runs
-(`Dockerfile` sets `TEST_PARALLELISM=seq`, but the audit examined the *pthread* variants of
-`matrix_multiply`, `pca` and `kmeans`, so no seq variant has ever been audited); `kmeans` is scored
-PASS by a harness that discards stderr and ignores the traced binary's exit status, while its
-pthread variant aborts on a CPU-count assertion and writes a 108 GB trace; and the port's
-verification debt — the three invariants below were never explicitly
-checked — is unclosed. The open task notes in `porting/TaskNotes/Tasks/`, in the order they should
-be worked, are `llvm-5-harness-honesty`, `llvm-5-seq-variant-failures`, `llvm-5-kmeans` and
-`llvm-5-port-closeout`. (`porting/llvm-releases/5.0.0/api-breakings.yaml`
-is triaged for only 4 of its 388 entries; finishing it is deliberately deferred.)
+The original honest-harness run (7 PASS / 15 FAIL) has been resolved: all 15
+non-zero-exit UnitTests are inherent program behaviour and now declare their expected
+exit codes in their Makefiles. `test9` (uninitialised `sum` → UB) uses `EXIT_UNCHECKED=1`.
+
+The port (`llvm-5-port.md`), full-suite audit (`llvm-5-test-audit`), and two test defects
+(`llvm-5-test-fixes`: PostDominanceFrontier virtual-root recursion, `findAllStoresForLoad`
+nestID issue) are done. Open tasks, in order: `llvm-5-seq-variant-failures`,
+`llvm-5-kmeans`, `llvm-5-port-closeout`.
+`porting/llvm-releases/5.0.0/api-breakings.yaml` is triaged for only 4 of its 388
+entries; finishing it is deliberately deferred.
 
 ## Containers — two kinds
 
