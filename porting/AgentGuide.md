@@ -36,6 +36,28 @@ Each test Makefile sets `NAME`, `INPUT`, `CRITERION`, `TEST_ANS`, then includes
 `test/Makefile.common` or `test/HelloWorld/Makefile` — read that shared Makefile before touching
 test infra; it spells out the trace-then-slice pipeline end to end.
 
+### Test harness — per-test logs and failure reporting
+
+Every pipeline stage's stdout/stderr is captured to `test/_test_logs/<flat-name>.log`
+(e.g. `UnitTests_test5.log`). The suite prints one `[PASS]`/`[FAIL]` line per test. Both build
+failures (compiler errors, `opt` crashes) and non-zero exits from traced binaries cause
+`[FAIL]`.
+
+- **Consolidated log:** run with `make -C test TEST_LOG=test-suite.log` to collect all per-test
+  logs into one file after the suite finishes.
+- **Inspect a single failure:** `cat test/_test_logs/<name>.log` shows build + test output.
+- **Quiet default:** with no `TEST_LOG` set, the harness stays quiet and only prints the
+  one-line-per-test table.
+- **Cleanup:** `make clean -C test` removes `_test_logs/` along with build artefacts.
+
+### Diagnosing new failures under the honest harness
+
+The harness now surfaces failures that were previously hidden by error suppression. When tests
+that passed under the old suppressive harness now fail, look at the per-test log for the stage
+that failed:
+- `make[1]: *** [<name>.trace] Error N` means the traced binary exited with code `N`.
+- Compiler errors and `opt` crashes appear in the build portion of the log.
+
 ## Debugging
 
 - **`-debug` flag** is wired through test Makefiles; stripped for `make test`.
