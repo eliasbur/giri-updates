@@ -291,6 +291,8 @@ harness, and one of them has a premise that may not survive Finding 2.
 
 **Crash demo:** Setting EXPECTED_EXIT=99 on test5 correctly produces `[FAIL build]` with "Exit status 0 does not match expected 99".
 
+- 2026-08-12 — PR #9 opened targeting port/llvm-5.0.2. All DoD items checked. All commits pushed.
+
 ## Handoff
 - PR: giriupdates #9 https://github.com/eliasbur/giri-updates/pull/9
 - branch `agent/llvm-5-harness-fallout`
