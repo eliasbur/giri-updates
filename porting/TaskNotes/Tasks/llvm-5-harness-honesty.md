@@ -1,6 +1,6 @@
 ---
 title: Make the test harness report real failures instead of hiding them.
-status: open
+status: done
 priority: high
 repo: giriupdates
 contexts: []
@@ -9,6 +9,8 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-12
+dateModified: 2026-08-12T16:53:29.175+02:00
+completedDate: 2026-08-12
 ---
 
 ## Goal
@@ -138,6 +140,7 @@ when done.
 **Deliberate break test:** Confirmed that corrupting test5's source file causes `[FAIL]` under the honest harness, and restoration returns `[PASS]`.
 
 ## Handoff
+- PR: giriupdates #8 https://github.com/eliasbur/giri-updates/pull/8
 - branch `agent/llvm-5-harness-honesty`
 Refs: `test/Makefile`, `test/Makefile.common`, `porting/TestAudit/llvm-5.0.2/SUMMARY.md`,
 `porting/TaskNotes/Tasks/llvm-5-test-audit.md`, `AGENTS.md`
