@@ -42,7 +42,7 @@ $(NAME).slice : $(NAME).all.bc $(NAME).trace
 		-stats $(DEBUGFLAGS) $< -o /dev/null
 
 $(NAME).trace: $(NAME).trace.exe
-	- ./$< $(INPUT)
+	./$< $(INPUT)
 
 $(NAME).trace.exe : $(NAME).trace.s
 	$(CXX) -fno-strict-aliasing $+ -o $@ -L$(GIRI_LIB_DIR) -lrtgiri $(LDFLAGS)
