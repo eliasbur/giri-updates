@@ -12,6 +12,10 @@ INPUT ?=
 CRITERION ?=
 TEST_ANS ?= ans-inst.txt
 MAPPING ?=
+# EXPECTED_EXIT: expected exit code of traced binary (-1 = don't check, any exit allowed)
+EXPECTED_EXIT ?= -1
+# EXIT_UNCHECKED: set to 1 when exit code is inherently unpredictable (UB, platform-dependent)
+EXIT_UNCHECKED = 0
 
 ################# Dont' edit the following lines accidently ##################
 CC = clang
@@ -20,8 +24,10 @@ CFLAGS += -g -O0 -c -emit-llvm
 GIRI_LIB_DIR = $(GIRI_DIR)/lib
 GIRI_BIN_DIR = $(GIRI_DIR)/bin
 
-.PHONY: all lib
+# Keep trace artifacts around for post-mortem when a stage fails
+.PRECIOUS: $(NAME).trace
 
+.PHONY: all lib
 all: lib $(NAME).slice.loc
 
 lib:
@@ -42,7 +48,19 @@ $(NAME).slice : $(NAME).all.bc $(NAME).trace
 		-stats $(DEBUGFLAGS) $< -o /dev/null
 
 $(NAME).trace: $(NAME).trace.exe
-	./$< $(INPUT)
+ifeq (1,$(EXIT_UNCHECKED))
+	@ ./$< ${INPUT} > /dev/null 2>&1 || true
+else
+	@ ./$< $(INPUT); \
+		_rc=$$?; \
+		if [ "$(EXPECTED_EXIT)" != "-1" ] && [ "$$rc" -ne "$(EXPECTED_EXIT)" ]; then \
+			echo "Exit status $$rc does not match expected $(EXPECTED_EXIT)"; \
+			exit 1; \
+		fi; \
+		if [ "$(EXPECTED_EXIT)" = "-1" ] && [ "$$rc" -ne 0 ]; then \
+			exit $$rc; \
+		fi
+endif
 
 $(NAME).trace.exe : $(NAME).trace.s
 	$(CXX) -fno-strict-aliasing $+ -o $@ -L$(GIRI_LIB_DIR) -lrtgiri $(LDFLAGS)
