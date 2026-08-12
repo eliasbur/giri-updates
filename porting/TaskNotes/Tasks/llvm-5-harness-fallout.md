@@ -1,6 +1,6 @@
 ---
 title: Resolve the 15 exit-status failures and the matrix_multiply verdict contradiction the honest harness exposed.
-status: open
+status: done
 priority: high
 repo: giriupdates
 contexts: []
@@ -9,6 +9,8 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-13
+dateModified: 2026-08-13T01:21:16.018+02:00
+completedDate: 2026-08-13
 ---
 
 ## Goal
@@ -290,6 +292,7 @@ harness, and one of them has a premise that may not survive Finding 2.
 **Crash demo:** Setting EXPECTED_EXIT=99 on test5 correctly produces `[FAIL build]` with "Exit status 0 does not match expected 99".
 
 ## Handoff
+- PR: giriupdates #9 https://github.com/eliasbur/giri-updates/pull/9
 - branch `agent/llvm-5-harness-fallout`
 Refs: `porting/TaskNotes/Tasks/llvm-5-harness-honesty.md`,
 `porting/TaskNotes/Tasks/llvm-5-seq-variant-failures.md`, `porting/TaskNotes/Tasks/llvm-5-kmeans.md`,
