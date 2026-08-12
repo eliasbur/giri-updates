@@ -1,6 +1,6 @@
 ---
 title: Fix the two confirmed defects behind the LLVM 5.0.2 test failures.
-status: open
+status: done
 priority: high
 repo: giriupdates
 contexts: []
@@ -9,6 +9,8 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-11
+dateModified: 2026-08-12T13:19:15.408+02:00
+completedDate: 2026-08-12
 ---
 
 ## Goal
@@ -223,6 +225,7 @@ hand instead:
   - Full suite (22 tests): 21 PASS, 1 FAIL (matrix_multiply seq version, which fails because `TEST_PARALLELISM=seq` is hardcoded in the Dockerfile and the seq version has 15 remaining "Could not find Control-dep" errors from pre-existing seq-specific post-dominator structure — separate from the pthread fix this task addressed)
 
 ## Handoff
+- PR: giriupdates #7 https://github.com/eliasbur/giri-updates/pull/7
 - branch: (driver-resolved)
 Refs: `porting/TestAudit/llvm-5.0.2/SUMMARY.md`, `porting/TaskNotes/Tasks/llvm-5-test-audit.md`,
 `AGENTS.md`, `test/Makefile`, `test/Makefile.common`
