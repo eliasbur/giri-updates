@@ -44,7 +44,8 @@ test:: lib
 
 lib:
 	@ echo -n "Building the Giri..."
-	@ $(MAKE) -s -C ../build > _test_logs/lib-stage.log 2>&1 || (cat _test_logs/lib-stage.log && echo "Fail to build the Giri lib!" && exit 1)
+	@ mkdir -p _test_logs; \
+		$(MAKE) -s -C ../build > _test_logs/lib-stage.log 2>&1 || (cat _test_logs/lib-stage.log && echo "Fail to build the Giri lib!" && exit 1)
 	@ echo
 
 clean:
