@@ -579,7 +579,7 @@ void TraceFile::findAllStoresForLoad(DynValue &DV,
       unsigned long bbindex = findNextNestedID(store_index,
                                                 RecordType::BBType,
                                                 storeBBID,
-                                                trace[store_index].id,
+                                                storeBBID,
                                                 trace[store_index].tid);
       DynValue NDV = DynValue(SI, bbindex);
       addToWorklist(NDV, Sources, DV);
