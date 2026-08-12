@@ -6,6 +6,17 @@ The overall task of this repository is to provide ports of the program for some 
 
 Every version branch (`port/llvm-*`) carries a copy of this file and may append a `## Current state` section at the top with branch-specific status.
 
+## Current state
+
+As of `3f54fb1` (2026-08-12), the test harness (`llvm-5-harness-honesty`) has been made honest:
+it no longer suppresses non-zero exits from traced binaries and retains per-test stage logs.
+Under the honest harness, `port/llvm-5.0.2` reports 7 PASS / 15 FAIL (vs the previously
+recorded 21 PASS / 1 FAIL). All 15 newly-failing UnitTests fail at trace generation because
+the traced binary exits non-zero — these were previously hidden by error suppression in the
+Makefiles. The 7 that do pass (test5, test17, test20, test21, matrix_multiply, pca, kmeans)
+complete the full trace/slice/diff pipeline successfully. The 15 failures require diagnosis
+of whether the non-zero exits are inherent program behavior under instrumentation.
+
 ## Containers — two kinds
 
 There are **two** containers in this workflow:
