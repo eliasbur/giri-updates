@@ -15,7 +15,7 @@ MAPPING ?=
 # EXPECTED_EXIT: expected exit code of traced binary (-1 = don't check, any exit allowed)
 EXPECTED_EXIT ?= -1
 # EXIT_UNCHECKED: set to 1 when exit code is inherently unpredictable (UB, platform-dependent)
-EXIT_UNCHECKED = 0
+EXIT_UNCHECKED ?= 0
 
 ################# Dont' edit the following lines accidently ##################
 CC = clang
