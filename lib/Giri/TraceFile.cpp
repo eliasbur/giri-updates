@@ -576,11 +576,11 @@ void TraceFile::findAllStoresForLoad(DynValue &DV,
       assert(SI);
 
       unsigned storeBBID = bbNumPass->getID(SI->getParent());
-unsigned long bbindex = findNextNestedID(store_index,
-                                                 RecordType::BBType,
-                                                 storeBBID,
-                                                 storeBBID,
-                                                 trace[store_index].tid);
+      unsigned long bbindex = findNextNestedID(store_index,
+                                                RecordType::BBType,
+                                                storeBBID,
+                                                storeBBID,
+                                                trace[store_index].tid);
       DynValue NDV = DynValue(SI, bbindex);
       addToWorklist(NDV, Sources, DV);
 
