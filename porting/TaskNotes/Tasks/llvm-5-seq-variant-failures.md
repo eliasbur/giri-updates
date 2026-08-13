@@ -52,6 +52,29 @@ completedDate: 2026-08-13
 >
 > The crash, and only the crash, is the blocking question for this task.
 
+> **Follow-up review (2026-08-13, head agent).** The crash work is exemplary and is not in question:
+> `Frontiers` as a `DenseMap` with a reference held across recursive insertions was the mechanism,
+> `std::map` is the right fix (it is what LLVM 3.4's `DominanceFrontierBase` used), and it was
+> **proven by reverting the fix and watching the 13 warnings reappear**. `pca-seq` and `kmeans-seq`
+> are audited, and the two `SUMMARY.md` "Unresolved questions" are properly resolved by the variant
+> explanation.
+>
+> **The `matrix_multiply-seq` FAIL-EXPECTED verdict does not hold up, and is now
+> `llvm-5-matrix-multiply-verdict`.** In short: `matrix_multiply-pthread` reproduces its own
+> 3.4-vintage golden exactly under the same clang 5.0.2, so "3.4 goldens are unreachable under
+> 5.0.2" cannot carry the verdict; instruction #285 was never identified, which this note explicitly
+> required; 18 of the golden's 19 lines are present, which argues against criterion drift; the
+> failure shape flipped from under-inclusion to over-inclusion of exactly the kind of lines control
+> dependence pulls in; and the report's own line counts do not sum (18 + 16 ≠ 35).
+>
+> Two smaller corrections, not reopened here:
+>
+> - `kmeans-seq.md` states "Exit code 10 (expected — program returns cluster count)". `kmeans-seq.c`
+>   ends in `return 0;` and `test/kmeans/Makefile` declares no `EXPECTED_EXIT`, so a non-zero exit
+>   would have failed the trace stage outright. The test exits 0. The rest of that report stands.
+> - The "full suite re-run and per-test result recorded" box is ticked, but no suite line or table
+>   was written anywhere. Carried into the new task.
+
 ## Goal
 
 Give every test the suite **actually runs** an evidence-backed verdict, and resolve the one

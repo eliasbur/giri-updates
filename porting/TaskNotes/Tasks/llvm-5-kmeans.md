@@ -68,8 +68,9 @@ whether `main 402` resolves at all; if it does, name the instruction it selects.
 root-cause line in `porting/TestAudit/llvm-5.0.2/kmeans.md` and the corresponding row and narrative
 in `SUMMARY.md`. Note the general risk while you are there: every test's criterion is an instruction
 index into clang-generated IR, and the goldens were produced against 3.4's IR —
-`llvm-5-seq-variant-failures` is testing that same hypothesis for `matrix_multiply`, so read its
-findings before writing yours.
+the same hypothesis is live for `matrix_multiply` in `llvm-5-matrix-multiply-verdict`, so read its
+findings before writing yours. Note that `kmeans-seq.md` already records `main 120` resolving
+cleanly, which is one data point against broad instruction-index drift.
 
 **Verify the seq variant.** Run `kmeans-seq` stage by stage and confirm the two-line golden match is
 genuine and not degenerate — an empty or near-empty slice matching a near-empty golden is a false
@@ -93,11 +94,16 @@ and the consequence in `AGENTS.md`'s `## Current state`.
 
 ## Definition of done
 
-- [ ] `kmeans-seq` audited stage by stage, with a report at
-      `porting/TestAudit/llvm-5.0.2/kmeans-seq.md` following the schema in `llvm-5-test-audit.md`
-      (skip if `llvm-5-seq-variant-failures` already wrote it — cross-reference instead)
+- [x] `kmeans-seq` audited stage by stage, with a report at
+      `porting/TestAudit/llvm-5.0.2/kmeans-seq.md` — written by `llvm-5-seq-variant-failures`
+      (`3945134`), verdict CLEAN, empty diff, criterion `main 120` resolves, 0 control-dep warnings.
+      **One correction to make there:** it records "Exit code 10 (expected — program returns cluster
+      count)". `kmeans-seq.c` ends in `return 0;` and the Makefile declares no `EXPECTED_EXIT`, so a
+      non-zero exit would have failed the trace stage. The test exits 0; fix that line
 - [ ] The two-line golden match on `kmeans-seq` shown to be genuine or degenerate, with the slice
-      content as evidence
+      content as evidence. **`kmeans-seq.md` does not answer this** — it records an empty diff,
+      which is the fact being questioned, not the answer. A 2-line golden (`222`, `276`) matched by
+      a 2-line slice is exactly the shape a degenerate check has
 - [ ] Instruction count of `main` in the 5.0.2 build recorded, and whether `main 402` resolves
 - [ ] The "criterion line 402 out of range" claim corrected in
       `porting/TestAudit/llvm-5.0.2/kmeans.md` and in `SUMMARY.md`
@@ -142,8 +148,8 @@ immediately after every run — an aborted run leaves a trace measured in tens o
 - `-debug` / `-debug-only=` are no-ops on the no-asserts 5.0.2 toolchain — so are Giri's own
   `assert()`s, since the CMake build configures `Release`. The assertion that fires in kmeans is in
   the **test program**, which the test Makefile compiles without `-DNDEBUG`.
-- This note edits `SUMMARY.md`, and so do `llvm-5-seq-variant-failures` and `llvm-5-port-closeout`.
-  Run them in sequence, not in parallel.
+- This note edits `SUMMARY.md`, and so do `llvm-5-matrix-multiply-verdict` and
+  `llvm-5-port-closeout`. Run them in sequence, not in parallel.
 - Live-shared checkout: `git add` explicit paths only, never `git add -A`.
 
 ## Files / scope
@@ -161,9 +167,10 @@ immediately after every run — an aborted run leaves a trace measured in tens o
 - ~~llvm-5-test-fixes~~
 - ~~llvm-5-harness-honesty~~
 - ~~llvm-5-harness-fallout~~
+- ~~llvm-5-seq-variant-failures~~
 
-Run after `llvm-5-seq-variant-failures`: it writes `kmeans-seq.md`, which the first item of the
-Definition of done defers to, and it may change `lib/Utility/PostDominatorFrontier.cpp` under you.
+Sequence after `llvm-5-matrix-multiply-verdict`, which may change
+`lib/Utility/PostDominatorFrontier.cpp` under you and would then invalidate a `kmeans-seq` run.
 
 ## Progress log
 

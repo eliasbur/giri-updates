@@ -75,15 +75,26 @@ Write the outcome — verified, or deviating and why — into this note and into
   (`5fbca9d`, honest harness with `EXPECTED_EXIT` — the per-test table in
   `llvm-5-harness-fallout.md` is the authoritative version). A reader currently has to know the
   commit history to tell which number applies to the tree in front of them.
-- `porting/TestAudit/llvm-5.0.2/SUMMARY.md`'s per-test verdict table is **pre-`3b26ea6` and
-  pre-honest-harness**, and every `FAIL-BUG` row attributed to "Root cause A" was subsequently
-  fixed. Do not rewrite the verdicts — downstream tasks treat them as the audit's record — but head
-  the table with the commit it describes, so it is not read as the current state.
+- `porting/TestAudit/llvm-5.0.2/SUMMARY.md`'s per-test verdict table now mixes **two vintages**, and
+  that is worse than uniformly stale. `llvm-5-seq-variant-failures` (`3945134`) added a `Variant`
+  column and post-fix rows for `matrix_multiply-seq`, `pca-seq` and `kmeans-seq`, but left every
+  other row at its pre-`3b26ea6` verdict. So the table currently asserts `matrix_multiply | pthread
+  | FAIL-BUG` and `pca | pthread | FAIL-BUG` when the last actual measurement of both is clean, and
+  `FAIL-BUG` for nine unit tests that now pass. Do not rewrite the audit's findings — downstream
+  tasks treat them as the record of what was true then — but each row needs the commit it describes,
+  and any row whose verdict has since changed needs the current result next to it.
+- **Decide how the port ships if `matrix_multiply-seq` stays `FAIL-EXPECTED`.** The harness has no
+  concept of an expected failure, so the suite will report `21 PASS / 1 FAIL` forever and every
+  future agent will have to be told that the red line is fine. Either document it as the accepted
+  end state in `AGENTS.md` and `AgentGuide.md`, or introduce an explicit expected-failure marker.
+  Wait for `llvm-5-matrix-multiply-verdict` before choosing — if that task turns the verdict into a
+  defect and fixes it, this item disappears.
 - `porting/TestAudit/llvm-5.0.2/SUMMARY.md`: the "Root cause A — 8 tests" heading sits above a
   10-test list, and the reconciliation block below the verdict table is unreconciled scratch work
   ("**Wait** — re-checking the baseline: … let me recount"). Rewrite that section to state the
   final numbers once. Leave the per-test verdict table alone — downstream tasks treat it as
-  authoritative — and coordinate with `llvm-5-seq-variant-failures`, which also edits this file.
+  authoritative — and coordinate with `llvm-5-matrix-multiply-verdict` and `llvm-5-kmeans`, which
+  also edit this file.
 - Record a decision on `test/UnitTests/{test6,test7,test22}`: each has a golden file but is absent
   from `test/auto-tests.txt`. Either wire them in or write the exclusion reason where the suite
   list lives, so it is not rediscovered by the next audit.
@@ -108,9 +119,15 @@ Write the outcome — verified, or deviating and why — into this note and into
 - [ ] `llvm-5-port.md` and `llvm-5-test-fixes.md` checkboxes match reality, with the deferred
       `api-breakings.yaml` box left unticked and annotated
 - [ ] `SUMMARY.md`'s root-cause counts and reconciliation section state one consistent set of
-      numbers; the per-test verdict table is untouched apart from a heading naming the commit it
-      describes
+      numbers, and the unreconciled scratch ("**Wait** — re-checking the baseline… let me recount")
+      is gone
+- [ ] Every row of the per-test verdict table carries the commit its verdict describes, and rows
+      whose verdict has since changed carry the current result; the audit's original findings are
+      preserved, not overwritten
 - [ ] The four historical suite results reconciled in one place, with the current one identified
+- [ ] A decision recorded on how a standing `FAIL-EXPECTED` is represented in a suite that has no
+      expected-failure mechanism — or the item struck, if `llvm-5-matrix-multiply-verdict` removed
+      the failure
 - [ ] Decision recorded for `test6` / `test7` / `test22`
 - [ ] `test/matrix_multiply` cleaned; `porting/AgentGuide.md` gained the no-asserts note
 - [ ] `AGENTS.md`'s `## Current state` updated to reflect the invariant results
@@ -122,8 +139,8 @@ Write the outcome — verified, or deviating and why — into this note and into
   (`AGENTS.md` → "Containers — two kinds").
 - The `bbid` / `lsid` targets in `test/Makefile.common` pipe into `view -` and hang under
   `docker exec` — run the underlying `opt … -dump-bbid=true` / `-dump-lsid=true` directly.
-- This task edits `SUMMARY.md`, and so does `llvm-5-seq-variant-failures`. Rebase rather than
-  resolving by hand-merging two rewrites of the same section.
+- This task edits `SUMMARY.md`, and so do `llvm-5-matrix-multiply-verdict` and `llvm-5-kmeans`.
+  Rebase rather than resolving by hand-merging two rewrites of the same section.
 - Do not change any `ans-*.txt`, criterion file, or the test Makefiles; the remaining harness work
   belongs to `llvm-5-harness-signal-detection`. Cleaning the tree is the only test-adjacent action
   in scope here.
@@ -143,7 +160,8 @@ Write the outcome — verified, or deviating and why — into this note and into
 - ~~llvm-5-harness-honesty~~
 - ~~llvm-5-harness-fallout~~
 - ~~llvm-5-harness-residuals~~
-- llvm-5-seq-variant-failures
+- ~~llvm-5-seq-variant-failures~~
+- llvm-5-matrix-multiply-verdict
 - llvm-5-kmeans
 - llvm-5-harness-signal-detection
 
