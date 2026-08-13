@@ -72,12 +72,28 @@ per-test declarations in the test's Makefile (before `include ../../Makefile.com
   explaining the derivation, e.g. `# fibonacci(15) = 610 → 610 & 0xFF = 98`.
 - **`EXIT_UNCHECKED = 1`** — the exit code is inherently unpredictable (undefined behaviour,
   platform-dependent). Set this only when `EXPECTED_EXIT` cannot be used; the trace is still
-  generated and sliced, program output is preserved in the per-test log, and only normal exits
-  (rc < 128) are ignored. A signal death still produces `[FAIL]`.
+  generated and sliced, and program output is preserved in the per-test log. Only exit statuses
+  below 128 are ignored.
 
 With no declaration (default), a non-zero exit from the traced binary causes `[FAIL build]`.
-A crash (signal death, `opt` segfault) always produces `[FAIL]` regardless of these settings.
-A deliberately wrong `EXPECTED_EXIT` also produces `[FAIL build]` with a diagnostic message.
+An `opt` crash always produces `[FAIL]`. A deliberately wrong `EXPECTED_EXIT` also produces
+`[FAIL build]` with a diagnostic message.
+
+> **A traced binary never dies by signal, so `128 + n` never appears.** `recordInit`
+> (`runtime/Giri/Tracing.cpp:272-280`) installs `cleanup_only_tracing` for SIGSEGV, SIGABRT,
+> SIGINT, SIGQUIT, SIGTERM, SIGILL and SIGFPE, and that handler ends in `exit(signum)`
+> (`Tracing.cpp:253-256`). A segfaulting traced program therefore exits **11**, an aborting one
+> **6** — normal exits, indistinguishable by status alone from a `main()` that returned the same
+> number. Two consequences:
+>
+> - Under `EXIT_UNCHECKED=1` the `rc >= 128` guard cannot fire, so a crash in that one test
+>   (`test9`) is only caught if it also breaks a later stage. Do not rely on it.
+> - Under `EXPECTED_EXIT = N`, avoid declaring an `N` that is also a handled signal number
+>   (2, 3, 4, 6, 8, 11, 15) without saying why — such a test would score PASS on that crash.
+>
+> The one reliable signal is on stderr: `[GIRI] Abnormal termination, signal number <n>`, printed
+> unconditionally by `ERROR` (`Tracing.cpp:41`). Grep the per-test log for it before trusting a
+> low exit status. Closing this properly is `llvm-5-harness-signal-detection`.
 
 ## Debugging
 

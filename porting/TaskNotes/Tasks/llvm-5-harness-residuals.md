@@ -13,6 +13,26 @@ dateModified: 2026-08-13T12:46:21.544+02:00
 completedDate: 2026-08-13
 ---
 
+> **Follow-up review (2026-08-13, head agent).** Residuals 1 and 3 are properly fixed: the
+> `/dev/null` redirection and the `|| true` are gone, program output reaches the per-test log, the
+> `EXPECTED_EXIT` comment matches the recipe, and the temporary `forloop.c` edit was reverted
+> cleanly. **Residual 2 is not closed, and the third DoD box should not have been ticked.**
+>
+> The `if [ "$$_rc" -ge 128 ]` guard is unreachable. Every traced binary installs Giri's own
+> handlers for the fatal signals (`runtime/Giri/Tracing.cpp:272-280`) and that handler ends in
+> `exit(signum)` (`Tracing.cpp:253-256`) — so a segfaulting traced program exits **11**, not 139,
+> and an aborting one exits **6**, not 134. No traced binary ever dies by a signal, so `_rc` is
+> never ≥ 128.
+>
+> This note's own progress log contains the evidence: "trace generated then opt crashed during
+> slicing → [FAIL]". Had the guard fired, `make` would have stopped at the `.trace` stage and `opt`
+> would never have run. The `[FAIL]` came from the downstream stage choking on a truncated trace,
+> not from the check — a crash that leaves a usable trace still scores PASS.
+>
+> Not reopened here. `porting/AgentGuide.md` has been corrected to describe the real behaviour, and
+> the fix is `llvm-5-harness-signal-detection`, which also covers the wider ambiguity this exposed:
+> a traced binary's exit status in `1..31` may be `main`'s return value **or** a signal number.
+
 ## Goal
 
 Make `EXIT_UNCHECKED` mean "the exit *status* is not checked" instead of "nothing about this test

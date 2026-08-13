@@ -8,7 +8,7 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 
 ## Current state
 
-As of this entry (`5fbca9d`), `port/llvm-5.0.2` has an honest harness with per-test exit
+As of this entry (`f8b7d33`), `port/llvm-5.0.2` has an honest harness with per-test exit
 status opt-in (`EXPECTED_EXIT`/`EXIT_UNCHECKED` in `test/Makefile.common`). The suite
 reports **21 PASS / 1 FAIL**. The single failure is `matrix_multiply-seq`, which segfaults
 in `PostDominanceFrontier::calculate` during the slicing stage — stack trace retained in
@@ -24,14 +24,21 @@ trace) are the last measured state for both. Always name the variant when record
 
 The original honest-harness run (7 PASS / 15 FAIL) has been resolved: all 15
 non-zero-exit UnitTests are inherent program behaviour and now declare their expected
-exit codes in their Makefiles. `test9` (uninitialised `sum` → UB) uses `EXIT_UNCHECKED=1`,
-which currently also discards that test's program output — see `llvm-5-harness-residuals`.
+exit codes in their Makefiles. `test9` (uninitialised `sum` → UB) uses `EXIT_UNCHECKED=1`.
+
+**A traced binary never dies by a signal.** Giri's runtime handles the fatal signals and
+its handler ends in `exit(signum)` (`runtime/Giri/Tracing.cpp:253-256`), so a segfaulting
+traced program exits 11 and an aborting one exits 6 — `128 + n` never appears, and a small
+exit status is ambiguous between `main`'s return value and a crash. The reliable marker is
+the stderr line `[GIRI] Abnormal termination, signal number <n>`.
+`llvm-5-harness-signal-detection` closes this; `porting/AgentGuide.md` documents it.
 
 The port (`llvm-5-port.md`), full-suite audit (`llvm-5-test-audit`), two test defects
 (`llvm-5-test-fixes`: PostDominanceFrontier virtual-root recursion, `findAllStoresForLoad`
-nestID issue) and both harness tasks (`llvm-5-harness-honesty`, `llvm-5-harness-fallout`)
-are done. Open tasks, in order: `llvm-5-harness-residuals` (small),
-`llvm-5-seq-variant-failures`, `llvm-5-kmeans`, `llvm-5-port-closeout`.
+nestID issue) and three harness tasks (`llvm-5-harness-honesty`, `llvm-5-harness-fallout`,
+`llvm-5-harness-residuals`) are done. Open tasks, in order:
+`llvm-5-seq-variant-failures`, `llvm-5-kmeans`, `llvm-5-harness-signal-detection`,
+`llvm-5-port-closeout`.
 `porting/llvm-releases/5.0.0/api-breakings.yaml` is triaged for only 4 of its 388
 entries; finishing it is deliberately deferred.
 

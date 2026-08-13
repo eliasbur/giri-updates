@@ -130,6 +130,11 @@ immediately after every run — an aborted run leaves a trace measured in tens o
 
 ## Traps
 
+- **The abort surfaces as exit status 6, not 134.** Giri's runtime handles SIGABRT itself and ends
+  in `exit(signum)` (`runtime/Giri/Tracing.cpp:253-256`), so `kmeans-pthread`'s assertion failure
+  looks like a normal exit with a small number. The reliable marker is the stderr line
+  `[GIRI] Abnormal termination, signal number 6`. Do not read exit 6 as "main returned 6", and do
+  not expect `128 + n` anywhere. See `llvm-5-harness-signal-detection`.
 - Never invoke a test directory's default target (`make -C <dir>` with no target) — `all:` depends
   on `lib:` and rebuilds the CMake tree.
 - The `bbid` / `lsid` / `prtrace` targets pipe into `view -` (vim) and hang under `docker exec`;

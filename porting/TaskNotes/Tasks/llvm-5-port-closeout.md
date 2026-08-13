@@ -125,8 +125,8 @@ Write the outcome — verified, or deviating and why — into this note and into
 - This task edits `SUMMARY.md`, and so does `llvm-5-seq-variant-failures`. Rebase rather than
   resolving by hand-merging two rewrites of the same section.
 - Do not change any `ans-*.txt`, criterion file, or the test Makefiles; the remaining harness work
-  belongs to `llvm-5-harness-residuals`. `.gitignore` and cleaning the tree are the only
-  test-adjacent changes in scope here.
+  belongs to `llvm-5-harness-signal-detection`. Cleaning the tree is the only test-adjacent action
+  in scope here.
 - Live-shared checkout: `git add` explicit paths only, never `git add -A`.
 
 ## Files / scope
@@ -142,9 +142,10 @@ Write the outcome — verified, or deviating and why — into this note and into
 - ~~llvm-5-test-fixes~~
 - ~~llvm-5-harness-honesty~~
 - ~~llvm-5-harness-fallout~~
-- llvm-5-harness-residuals
+- ~~llvm-5-harness-residuals~~
 - llvm-5-seq-variant-failures
 - llvm-5-kmeans
+- llvm-5-harness-signal-detection
 
 This task runs last: the invariant checks can be done at any time, but the note and report
 reconciliation is only final once the others have stopped moving the numbers.
