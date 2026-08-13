@@ -72,7 +72,8 @@ per-test declarations in the test's Makefile (before `include ../../Makefile.com
   explaining the derivation, e.g. `# fibonacci(15) = 610 → 610 & 0xFF = 98`.
 - **`EXIT_UNCHECKED = 1`** — the exit code is inherently unpredictable (undefined behaviour,
   platform-dependent). Set this only when `EXPECTED_EXIT` cannot be used; the trace is still
-  generated and sliced, but the exit code is not checked.
+  generated and sliced, program output is preserved in the per-test log, and only normal exits
+  (rc < 128) are ignored. A signal death still produces `[FAIL]`.
 
 With no declaration (default), a non-zero exit from the traced binary causes `[FAIL build]`.
 A crash (signal death, `opt` segfault) always produces `[FAIL]` regardless of these settings.
