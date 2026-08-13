@@ -1,6 +1,6 @@
 ---
 title: Settle whether matrix_multiply-seq's remaining diff is a golden-file consequence or a slicing defect.
-status: open
+status: done
 priority: high
 repo: giriupdates
 contexts: []
@@ -9,6 +9,8 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-13
+dateModified: 2026-08-13T16:05:09.373+02:00
+completedDate: 2026-08-13
 ---
 
 ## Goal
@@ -225,6 +227,7 @@ concurrently with any task that runs the suite.
 - 2026-08-13 `d2d03e2` — Full suite re-run: 21 PASS / 1 FAIL, unchanged from baseline. `matrix_multiply-pthread` and `pca-pthread` re-verified diff-empty (exit 0). Updated `AGENTS.md` Current state to reflect settled verdict. TODO: open PR.
 
 ## Handoff
+- PR: giriupdates #12 https://github.com/eliasbur/giri-updates/pull/12
 - branch `agent/llvm-5-matrix-multiply-verdict`
 Refs: `porting/TaskNotes/Tasks/llvm-5-seq-variant-failures.md`,
 `porting/TestAudit/llvm-5.0.2/matrix_multiply-seq.md`,
