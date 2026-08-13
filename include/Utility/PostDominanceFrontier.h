@@ -14,18 +14,18 @@
 #ifndef LLVM_ANALYSIS_POST_DOMINANCE_FRONTIER_H
 #define LLVM_ANALYSIS_POST_DOMINANCE_FRONTIER_H
 
+#include <map>
 #include <set>
 #include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/PostDominators.h"
-#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
 struct PostDominanceFrontier : public FunctionPass {
   typedef FunctionPass SuperClass;
   typedef std::set<BasicBlock*> DomSetType;
-  typedef DenseMap<BasicBlock*, DomSetType> DomSetMap;
+  typedef std::map<BasicBlock*, DomSetType> DomSetMap;
 
   static char ID;
   PostDominanceFrontier() : FunctionPass(ID) {}

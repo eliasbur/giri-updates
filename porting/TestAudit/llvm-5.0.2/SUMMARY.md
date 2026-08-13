@@ -11,30 +11,33 @@ Matches the 13 PASS / 9 FAIL split recorded in `llvm-5-port.md` exactly.
 
 ## Per-test verdict table
 
-| Test | Verdict | Root cause | Report |
-|------|---------|------------|--------|
-| test1 | CLEAN | Diff empty, no non-routine output | [UnitTests-test1.md](UnitTests-test1.md) |
-| test2 | CLEAN | Diff empty, no non-routine output | [UnitTests-test2.md](UnitTests-test2.md) |
-| test3 | FAIL-BUG | PostDominatorFrontier.cpp:37 early return empties frontier map, missing line 17 | [UnitTests-test3.md](UnitTests-test3.md) |
-| test4 | CLEAN | Diff empty; "Start slicing..." messages are routine per-criterion output | [UnitTests-test4.md](UnitTests-test4.md) |
-| test5 | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 2 "Could not find Control-dep", 10 lines missing | [UnitTests-test5.md](UnitTests-test5.md) |
-| test8 | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 2 "Could not find Control-dep", line 12 missing | [UnitTests-test8.md](UnitTests-test8.md) |
-| test9 | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 28 "Could not find Control-dep", line 9 missing | [UnitTests-test9.md](UnitTests-test9.md) |
-| test10 | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, "Could not find Control-dep", line 13 missing | [UnitTests-test10.md](UnitTests-test10.md) |
-| test11 | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 5 "Could not find Control-dep", 4 lines missing | [UnitTests-test11.md](UnitTests-test11.md) |
-| test12 | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 32 "Could not find Control-dep", 3 lines missing | [UnitTests-test12.md](UnitTests-test12.md) |
-| test13 | CLEAN | Diff empty, no non-routine output | [UnitTests-test13.md](UnitTests-test13.md) |
-| test14 | CLEAN | Diff empty, no non-routine output | [UnitTests-test14.md](UnitTests-test14.md) |
-| test15 | CLEAN | Diff empty, no non-routine output | [UnitTests-test15.md](UnitTests-test15.md) |
-| test16 | FAIL-BUG | TraceFile.cpp:378 findNextNestedID: store ID collides with BB ID, fatal crash | [UnitTests-test16.md](UnitTests-test16.md) |
-| test17 | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 5 "Could not find Control-dep", 2 lines missing | [UnitTests-test17.md](UnitTests-test17.md) |
-| test18 | CLEAN | Diff empty, no non-routine output | [UnitTests-test18.md](UnitTests-test18.md) |
-| test19 | CLEAN | Diff empty, no non-routine output | [UnitTests-test19.md](UnitTests-test19.md) |
-| test20 | CLEAN | Diff empty; clang stage 2 warning about implicit declaration is expected for mutual recursion | [UnitTests-test20.md](UnitTests-test20.md) |
-| test21 | CLEAN | Diff empty, no non-routine output | [UnitTests-test21.md](UnitTests-test21.md) |
-| matrix_multiply | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 30 "Could not find Control-dep", 25 lines missing | [matrix_multiply.md](matrix_multiply.md) |
-| pca | FAIL-BUG (sub-agent filed FAIL-EXPECTED, corrected) | PostDominatorFrontier.cpp:37 early return, 40 "Could not find Control-dep", 8 lines missing | [pca.md](pca.md) |
-| kmeans | FAIL-HARNESS | 256-CPU container triggers assertion failure, 108 GB trace, slicing times out; criterion line 402 out of range | [kmeans.md](kmeans.md) |
+| Test | Variant | Verdict | Root cause | Report |
+|------|---------|---------|------------|--------|
+| test1 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test1.md](UnitTests-test1.md) |
+| test2 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test2.md](UnitTests-test2.md) |
+| test3 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return empties frontier map, missing line 17 | [UnitTests-test3.md](UnitTests-test3.md) |
+| test4 | seq (no pthread variant) | CLEAN | Diff empty; "Start slicing..." messages are routine per-criterion output | [UnitTests-test4.md](UnitTests-test4.md) |
+| test5 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 2 "Could not find Control-dep", 10 lines missing | [UnitTests-test5.md](UnitTests-test5.md) |
+| test8 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 2 "Could not find Control-dep", line 12 missing | [UnitTests-test8.md](UnitTests-test8.md) |
+| test9 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 28 "Could not find Control-dep", line 9 missing | [UnitTests-test9.md](UnitTests-test9.md) |
+| test10 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, "Could not find Control-dep", line 13 missing | [UnitTests-test10.md](UnitTests-test10.md) |
+| test11 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 5 "Could not find Control-dep", 4 lines missing | [UnitTests-test11.md](UnitTests-test11.md) |
+| test12 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 32 "Could not find Control-dep", 3 lines missing | [UnitTests-test12.md](UnitTests-test12.md) |
+| test13 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test13.md](UnitTests-test13.md) |
+| test14 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test14.md](UnitTests-test14.md) |
+| test15 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test15.md](UnitTests-test15.md) |
+| test16 | seq (no pthread variant) | FAIL-BUG | TraceFile.cpp:378 findNextNestedID: store ID collides with BB ID, fatal crash | [UnitTests-test16.md](UnitTests-test16.md) |
+| test17 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 5 "Could not find Control-dep", 2 lines missing | [UnitTests-test17.md](UnitTests-test17.md) |
+| test18 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test18.md](UnitTests-test18.md) |
+| test19 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test19.md](UnitTests-test19.md) |
+| test20 | seq (no pthread variant) | CLEAN | Diff empty; clang stage 2 warning about implicit declaration is expected for mutual recursion | [UnitTests-test20.md](UnitTests-test20.md) |
+| test21 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test21.md](UnitTests-test21.md) |
+| matrix_multiply | seq | FAIL-EXPECTED | DenseMap ref-invalidation fixed; diff remains from LLVM 3.4→5.0.2 IR differences (16 extra + 1 missing lines) | [matrix_multiply-seq.md](matrix_multiply-seq.md) |
+| matrix_multiply | pthread | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 30 "Could not find Control-dep", 25 lines missing | [matrix_multiply.md](matrix_multiply.md) |
+| pca | seq | CLEAN | Diff empty, no non-routine output | [pca-seq.md](pca-seq.md) |
+| pca | pthread | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 40 "Could not find Control-dep", 8 lines missing | [pca.md](pca.md) |
+| kmeans | seq | CLEAN | Diff empty, no non-routine output | [kmeans-seq.md](kmeans-seq.md) |
+| kmeans | pthread | FAIL-HARNESS | 256-CPU container triggers assertion failure, 108 GB trace, slicing times out; criterion line 402 out of range | [kmeans.md](kmeans.md) |
 
 ## Distinct root causes
 
@@ -140,9 +143,9 @@ Similarly, kmeans was [PASS] in the baseline but FAIL-HARNESS in the audit. The 
 
 ## Unresolved questions
 
-1. **pca baseline discrepancy:** The baseline sweep reported pca as PASS, but the audit shows 8 lines missing from the slice. The Makefile would have detected this via `diff`. Possible explanation: the Makefile's `make clean -s -C $$t` between tests may have interacted differently, or the build artifacts from a previous test may have been reused.
+1. **pca baseline discrepancy:** ~~The baseline sweep reported pca as PASS, but the audit shows 8 lines missing from the slice. The Makefile would have detected this via `diff`. Possible explanation: the Makefile's `make clean -s -C $$t` between tests may have interacted differently, or the build artifacts from a previous test may have been reused.~~ **RESOLVED (2026-08-13, llvm-5-seq-variant-failures):** `Dockerfile:5` sets `ENV TEST_PARALLELISM=seq`. The test Makefiles use `TEST_PARALLELISM ?= pthread`, which yields to the environment variable. The baseline sweep ran **pca-seq** (not pca-pthread). The pthread audit (`pca.md`) found FAIL-BUG with 8 lines missing, but **pca-seq passes cleanly** (verified in this task, report at `pca-seq.md`). The baseline correctly reported pca as PASS because it was running the seq variant.
 
-2. **kmeans baseline discrepancy:** The baseline sweep reported kmeans as PASS, but the audit shows a crash in stage 7 (assertion failure) and stage 8 timeout. The `-` prefix hides the crash, and with a 108 GB trace file, `make test` may have been running for hours (or the build timed out before reaching it). The baseline `make -C test` run completed in a reasonable time, suggesting the Makefile may have short-circuited or used cached artifacts.
+2. **kmeans baseline discrepancy:** ~~The baseline sweep reported kmeans as PASS, but the audit shows a crash in stage 7 (assertion failure) and stage 8 timeout. The `-` prefix hides the crash, and with a 108 GB trace file, `make test` may have been running for hours (or the build timed out before reaching it). The baseline `make -C test` run completed in a reasonable time, suggesting the Makefile may have short-circuited or used cached artifacts.~~ **RESOLVED (2026-08-13, llvm-5-seq-variant-failures):** Same variant explanation. The baseline ran **kmeans-seq** (not kmeans-pthread). The pthread audit (`kmeans.md`) found FAIL-HARNESS with 256-CPU assertion failure and 108 GB trace, but **kmeans-seq passes cleanly** (verified in this task, report at `kmeans-seq.md`). kmeans-seq.c uses a single thread, does not assert on thread count, and generates a small trace. The baseline correctly reported kmeans as PASS because it was running the seq variant.
 
 3. **`-stats` output:** The prebuilt LLVM 5.0.2 toolchain includes `-stats` in the slicing pipeline. These emit summary counters (e.g., `Number of Dynamic Values in Slice`) to stderr. The Makefile discards these via `> /dev/null 2>&1`. All passing tests produced `-stats` output; not a finding, but worth noting.
 
