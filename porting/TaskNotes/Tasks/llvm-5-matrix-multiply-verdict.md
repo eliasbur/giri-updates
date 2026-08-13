@@ -141,24 +141,24 @@ with the same evidence standard the DenseMap fix met.
 
 ## Definition of done
 
-- [ ] Instruction #285 of `matrix_mult` in the 5.0.2 build identified verbatim, with its `!dbg`
+- [x] Instruction #285 of `matrix_mult` in the 5.0.2 build identified verbatim, with its `!dbg`
       line, and `matrix_mult`'s total instruction count recorded
-- [ ] The pthread counter-argument answered explicitly: why the same compiler reproduces
+- [x] The pthread counter-argument answered explicitly: why the same compiler reproduces
       `ans-inst-pthread.txt` exactly but cannot reproduce `ans-inst-seq.txt`. "IR differs between
       3.4 and 5.0.2" is not an answer to this question, it is the thing being questioned
-- [ ] The 16 extra lines classified as data-dependence or control-dependence sourced, with the
+- [x] The 16 extra lines classified as data-dependence or control-dependence sourced, with the
       method stated (`-trace-cd=false` comparison is sufficient)
-- [ ] The missing golden line 97 explained
-- [ ] The report's line accounting closed: unique-line count, golden lines present, extras, and
+- [x] The missing golden line 97 explained
+- [x] The report's line accounting closed: unique-line count, golden lines present, extras, and
       missing must sum consistently
-- [ ] `matrix_multiply-seq.md`'s verdict re-filed on this evidence — `FAIL-EXPECTED` with the
+- [x] `matrix_multiply-seq.md`'s verdict re-filed on this evidence — `FAIL-EXPECTED` with the
       pthread question answered, or a defect with a fix or an escalation
-- [ ] Full suite re-run and the per-test result **written down** — the count, and any test whose
+- [x] Full suite re-run and the per-test result **written down** — the count, and any test whose
       verdict differs from the 21 PASS / 1 FAIL table in `llvm-5-harness-fallout.md`
-- [ ] `matrix_multiply-pthread` and `pca-pthread` re-verified diff-empty after any code change, with
+- [x] `matrix_multiply-pthread` and `pca-pthread` re-verified diff-empty after any code change, with
       the diff output recorded rather than asserted
-- [ ] `AGENTS.md` `## Current state` updated to the resolved position
-- [ ] No `ans-*.txt`, no criterion file, no `test/auto-tests.txt` and no test Makefile modified — if
+- [x] `AGENTS.md` `## Current state` updated to the resolved position
+- [x] No `ans-*.txt`, no criterion file, no `test/auto-tests.txt` and no test Makefile modified — if
       one of them has to change, **stop and escalate**
 - [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
 
@@ -221,7 +221,8 @@ concurrently with any task that runs the suite.
 
 ## Progress log
 
-- 2026-08-13 `6538bd0` — Investigated criterion instruction #285 of `matrix_mult` under LLVM 5.0.2: identified as the `fprintf` call at source line 94 (output-printing loop). Ran `-trace-cd=false` experiment: 15/16 extra lines are data-dependence sourced, 1 is control-dependence. Compared with pthread variant (`matrixmult_map:138` = store to `matrix_out` at line 155, golden matches exactly). Rewrote `matrix_multiply-seq.md` verdict with evidence; corrected line accounting (34, not 35); updated `SUMMARY.md`. TODO: re-run full suite, re-verify pthread variants, update AGENTS.md, open PR. next: full suite re-run in Docker container.
+- 2026-08-13 `6538bd0` — Investigated criterion instruction #285 of `matrix_mult` under LLVM 5.0.2: identified as the `fprintf` call at source line 94 (output-printing loop). Ran `-trace-cd=false` experiment: 15/16 extra lines are data-dependence sourced, 1 is control-dependence. Compared with pthread variant (`matrixmult_map:138` = store to `matrix_out` at line 155, golden matches exactly). Rewrote `matrix_multiply-seq.md` verdict with evidence; corrected line accounting (34, not 35); updated `SUMMARY.md`. TODO: re-run full suite, re-verify pthread variants, update AGENTS.md, open PR.
+- 2026-08-13 `d2d03e2` — Full suite re-run: 21 PASS / 1 FAIL, unchanged from baseline. `matrix_multiply-pthread` and `pca-pthread` re-verified diff-empty (exit 0). Updated `AGENTS.md` Current state to reflect settled verdict. TODO: open PR.
 
 ## Handoff
 - branch `agent/llvm-5-matrix-multiply-verdict`
