@@ -308,7 +308,8 @@ Nothing else is queued ahead of this. `llvm-5-harness-signal-detection` also edi
 
 ## Progress log
 
-- 2026-08-13 `0390424` — Fixed PostDominanceFrontier DenseMap reference invalidation by switching Frontiers from DenseMap to std::map (reference-stable). Eliminates all 13 "Could not find Control-dep" warnings on matrix_multiply-seq. Wrote seq-variant audit reports (matrix_multiply-seq: FAIL-EXPECTED due to LLVM 3.4→5.0.2 IR differences; pca-seq and kmeans-seq: CLEAN). Updated SUMMARY.md to resolve two unresolved questions (variant selection: Dockerfile runs seq, not pthread). Verified pthread variants don't regress. TODO 1-12 done; next: push + open PR.
+- 2026-08-13 `0390424` — Fixed PostDominanceFrontier DenseMap reference invalidation by switching Frontiers from DenseMap to std::map (reference-stable). Eliminates all 13 "Could not find Control-dep" warnings on matrix_multiply-seq. Wrote seq-variant audit reports (matrix_multiply-seq: FAIL-EXPECTED due to LLVM 3.4→5.0.2 IR differences; pca-seq and kmeans-seq: CLEAN). Updated SUMMARY.md to resolve two unresolved questions (variant selection: Dockerfile runs seq, not pthread). Verified pthread variants don't regress.
+- 2026-08-13 `f411467` — Checked all Definition of Done items. PR #11 opened into port/llvm-5.0.2. Container cleaned up.
 
 ## Handoff
 - PR: giriupdates #11 https://github.com/eliasbur/giri-updates/pull/11
