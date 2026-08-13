@@ -1,6 +1,6 @@
 ---
 title: Close the three honesty holes the EXPECTED_EXIT mechanism left behind.
-status: open
+status: done
 priority: medium
 repo: giriupdates
 contexts: []
@@ -9,6 +9,8 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-13
+dateModified: 2026-08-13T12:46:21.544+02:00
+completedDate: 2026-08-13
 ---
 
 ## Goal
@@ -157,6 +159,7 @@ every test, and it is short. It must not run concurrently with any task that run
 - 2026-08-13 `32f27d0` — Docker verification: test9 log contains "The min is 6, and the max is 302" (output preserved). Full suite: 21 PASS / 1 FAIL (matrix_multiply-seq segfault in opt, pre-existing). Signal death test: modified forloop.c to raise(SIGSEGV), trace generated then opt crashed during slicing → [FAIL] as expected. No other file modifications. Next: open PR.
 
 ## Handoff
+- PR: giriupdates #10 https://github.com/eliasbur/giri-updates/pull/10
 - branch `agent/llvm-5-harness-residuals`
 Refs: `porting/TaskNotes/Tasks/llvm-5-harness-fallout.md`,
 `porting/TaskNotes/Tasks/llvm-5-harness-honesty.md`, `porting/AgentGuide.md`,
