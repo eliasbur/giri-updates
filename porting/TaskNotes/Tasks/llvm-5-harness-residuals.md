@@ -91,15 +91,15 @@ the harness.
 
 ## Definition of done
 
-- [ ] `EXIT_UNCHECKED=1` keeps the traced binary's stdout and stderr in the per-test log —
+- [x] `EXIT_UNCHECKED=1` keeps the traced binary's stdout and stderr in the per-test log —
       demonstrated by `test9`'s log containing its program output after the change
-- [ ] A signal death of the traced binary still produces `[FAIL]` under `EXIT_UNCHECKED=1` —
+- [x] A signal death of the traced binary still produces `[FAIL]` under `EXIT_UNCHECKED=1` —
       demonstrated by temporarily making test9 abort (e.g. a `kill -SEGV`-equivalent edit to a
       *copy*, or an injected `EXIT_UNCHECKED=1` on a test made to segfault), then reverting
-- [ ] `test/Makefile.common`'s `EXPECTED_EXIT` comment matches the recipe's behaviour
-- [ ] `porting/AgentGuide.md`'s crash-guarantee sentence is true as written
-- [ ] Full suite re-run: 21 PASS / 1 FAIL, same failure as before, and no test's verdict changed
-- [ ] No `ans-*.txt`, no criterion file, no `test/auto-tests.txt`, and no source under `lib/`,
+- [x] `test/Makefile.common`'s `EXPECTED_EXIT` comment matches the recipe's behaviour
+- [x] `porting/AgentGuide.md`'s crash-guarantee sentence is true as written
+- [x] Full suite re-run: 21 PASS / 1 FAIL, same failure as before, and no test's verdict changed
+- [x] No `ans-*.txt`, no criterion file, no `test/auto-tests.txt`, and no source under `lib/`,
       `include/`, `runtime/` or `tools/` modified
 - [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
 
@@ -153,7 +153,8 @@ every test, and it is short. It must not run concurrently with any task that run
 
 ## Progress log
 
-- 2026-08-13 `32f27d0` — Fixed all three residuals: EXIT_UNCHECKED preserves program output in per-test log and only suppresses normal exit status (signal deaths still fail); EXPECTED_EXIT comment corrected to match recipe; AgentGuide.md updated with accurate EXIT_UNCHECKED description. Next: build Docker image, run full suite, verify 21 PASS / 1 FAIL, and verify test9 output preserved.
+- 2026-08-13 `32f27d0` — Fixed all three residuals: EXIT_UNCHECKED preserves program output in per-test log and only suppresses normal exit status (signal deaths ≥128 still fail); EXPECTED_EXIT comment corrected to match recipe; AgentGuide.md updated with accurate EXIT_UNCHECKED description. Next: build Docker image, run full suite, verify 21 PASS / 1 FAIL, and verify test9 output preserved.
+- 2026-08-13 `32f27d0` — Docker verification: test9 log contains "The min is 6, and the max is 302" (output preserved). Full suite: 21 PASS / 1 FAIL (matrix_multiply-seq segfault in opt, pre-existing). Signal death test: modified forloop.c to raise(SIGSEGV), trace generated then opt crashed during slicing → [FAIL] as expected. No other file modifications. Next: open PR.
 
 ## Handoff
 - branch `agent/llvm-5-harness-residuals`
