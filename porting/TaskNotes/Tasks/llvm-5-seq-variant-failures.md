@@ -11,6 +11,14 @@ timeEstimate: 0
 dateCreated: 2026-08-12
 ---
 
+> **Note from `llvm-5-harness-fallout` (2026-08-12):** The "15 remaining \`Could not find Control-dep\`"
+> diagnosis is only half of the story. On the current `port/llvm-5.0.2`, `matrix_multiply-seq`
+> actually **segfaults** during slicing in `PostDominanceFrontier::calculate` (null \`BasicBlock*\`
+> inserted into an \`std::set\`, stack trace in \`_test_logs/matrix_multiply.log\`). The stderr
+> "Could not find Control-dep" output was from earlier runs before this crash path manifested, or
+> may appear on different builds. Verify the actual failure mode before assuming it is a benign
+> control-dependence warning.
+
 ## Goal
 
 Give every test the suite **actually runs** an evidence-backed verdict, and resolve the one
