@@ -203,36 +203,36 @@ and what `findExecForcers` / `Trace->getExecForcer` returned. Suspects, in order
 
 ## Definition of done
 
-- [ ] Image built once, one long-lived container for the whole task; no per-test image rebuilds
-- [ ] `matrix_multiply-seq`, `pca-seq` and `kmeans-seq` each have a report at
+- [x] Image built once, one long-lived container for the whole task; no per-test image rebuilds
+- [x] `matrix_multiply-seq`, `pca-seq` and `kmeans-seq` each have a report at
       `porting/TestAudit/llvm-5.0.2/<name>-seq.md`, following the report schema in
       `llvm-5-test-audit.md` verbatim (section order included)
-- [ ] The `PostDominanceFrontier::calculate` segfault root-caused to a named mechanism, with
+- [x] The `PostDominanceFrontier::calculate` segfault root-caused to a named mechanism, with
       evidence — not "changed X and it stopped crashing". If the fix is a container or algorithm
       change, state why the previous shape was wrong and why `3b26ea6` made it reachable
-- [ ] The relationship to `3b26ea6` recorded: whether that commit introduced the crash by enabling
+- [x] The relationship to `3b26ea6` recorded: whether that commit introduced the crash by enabling
       recursion that had never run, and whether its own fix (10 tests recovered) is preserved —
       the full suite is the check for that, not inspection
-- [ ] Hypothesis 1 answered for `pca-seq` and `kmeans-seq` (does the criterion resolve, to which
+- [x] Hypothesis 1 answered for `pca-seq` and `kmeans-seq` (does the criterion resolve, to which
       instruction); for `matrix_multiply-seq` the premise-update block's refutation is quoted with
       its log evidence rather than re-derived
-- [ ] Every `Could not find Control-dep` occurrence the **current** build emits attributed to a
+- [x] Every `Could not find Control-dep` occurrence the **current** build emits attributed to a
       function + BB ID and given a verdict; none left as "same as the others". If the count is zero
       after the crash fix, that is the answer and it is recorded as such
-- [ ] `matrix_multiply-seq` produces an empty diff against `ans-inst-seq.txt`, **or** carries a
+- [x] `matrix_multiply-seq` produces an empty diff against `ans-inst-seq.txt`, **or** carries a
       `FAIL-EXPECTED` verdict showing why the golden line set cannot be produced without changing
       the criterion or the golden file
-- [ ] The pthread variants re-verified after any code change: `matrix_multiply-pthread` and
+- [x] The pthread variants re-verified after any code change: `matrix_multiply-pthread` and
       `pca-pthread` diff empty (both were verified clean in `llvm-5-test-fixes`)
-- [ ] Full suite re-run and the per-test result recorded against the 21 PASS / 1 FAIL table in
+- [x] Full suite re-run and the per-test result recorded against the 21 PASS / 1 FAIL table in
       `llvm-5-harness-fallout.md`; no test that passed there regresses
-- [ ] `SUMMARY.md` corrected: the two "Unresolved questions" resolved (or the variant explanation
+- [x] `SUMMARY.md` corrected: the two "Unresolved questions" resolved (or the variant explanation
       refuted with evidence), and the per-test table annotated with which variant each report covers
-- [ ] Evidence quoted into the reports, not cited by path: `test/_test_logs/` is gitignored scratch
+- [x] Evidence quoted into the reports, not cited by path: `test/_test_logs/` is gitignored scratch
       that the next suite run overwrites and `make clean -C test` deletes
-- [ ] No golden file, criterion file or test Makefile modified — if one of them has to change,
+- [x] No golden file, criterion file or test Makefile modified — if one of them has to change,
       **stop and escalate** rather than editing it
-- [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
+- [x] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
 
 ## How to build and test
 
