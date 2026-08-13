@@ -8,21 +8,30 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 
 ## Current state
 
-As of this entry, `port/llvm-5.0.2` has an honest harness with per-test exit status
-opt-in (`EXPECTED_EXIT`/`EXIT_UNCHECKED` in `test/Makefile.common`). The suite reports
-**21 PASS / 1 FAIL**. The single failure is `matrix_multiply-seq`, which segfaults in
-`PostDominanceFrontier::calculate` during the slicing stage (null `BasicBlock*` inserted
-into an `std::set`). The `matrix_multiply-pthread` variant passes the full pipeline.
-pca and kmeans pass in both configurations.
+As of this entry (`5fbca9d`), `port/llvm-5.0.2` has an honest harness with per-test exit
+status opt-in (`EXPECTED_EXIT`/`EXIT_UNCHECKED` in `test/Makefile.common`). The suite
+reports **21 PASS / 1 FAIL**. The single failure is `matrix_multiply-seq`, which segfaults
+in `PostDominanceFrontier::calculate` during the slicing stage — stack trace retained in
+`test/_test_logs/matrix_multiply.log`, root cause not yet established.
+
+**The suite measures the seq variants.** `Dockerfile:5` sets `TEST_PARALLELISM=seq` and the
+three benchmark Makefiles use `?=`, so a suite result says nothing about a pthread variant
+unless that variant was run by hand. What has been run by hand:
+`matrix_multiply-pthread` passes the full pipeline. `pca-pthread` and `kmeans-pthread` have
+**not** been re-run since `porting/TestAudit/llvm-5.0.2/` audited them before `3b26ea6`;
+that audit's findings (pca: 8 lines missing; kmeans: assertion abort at 256 CPUs, 108 GB
+trace) are the last measured state for both. Always name the variant when recording a result.
 
 The original honest-harness run (7 PASS / 15 FAIL) has been resolved: all 15
 non-zero-exit UnitTests are inherent program behaviour and now declare their expected
-exit codes in their Makefiles. `test9` (uninitialised `sum` → UB) uses `EXIT_UNCHECKED=1`.
+exit codes in their Makefiles. `test9` (uninitialised `sum` → UB) uses `EXIT_UNCHECKED=1`,
+which currently also discards that test's program output — see `llvm-5-harness-residuals`.
 
-The port (`llvm-5-port.md`), full-suite audit (`llvm-5-test-audit`), and two test defects
+The port (`llvm-5-port.md`), full-suite audit (`llvm-5-test-audit`), two test defects
 (`llvm-5-test-fixes`: PostDominanceFrontier virtual-root recursion, `findAllStoresForLoad`
-nestID issue) are done. Open tasks, in order: `llvm-5-seq-variant-failures`,
-`llvm-5-kmeans`, `llvm-5-port-closeout`.
+nestID issue) and both harness tasks (`llvm-5-harness-honesty`, `llvm-5-harness-fallout`)
+are done. Open tasks, in order: `llvm-5-harness-residuals` (small),
+`llvm-5-seq-variant-failures`, `llvm-5-kmeans`, `llvm-5-port-closeout`.
 `porting/llvm-releases/5.0.0/api-breakings.yaml` is triaged for only 4 of its 388
 entries; finishing it is deliberately deferred.
 

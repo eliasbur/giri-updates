@@ -13,6 +13,28 @@ dateModified: 2026-08-13T01:21:16.018+02:00
 completedDate: 2026-08-13
 ---
 
+> **Follow-up review (2026-08-13, head agent).** This task's substance holds up: the 15 exit
+> statuses are inherent program behaviour, the opt-in is per-test and written down, and the suite is
+> back to 21 PASS / 1 FAIL against real goldens. Three residuals were found on review and are now
+> `llvm-5-harness-residuals`, not reopened here:
+>
+> - The `EXIT_UNCHECKED` branch (`test/Makefile.common:51-52`) sends the traced binary's stdout and
+>   stderr to `/dev/null`. Compare `test/_test_logs/UnitTests_test3.log` (program output present)
+>   with `UnitTests_test9.log` (empty between the stage markers).
+> - Consequently the DoD box "a crash, a signal death, or an undeclared exit status still yields
+>   `[FAIL]`" is true for `EXPECTED_EXIT` tests and for `opt`, but **not** for a signal death of the
+>   traced binary under `EXIT_UNCHECKED=1`. `porting/AgentGuide.md` states the guarantee
+>   unconditionally and is wrong as written.
+> - `test/Makefile.common:15`'s comment says `-1 = don't check, any exit allowed`; the recipe
+>   enforces exit 0 at that default.
+>
+> Also corrected: `AGENTS.md` was left claiming "pca and kmeans pass in both configurations". Only
+> the seq variants ran here, so that was unsupported for both pthread variants; `AGENTS.md` now says
+> what was and was not measured. Finding 2 is fully resolved — `matrix_multiply` is a real,
+> reproducible seq-only failure — but the mechanism recorded in the progress log ("null
+> `BasicBlock*` → `std::set` insert crash") is an inference, not a proven root cause;
+> `llvm-5-seq-variant-failures` owns it and starts from a different lead hypothesis.
+
 ## Goal
 
 Turn the honest harness's 7 PASS / 15 FAIL into a result that is both honest **and** correct: every

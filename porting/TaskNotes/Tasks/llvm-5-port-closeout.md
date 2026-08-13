@@ -67,8 +67,18 @@ Write the outcome — verified, or deviating and why — into this note and into
   `## Current state` box is now satisfied.
 - `llvm-5-test-fixes.md`: two boxes are stale — the PR (`giriupdates #7`) is merged as `3b26ea6`,
   and the suite line ("21 of 22 pass; kmeans is the only expected failure") does not match the
-  recorded result (the one failure is `matrix_multiply-seq`; kmeans was scored PASS by a harness
-  that hid its crash — see `llvm-5-harness-honesty` and `llvm-5-kmeans`).
+  recorded result (the one failure is `matrix_multiply-seq`; kmeans-seq's PASS survived the honest
+  harness, kmeans-pthread was never re-run — see `llvm-5-harness-fallout` and `llvm-5-kmeans`).
+- **Reconcile the four suite results that now exist**, in one place, and say which one is current:
+  13 PASS / 9 FAIL (baseline, pre-`3b26ea6`), 21 PASS / 1 FAIL (post-fixes, suppressive harness),
+  7 PASS / 15 FAIL (`2fb3b6d`, honest harness before the exit-status opt-in), and 21 PASS / 1 FAIL
+  (`5fbca9d`, honest harness with `EXPECTED_EXIT` — the per-test table in
+  `llvm-5-harness-fallout.md` is the authoritative version). A reader currently has to know the
+  commit history to tell which number applies to the tree in front of them.
+- `porting/TestAudit/llvm-5.0.2/SUMMARY.md`'s per-test verdict table is **pre-`3b26ea6` and
+  pre-honest-harness**, and every `FAIL-BUG` row attributed to "Root cause A" was subsequently
+  fixed. Do not rewrite the verdicts — downstream tasks treat them as the audit's record — but head
+  the table with the commit it describes, so it is not read as the current state.
 - `porting/TestAudit/llvm-5.0.2/SUMMARY.md`: the "Root cause A — 8 tests" heading sits above a
   10-test list, and the reconciliation block below the verdict table is unreconciled scratch work
   ("**Wait** — re-checking the baseline: … let me recount"). Rewrite that section to state the
@@ -98,7 +108,9 @@ Write the outcome — verified, or deviating and why — into this note and into
 - [ ] `llvm-5-port.md` and `llvm-5-test-fixes.md` checkboxes match reality, with the deferred
       `api-breakings.yaml` box left unticked and annotated
 - [ ] `SUMMARY.md`'s root-cause counts and reconciliation section state one consistent set of
-      numbers; the per-test verdict table is untouched
+      numbers; the per-test verdict table is untouched apart from a heading naming the commit it
+      describes
+- [ ] The four historical suite results reconciled in one place, with the current one identified
 - [ ] Decision recorded for `test6` / `test7` / `test22`
 - [ ] `test/matrix_multiply` cleaned; `porting/AgentGuide.md` gained the no-asserts note
 - [ ] `AGENTS.md`'s `## Current state` updated to reflect the invariant results
@@ -112,8 +124,9 @@ Write the outcome — verified, or deviating and why — into this note and into
   `docker exec` — run the underlying `opt … -dump-bbid=true` / `-dump-lsid=true` directly.
 - This task edits `SUMMARY.md`, and so does `llvm-5-seq-variant-failures`. Rebase rather than
   resolving by hand-merging two rewrites of the same section.
-- Do not change any `ans-*.txt`, criterion file, or the test Makefiles; the harness work belongs to
-  `llvm-5-harness-honesty`.
+- Do not change any `ans-*.txt`, criterion file, or the test Makefiles; the remaining harness work
+  belongs to `llvm-5-harness-residuals`. `.gitignore` and cleaning the tree are the only
+  test-adjacent changes in scope here.
 - Live-shared checkout: `git add` explicit paths only, never `git add -A`.
 
 ## Files / scope
@@ -127,12 +140,14 @@ Write the outcome — verified, or deviating and why — into this note and into
 ## Blocked by
 
 - ~~llvm-5-test-fixes~~
-- llvm-5-harness-honesty
+- ~~llvm-5-harness-honesty~~
+- ~~llvm-5-harness-fallout~~
+- llvm-5-harness-residuals
 - llvm-5-seq-variant-failures
 - llvm-5-kmeans
 
 This task runs last: the invariant checks can be done at any time, but the note and report
-reconciliation is only final once the other three have stopped moving the numbers.
+reconciliation is only final once the others have stopped moving the numbers.
 
 ## Progress log
 

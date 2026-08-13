@@ -11,17 +11,35 @@ timeEstimate: 0
 dateCreated: 2026-08-12
 ---
 
+> **Premise update (2026-08-13, head agent, after `llvm-5-harness-fallout` merged as `5fbca9d`).**
+> One assumption below is now settled and one warning is new.
+>
+> 1. **`kmeans-seq`'s PASS is not a harness artifact.** The honest harness has landed and
+>    `kmeans-seq` still passes: the suite's per-test log showed the full program run, the criterion
+>    resolving (`Start slicing Function:Instruction is defined as main:120`), exit 0 and an empty
+>    diff. (That log lived in `test/_test_logs/`, which is gitignored scratch — re-run the test to
+>    see it, don't go looking for the file.) So "once the harness holes are closed, whatever kmeans
+>    really does becomes visible" has happened, and what became visible is a genuine PASS *of the
+>    seq variant against a two-line golden*. The degenerate-golden question below is therefore the
+>    live one, not the harness question.
+> 2. **Nothing has been measured about `kmeans-pthread` since the audit.** The fallout run used
+>    `--cpuset-cpus=0-3`, but the suite runs the **seq** variants, so no pthread run happened. Treat
+>    the audit's findings (assertion at `kmeans-pthread.c:316`, 108 GB trace) as still standing.
+>    `AGENTS.md` briefly claimed kmeans passed "in both configurations"; that claim was unsupported
+>    and has been corrected — do not resurrect it from an older revision.
+
 ## Goal
 
-Give `kmeans` — the one test whose result the suite has never actually measured — a decided,
-written-down outcome, and correct the two audit claims about it that do not hold up.
+Give `kmeans` — the one test whose result the suite has never actually measured in its pthread
+configuration — a decided, written-down outcome, and correct the two audit claims about it that do
+not hold up.
 
 ## Why this task exists
 
-`kmeans` is scored PASS by the suite while its pthread variant aborts on an assertion and writes a
-108 GB trace. It got that PASS from the harness holes fixed in `llvm-5-harness-honesty`; once those
-are closed, whatever kmeans really does becomes visible and has to be dealt with rather than
-tolerated.
+`kmeans-seq` is scored PASS by the suite against a two-line golden, while the pthread variant aborts
+on an assertion and writes a 108 GB trace. The PASS survived the honest-harness work, so it is real
+as far as the harness goes — but "real" and "meaningful" are different claims, and the pthread
+variant is still an unhandled crash sitting in `test/auto-tests.txt`.
 
 `porting/TestAudit/llvm-5.0.2/kmeans.md` (pthread variant) found:
 
@@ -61,7 +79,10 @@ so and treat it as a finding about the golden, not about the port.
 **Decide the pthread variant (points 1-2).** Implement exactly one outcome and write down why:
 
 - run the suite CPU-restricted (`docker run --cpuset-cpus=…`) and document it as a stated
-  environment requirement, or
+  environment requirement — but **verify the premise first**: this only works if
+  `sysconf(_SC_NPROCESSORS_ONLN)` inside the container honours the cpuset (glibc answers it from
+  `sched_getaffinity` in recent versions, from `/sys` in older ones). Print `num_procs` from a
+  cpuset-restricted run before adopting this; if it still reports 256, the option does not exist, or
 - give kmeans an input large enough that `num_per_thread > 0` on a many-core host — this changes
   what the trace contains and therefore the slice, so the golden-file relationship has to be
   re-checked, not assumed, or
@@ -81,8 +102,10 @@ and the consequence in `AGENTS.md`'s `## Current state`.
 - [ ] The "criterion line 402 out of range" claim corrected in
       `porting/TestAudit/llvm-5.0.2/kmeans.md` and in `SUMMARY.md`
 - [ ] One outcome implemented for the pthread variant, with its reasoning in this note and its
-      consequence in `AGENTS.md`
-- [ ] Full suite re-run afterwards under the honest harness; no other test's verdict changed
+      consequence in `AGENTS.md`; if the cpuset option is chosen, the measured `num_procs` under
+      restriction is recorded as the evidence it rests on
+- [ ] Full suite re-run afterwards under the honest harness and compared against the per-test table
+      in `llvm-5-harness-fallout.md`; no other test's verdict changed
 - [ ] No `ans-*.txt` and no criterion file modified
 - [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
 
@@ -131,7 +154,11 @@ immediately after every run — an aborted run leaves a trace measured in tens o
 ## Blocked by
 
 - ~~llvm-5-test-fixes~~
-- llvm-5-harness-honesty
+- ~~llvm-5-harness-honesty~~
+- ~~llvm-5-harness-fallout~~
+
+Run after `llvm-5-seq-variant-failures`: it writes `kmeans-seq.md`, which the first item of the
+Definition of done defers to, and it may change `lib/Utility/PostDominatorFrontier.cpp` under you.
 
 ## Progress log
 
