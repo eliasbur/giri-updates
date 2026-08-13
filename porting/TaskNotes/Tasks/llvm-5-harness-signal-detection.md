@@ -120,7 +120,7 @@ step 1 leaves true.
       removed
 - [ ] Full suite re-run: **21 PASS / 1 FAIL**. The one failure is `matrix_multiply-seq`, whose
       segfault was fixed in `3945134` but whose diff against the golden remains — see
-      `llvm-5-matrix-multiply-verdict`. Any other change is a finding
+      `llvm-5-criterion-drift-sweep`. Any other change is a finding
 - [ ] No `ans-*.txt`, no criterion file, no `test/auto-tests.txt` modified, and no permanent change
       to any test's `.c` source
 - [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
@@ -158,7 +158,7 @@ before the suite run, or you will measure stale executables.
 - `test/Makefile.common` affects all 22 tests. Re-run the whole suite after every edit to it.
 - Anything you edit in a test's `.c` file to force a crash must be reverted, and the revert shown in
   the diff. `llvm-5-harness-residuals` did this correctly — follow it.
-- `matrix_multiply-seq` is not yours; it belongs to `llvm-5-matrix-multiply-verdict`. Its failure is
+- `matrix_multiply-seq` is not yours; it belongs to `llvm-5-criterion-drift-sweep`. Its failure is
   now a non-empty diff at the `test` stage, which the harness already reports correctly.
 - `-debug` / `-debug-only=` are no-ops on the no-asserts 5.0.2 toolchain, as are Giri's own
   `assert()`s (`Release` CMake build). Test programs' `assert()`s do fire — that is how kmeans
@@ -183,7 +183,7 @@ before the suite run, or you will measure stale executables.
 - ~~llvm-5-harness-residuals~~
 
 Nothing gates this and it gates nothing: no current test's verdict is wrong because of it. Run it
-after `llvm-5-matrix-multiply-verdict` and `llvm-5-kmeans`, before `llvm-5-port-closeout`. It must not
+after `llvm-5-criterion-drift-sweep` and `llvm-5-kmeans`, before `llvm-5-port-closeout`. It must not
 run concurrently with any task that runs the suite.
 
 ## Progress log

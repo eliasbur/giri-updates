@@ -13,6 +13,32 @@ dateModified: 2026-08-13T16:05:09.373+02:00
 completedDate: 2026-08-13
 ---
 
+> **Follow-up review (2026-08-13, head agent).** The measurements are good and are kept: 298
+> instructions in `matrix_mult`, #285 = the `fprintf` at line 94, the `matrix_out` store at #224,
+> and the `-trace-cd=false` split of the 16 extras into 15 data / 1 control. The line accounting is
+> fixed and the pthread variants are re-verified. **The explanation built on those measurements does
+> not hold, and step 2 of this note — the index sweep — was skipped even though its own trigger
+> condition fired.** Now `llvm-5-criterion-drift-sweep`.
+>
+> Two independent refutations of "3.4's #285 was near the `matrix_out` store":
+>
+> 1. **Direction.** A fixed index into a *shorter* instruction stream lands *further along* the
+>    source, not earlier. If 3.4 emitted fewer instructions before the print loop, its #285 would be
+>    at or past line 94 — not back at line 84. The stated cause predicts the opposite of the stated
+>    effect. (And clang 3.4 at `-O0` emits `llvm.dbg.declare` too, so the "10 extra intrinsics"
+>    premise needs a 3.4 build before it can be asserted at all.)
+> 2. **The golden.** A criterion's own line appears in its slice — that is how line 94 entered the
+>    actual output. Line 84 is **not** in `ans-inst-seq.txt`, so the 3.4 criterion was not that
+>    store. Lines 90 and 97 are in the golden while 92, 94 and 84 are not, which is exactly the
+>    slice of the `dprintf("\n")` at line 97: its own line, the outer print loop it is
+>    control-dependent on, and nothing data-dependent because a newline print reads nothing.
+>
+> That reading also explains the whole diff in one move — missing 97 was the old criterion, extra 94
+> is the new one, extra 92 is its inner-loop control dependence, and extras 75-86 / 155-165 are the
+> computation chain a *value* print pulls in and a newline print never did. The drift is then a few
+> instructions inside one loop, not 61 across the function. `FAIL-EXPECTED` may survive; the
+> magnitude and mechanism do not. One sweep settles it.
+
 ## Goal
 
 Decide, with evidence that survives the counter-argument below, whether `matrix_multiply-seq`'s

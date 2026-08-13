@@ -68,7 +68,7 @@ whether `main 402` resolves at all; if it does, name the instruction it selects.
 root-cause line in `porting/TestAudit/llvm-5.0.2/kmeans.md` and the corresponding row and narrative
 in `SUMMARY.md`. Note the general risk while you are there: every test's criterion is an instruction
 index into clang-generated IR, and the goldens were produced against 3.4's IR —
-the same hypothesis is live for `matrix_multiply` in `llvm-5-matrix-multiply-verdict`, so read its
+the same hypothesis is live for `matrix_multiply` in `llvm-5-criterion-drift-sweep`, so read its
 findings before writing yours. Note that `kmeans-seq.md` already records `main 120` resolving
 cleanly, which is one data point against broad instruction-index drift.
 
@@ -148,7 +148,7 @@ immediately after every run — an aborted run leaves a trace measured in tens o
 - `-debug` / `-debug-only=` are no-ops on the no-asserts 5.0.2 toolchain — so are Giri's own
   `assert()`s, since the CMake build configures `Release`. The assertion that fires in kmeans is in
   the **test program**, which the test Makefile compiles without `-DNDEBUG`.
-- This note edits `SUMMARY.md`, and so do `llvm-5-matrix-multiply-verdict` and
+- This note edits `SUMMARY.md`, and so do `llvm-5-criterion-drift-sweep` and
   `llvm-5-port-closeout`. Run them in sequence, not in parallel.
 - Live-shared checkout: `git add` explicit paths only, never `git add -A`.
 
@@ -169,7 +169,7 @@ immediately after every run — an aborted run leaves a trace measured in tens o
 - ~~llvm-5-harness-fallout~~
 - ~~llvm-5-seq-variant-failures~~
 
-Sequence after `llvm-5-matrix-multiply-verdict`, which may change
+Sequence after `llvm-5-criterion-drift-sweep`, which may change
 `lib/Utility/PostDominatorFrontier.cpp` under you and would then invalidate a `kmeans-seq` run.
 
 ## Progress log

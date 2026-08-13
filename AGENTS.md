@@ -16,15 +16,18 @@ Its segfault is fixed: `PostDominanceFrontier::calculate` held a reference into 
 across recursive insertions while `Frontiers` was a `DenseMap`, which invalidates references
 when it grows. `Frontiers` is now a `std::map`, matching LLVM 3.4
 (`include/Utility/PostDominanceFrontier.h:28`); reverting the change reproduces the 13
-`Could not find Control-dep` warnings. The remaining diff against `ans-inst-seq.txt` (16
-extra lines, 1 missing — line 97) is `FAIL-EXPECTED`: LLVM 5.0.2's `matrix_mult` function is
-298 instructions long (including 10 `dbg.declare` intrinsics counted by `inst_iterator`),
-so criterion `matrix_mult:285` resolves to a `fprintf` call in the output-printing loop
-(source line 94), whereas under LLVM 3.4 the function was shorter and #285 resolved to an
-instruction in the computation loop near the `matrix_out` store. The 16 extra lines are
-15 data-dependence sourced and 1 control-dependence sourced (verified with
-`-trace-cd=false`). The pthread variant's golden matches exactly because its criterion
-(`matrixmult_map:138`) is the computation store in a shorter function.
+`Could not find Control-dep` warnings.
+
+What remains is a diff against `ans-inst-seq.txt`: 16 extra lines, 1 missing (line 97).
+Measured facts: LLVM 5.0.2's `matrix_mult` has 298 instructions, criterion
+`matrix_mult:285` resolves to the `fprintf` at source line 94 (the output-printing loop),
+the `matrix_out` store is at #224, and the 16 extras are 15 data-dependence and 1
+control-dependence sourced (`-trace-cd=false`). The verdict is provisionally
+`FAIL-EXPECTED` on criterion drift, but **the mechanism recorded in
+`matrix_multiply-seq.md` is wrong** — it has the drift direction inverted and is
+contradicted by the golden, which omits line 84 and contains lines 90 and 97.
+`llvm-5-criterion-drift-sweep` settles it by finding the index that reproduces the golden.
+Do not quote the drift magnitude or its cause until that lands.
 
 **The suite measures the seq variants.** `Dockerfile:5` sets `TEST_PARALLELISM=seq` and the
 three benchmark Makefiles use `?=`, so a suite result says nothing about a pthread variant
@@ -50,8 +53,10 @@ The port (`llvm-5-port.md`), full-suite audit (`llvm-5-test-audit`), three test 
 (`llvm-5-test-fixes`: PostDominanceFrontier virtual-root recursion, `findAllStoresForLoad`
 nestID issue; `llvm-5-seq-variant-failures`: the `DenseMap` reference invalidation above,
 plus seq-variant audit reports) and three harness tasks (`llvm-5-harness-honesty`,
-`llvm-5-harness-fallout`, `llvm-5-harness-residuals`) are done. Open tasks, in order:
-`llvm-5-kmeans`, `llvm-5-harness-signal-detection`, `llvm-5-port-closeout`.
+`llvm-5-harness-fallout`, `llvm-5-harness-residuals`) are done, as is
+`llvm-5-matrix-multiply-verdict` apart from the correction above. Open tasks, in order:
+`llvm-5-criterion-drift-sweep`, `llvm-5-kmeans`, `llvm-5-harness-signal-detection`,
+`llvm-5-port-closeout`.
 `porting/llvm-releases/5.0.0/api-breakings.yaml` is triaged for only 4 of its 388
 entries; finishing it is deliberately deferred.
 
