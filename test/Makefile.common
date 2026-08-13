@@ -12,7 +12,7 @@ INPUT ?=
 CRITERION ?=
 TEST_ANS ?= ans-inst.txt
 MAPPING ?=
-# EXPECTED_EXIT: expected exit code of traced binary (-1 = don't check, any exit allowed)
+# EXPECTED_EXIT: expected exit code of traced binary (default -1: non-zero exit fails the stage; set to N to pass only on that exit, or set EXIT_UNCHECKED=1 to skip checking entirely for UB)
 EXPECTED_EXIT ?= -1
 # EXIT_UNCHECKED: set to 1 when exit code is inherently unpredictable (UB, platform-dependent)
 EXIT_UNCHECKED ?= 0
@@ -49,7 +49,9 @@ $(NAME).slice : $(NAME).all.bc $(NAME).trace
 
 $(NAME).trace: $(NAME).trace.exe
 ifeq (1,$(EXIT_UNCHECKED))
-	@ ./$< ${INPUT} > /dev/null 2>&1 || true
+	@ ./$< $(INPUT); \
+		_rc=$$?; \
+		if [ "$$_rc" -ge 128 ]; then exit $$_rc; fi # signal death (>=128) fails; normal exit ignored
 else
 	@ ./$< $(INPUT); \
 		_rc=$$?; \
