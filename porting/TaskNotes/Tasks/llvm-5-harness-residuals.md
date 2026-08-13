@@ -153,6 +153,8 @@ every test, and it is short. It must not run concurrently with any task that run
 
 ## Progress log
 
+- 2026-08-13 `32f27d0` — Fixed all three residuals: EXIT_UNCHECKED preserves program output in per-test log and only suppresses normal exit status (signal deaths still fail); EXPECTED_EXIT comment corrected to match recipe; AgentGuide.md updated with accurate EXIT_UNCHECKED description. Next: build Docker image, run full suite, verify 21 PASS / 1 FAIL, and verify test9 output preserved.
+
 ## Handoff
 - branch `agent/llvm-5-harness-residuals`
 Refs: `porting/TaskNotes/Tasks/llvm-5-harness-fallout.md`,
