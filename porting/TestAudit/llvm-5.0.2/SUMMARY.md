@@ -32,7 +32,7 @@ Matches the 13 PASS / 9 FAIL split recorded in `llvm-5-port.md` exactly.
 | test19 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test19.md](UnitTests-test19.md) |
 | test20 | seq (no pthread variant) | CLEAN | Diff empty; clang stage 2 warning about implicit declaration is expected for mutual recursion | [UnitTests-test20.md](UnitTests-test20.md) |
 | test21 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test21.md](UnitTests-test21.md) |
-| matrix_multiply | seq | FAIL-EXPECTED | DenseMap ref-invalidation fixed; diff remains from LLVM 3.4→5.0.2 IR differences (16 extra + 1 missing lines) | [matrix_multiply-seq.md](matrix_multiply-seq.md) |
+| matrix_multiply | seq | FAIL-EXPECTED | Criterion `matrix_mult:285` drifts from computation-store (LLVM 3.4) to output fprintf at line 94 (LLVM 5.0.2, 298-instruction function) — 18/19 golden lines preserved (shared data chain), 16 DD-sourced extras, 1 missing (line 97, separate fprintf) | [matrix_multiply-seq.md](matrix_multiply-seq.md) |
 | matrix_multiply | pthread | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 30 "Could not find Control-dep", 25 lines missing | [matrix_multiply.md](matrix_multiply.md) |
 | pca | seq | CLEAN | Diff empty, no non-routine output | [pca-seq.md](pca-seq.md) |
 | pca | pthread | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 40 "Could not find Control-dep", 8 lines missing | [pca.md](pca.md) |

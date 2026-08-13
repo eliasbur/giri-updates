@@ -8,7 +8,7 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 
 ## Current state
 
-As of this entry (`3945134`), `port/llvm-5.0.2` has an honest harness with per-test exit
+As of this entry (`99423d6`), `port/llvm-5.0.2` has an honest harness with per-test exit
 status opt-in (`EXPECTED_EXIT`/`EXIT_UNCHECKED` in `test/Makefile.common`). The suite
 reports **21 PASS / 1 FAIL**. The single failure is `matrix_multiply-seq`.
 
@@ -16,19 +16,24 @@ Its segfault is fixed: `PostDominanceFrontier::calculate` held a reference into 
 across recursive insertions while `Frontiers` was a `DenseMap`, which invalidates references
 when it grows. `Frontiers` is now a `std::map`, matching LLVM 3.4
 (`include/Utility/PostDominanceFrontier.h:28`); reverting the change reproduces the 13
-`Could not find Control-dep` warnings. What remains is a **diff**: 16 extra lines and one
-missing (line 97) against `ans-inst-seq.txt`. That diff is currently filed `FAIL-EXPECTED`,
-but the verdict is contested and under review as `llvm-5-matrix-multiply-verdict` — do not
-quote it as settled, in either direction.
+`Could not find Control-dep` warnings. The remaining diff against `ans-inst-seq.txt` (16
+extra lines, 1 missing — line 97) is `FAIL-EXPECTED`: LLVM 5.0.2's `matrix_mult` function is
+298 instructions long (including 10 `dbg.declare` intrinsics counted by `inst_iterator`),
+so criterion `matrix_mult:285` resolves to a `fprintf` call in the output-printing loop
+(source line 94), whereas under LLVM 3.4 the function was shorter and #285 resolved to an
+instruction in the computation loop near the `matrix_out` store. The 16 extra lines are
+15 data-dependence sourced and 1 control-dependence sourced (verified with
+`-trace-cd=false`). The pthread variant's golden matches exactly because its criterion
+(`matrixmult_map:138`) is the computation store in a shorter function.
 
 **The suite measures the seq variants.** `Dockerfile:5` sets `TEST_PARALLELISM=seq` and the
 three benchmark Makefiles use `?=`, so a suite result says nothing about a pthread variant
 unless that variant was run by hand. This is also the answer to the audit's two "Unresolved
 questions": the baseline scored `pca-seq`/`kmeans-seq` (both clean), the audit analysed the
-pthread variants. What has been run by hand: `matrix_multiply-pthread` and `pca-pthread`
-pass. `kmeans-pthread` has **not** been re-run since the pre-`3b26ea6` audit, whose findings
-(assertion abort at 256 CPUs, 108 GB trace) are its last measured state. Always name the
-variant when recording a result.
+pthread variants. Re-verified by `llvm-5-matrix-multiply-verdict`: `matrix_multiply-pthread`
+and `pca-pthread` both pass with empty diffs. `kmeans-pthread` has **not** been re-run since
+the pre-`3b26ea6` audit, whose findings (assertion abort at 256 CPUs, 108 GB trace) are its
+last measured state. Always name the variant when recording a result.
 
 The original honest-harness run (7 PASS / 15 FAIL) has been resolved: all 15
 non-zero-exit UnitTests are inherent program behaviour and now declare their expected
@@ -46,8 +51,7 @@ The port (`llvm-5-port.md`), full-suite audit (`llvm-5-test-audit`), three test 
 nestID issue; `llvm-5-seq-variant-failures`: the `DenseMap` reference invalidation above,
 plus seq-variant audit reports) and three harness tasks (`llvm-5-harness-honesty`,
 `llvm-5-harness-fallout`, `llvm-5-harness-residuals`) are done. Open tasks, in order:
-`llvm-5-matrix-multiply-verdict`, `llvm-5-kmeans`, `llvm-5-harness-signal-detection`,
-`llvm-5-port-closeout`.
+`llvm-5-kmeans`, `llvm-5-harness-signal-detection`, `llvm-5-port-closeout`.
 `porting/llvm-releases/5.0.0/api-breakings.yaml` is triaged for only 4 of its 388
 entries; finishing it is deliberately deferred.
 
