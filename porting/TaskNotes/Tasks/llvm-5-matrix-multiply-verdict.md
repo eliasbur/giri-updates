@@ -221,6 +221,8 @@ concurrently with any task that runs the suite.
 
 ## Progress log
 
+- 2026-08-13 `6538bd0` — Investigated criterion instruction #285 of `matrix_mult` under LLVM 5.0.2: identified as the `fprintf` call at source line 94 (output-printing loop). Ran `-trace-cd=false` experiment: 15/16 extra lines are data-dependence sourced, 1 is control-dependence. Compared with pthread variant (`matrixmult_map:138` = store to `matrix_out` at line 155, golden matches exactly). Rewrote `matrix_multiply-seq.md` verdict with evidence; corrected line accounting (34, not 35); updated `SUMMARY.md`. TODO: re-run full suite, re-verify pthread variants, update AGENTS.md, open PR. next: full suite re-run in Docker container.
+
 ## Handoff
 - branch `agent/llvm-5-matrix-multiply-verdict`
 Refs: `porting/TaskNotes/Tasks/llvm-5-seq-variant-failures.md`,
