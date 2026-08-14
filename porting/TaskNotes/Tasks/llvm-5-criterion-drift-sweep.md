@@ -204,6 +204,8 @@ task that runs the suite.
 
 ## Progress log
 
+- 2026-08-14 `TBD` — Sweep: indices 291 and 292 match the golden exactly (drift +7 from 285 to 292, both `!dbg !259` → line 97 `dprintf("\n")`). Rewrote `matrix_multiply-seq.md`, updated `SUMMARY.md` and `AGENTS.md` Current state. TODO: re-run full suite.
+
 ## Handoff
 - branch `agent/llvm-5-criterion-drift-sweep`
 Refs: `porting/TaskNotes/Tasks/llvm-5-matrix-multiply-verdict.md`,
