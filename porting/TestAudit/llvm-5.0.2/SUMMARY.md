@@ -37,7 +37,7 @@ Matches the 13 PASS / 9 FAIL split recorded in `llvm-5-port.md` exactly.
 | pca | seq | CLEAN | Diff empty, no non-routine output | [pca-seq.md](pca-seq.md) |
 | pca | pthread | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 40 "Could not find Control-dep", 8 lines missing | [pca.md](pca.md) |
 | kmeans | seq | CLEAN | Diff empty, no non-routine output | [kmeans-seq.md](kmeans-seq.md) |
-| kmeans | pthread | FAIL-HARNESS | 256-CPU container triggers assertion failure, 108 GB trace, slicing times out; criterion line 402 out of range | [kmeans.md](kmeans.md) |
+| kmeans | pthread | FAIL-HARNESS | 256-CPU container triggers assertion failure, 108 GB trace, slicing times out; criterion `main 402` is an instruction index, not a source line | [kmeans.md](kmeans.md) |
 
 ## Distinct root causes
 
@@ -63,7 +63,7 @@ When a function has multiple exit points (e.g., `exit()` + `return`), LLVM 5.0.2
 
 **Affected tests:** kmeans
 
-**Description:** The container has 256 CPUs. kmeans-pthread.c uses `sysconf(_SC_NPROCESSORS_ONLN)` for thread count, but asserts `num_threads == num_procs`. With 100 points and 256 CPUs, `num_per_thread = 0`, only 100 threads are created, and the assertion fires. Additionally, `criterion-inst-pthread.txt` references line 402, but `kmeans-pthread.c` has only 362 lines.
+**Description:** The container has 256 CPUs. kmeans-pthread.c uses `sysconf(_SC_NPROCESSORS_ONLN)` for thread count, but asserts `num_threads == num_procs`. With 100 points and 256 CPUs, `num_per_thread = 0`, only 100 threads are created, and the assertion fires. Additionally, `criterion-inst-pthread.txt` specifies `main 402` — this is the 402nd LLVM instruction in `main` (not a source line number).
 
 ## Messages in passing tests
 
