@@ -407,6 +407,7 @@ Nothing blocks this task any more, and nothing follows it. The numbers have stop
 task to change them was `llvm-5-final-defects` (`e194151`), and it left the suite at 21 PASS / 1 FAIL.
 
 ## Progress log
+- `0be668c` — Part 0: fixed all 8 `$_tmperr` quoting bugs in `test/Makefile.common` using mechanism A (per-test `$(NAME).trace.err` file). Dropped `mktemp`, removed unused `_rc` in `EXIT_UNCHECKED` branch, extended `clean:` to cover `*.trace.err` and `core.*`, added `*.err` to `.gitignore`. Next: container verification — crash detection re-test and full suite run.
 
 ## Handoff
 - branch `agent/llvm-5-port-closeout`
