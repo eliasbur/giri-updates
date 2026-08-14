@@ -231,6 +231,9 @@ not run concurrently with any task that runs the suite.
 
 ## Progress log
 
+- 2026-08-14 `2d042e6` — Part 1A-C: Makefile.common now captures stderr, greps for `[GIRI] Abnormal termination`, fails trace stage on crash. Added SIGINT collision comments to test2/13/14/16. Updated AgentGuide.md. TODO 1A/B/C done; next: build container and test crash detection (Part 1D).
+- 2026-08-14 `96e80e7` — Part 2C: corrected kmeans-seq.md exit code (0, not 10), kmeans.md/SUMMARY.md criterion description (instruction index, not source line). next: Part 1D container build + Part 2A/B instruction sweep.
+
 ## Handoff
 - branch `agent/open-code/llvm-5-final-defects`
 Refs: `porting/TaskNotes/Tasks/llvm-5-harness-residuals.md`,
