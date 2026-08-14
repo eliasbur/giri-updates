@@ -1,6 +1,6 @@
 ---
 title: Fix the harness's crash blindness and settle kmeans, in one pass.
-status: open
+status: done
 priority: high
 repo: giriupdates
 contexts: []
@@ -9,6 +9,8 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-14
+dateModified: 2026-08-14T11:27:32.244+02:00
+completedDate: 2026-08-14
 ---
 
 ## Goal
@@ -249,6 +251,7 @@ not run concurrently with any task that runs the suite.
 - 2026-08-14 `022de16` — Part 1D+2A+2B+2D: verified crash detection under EXIT_UNCHECKED (test9 early crash → [FAIL] at trace), EXPECTED_EXIT (test2 early crash → [FAIL]), and end-of-main crash (test3 → [FAIL] at trace, not later stage). per-test log contains `fibonacci(15) is 610`. kmeans-seq: 165 instructions, #120 = call @dump_matrix (kmeans-seq.c:276). Index sweep 114-126: only #120 matches golden [222, 276] — NOT degenerate. kmeans-pthread: 448 instructions, #402 = call @dump_points (resolves). sysconf(_SC_NPROCESSORS_ONLN) = 256, harness catches abort. cpuset unavailable. Full suite: 21 PASS / 1 FAIL (matrix_multiply-seq, FAIL-EXPECTED). next: check off DoD, open PR.
 
 ## Handoff
+- PR: giriupdates #14 https://github.com/eliasbur/giri-updates/pull/14
 - branch `agent/open-code/llvm-5-final-defects`
 Refs: `porting/TaskNotes/Tasks/llvm-5-harness-residuals.md`,
 `porting/TestAudit/llvm-5.0.2/kmeans.md`, `porting/TestAudit/llvm-5.0.2/kmeans-seq.md`,
