@@ -294,51 +294,51 @@ had to be redone. This is the last task, so nothing downstream will catch a box 
 
 Part 0:
 
-- [ ] All eight `"$_tmperr"` uses corrected; mechanism (A or B) named with the reasoning, and the
+- [x] All eight `"$_tmperr"` uses corrected; mechanism (A or B) named with the reasoning, and the
       unused `_rc` in the `EXIT_UNCHECKED` branch either dropped or explained
-- [ ] Crash detection re-verified end to end against the corrected recipe — paste the harness
+- [x] Crash detection re-verified end to end against the corrected recipe — paste the harness
       output showing `[FAIL]` at the **trace** stage, and show the temporary `.c` edit reverted
-- [ ] Evidence that the intended file is the one in use: no stray `tmperr` in any test directory,
+- [x] Evidence that the intended file is the one in use: no stray `tmperr` in any test directory,
       and no `/tmp` leak — paste the `ls` / `/tmp` check
-- [ ] Full suite re-run after the change: still 21 PASS / 1 FAIL, `matrix_multiply-seq` the only
+- [x] Full suite re-run after the change: still 21 PASS / 1 FAIL, `matrix_multiply-seq` the only
       failure — paste the suite output and the commit it was measured at
 
 Parts 1–3:
 
-- [ ] Invariant 1 verified with dumped ID sets from both pipelines, for at least one single-file and
+- [x] Invariant 1 verified with dumped ID sets from both pipelines, for at least one single-file and
       one multi-file test, plus a repeat-run comparison; the diffs (empty or not) recorded
-- [ ] Invariant 2 verified: `Runtime.h` unchanged against `master`, and `sizeof(Entry)` on the
+- [x] Invariant 2 verified: `Runtime.h` unchanged against `master`, and `sizeof(Entry)` on the
       5.0.2 build recorded together with the page size it divides
-- [ ] Invariant 3 verified from a `-srcline-mapping` run, not inferred from test diffs
-- [ ] If any invariant is **broken** rather than deviating: Parts 2–3 stopped, dumps kept, a new
+- [x] Invariant 3 verified from a `-srcline-mapping` run, not inferred from test diffs
+- [x] If any invariant is **broken** rather than deviating: Parts 2–3 stopped, dumps kept, a new
       task note written, and the PR says the port is not closeable — see "If an invariant does not
       hold, stop". If all three hold, state that explicitly instead.
-- [ ] All thirteen `llvm-5-port.md` boxes and both stale `llvm-5-test-fixes.md` boxes match reality,
+- [x] All thirteen `llvm-5-port.md` boxes and both stale `llvm-5-test-fixes.md` boxes match reality,
       with the deferred `api-breakings.yaml` box left unticked and annotated, and `test-fixes`'
       kmeans line rewritten rather than ticked
-- [ ] `SUMMARY.md`'s root-cause counts and reconciliation section state one consistent set of
+- [x] `SUMMARY.md`'s root-cause counts and reconciliation section state one consistent set of
       numbers, and the unreconciled scratch ("**Wait** — re-checking the baseline… let me recount")
       is gone
-- [ ] Every row of the per-test verdict table carries the commit its verdict describes, and rows
+- [x] Every row of the per-test verdict table carries the commit its verdict describes, and rows
       whose verdict has since changed carry the current result; the audit's original findings are
       preserved, not overwritten
-- [ ] The five historical suite results reconciled in one place, with your own Part 0 run recorded
+- [x] The five historical suite results reconciled in one place, with your own Part 0 run recorded
       as the current one and tied to its commit
-- [ ] A decision recorded on how a standing `FAIL-EXPECTED` is represented in a suite that has no
+- [x] A decision recorded on how a standing `FAIL-EXPECTED` is represented in a suite that has no
       expected-failure mechanism — or the item struck, if `llvm-5-criterion-drift-sweep` removed
       the failure
-- [ ] Decision recorded for `test6` / `test7` / `test22`, written where the suite list lives
-- [ ] Tree matches a fresh checkout: the `-seq` artifacts and all six core dumps gone, `clean:`
+- [x] Decision recorded for `test6` / `test7` / `test22`, written where the suite list lives
+- [x] Tree matches a fresh checkout: the `-seq` artifacts and all six core dumps gone, `clean:`
       extended to `core.*` — paste `git status --ignored --short test/`
-- [ ] `porting/AgentGuide.md` gained the no-asserts note
-- [ ] Decisions recorded for the two deferred code observations (the
+- [x] `porting/AgentGuide.md` gained the no-asserts note
+- [x] Decisions recorded for the two deferred code observations (the
       `ensurePostDomFrontierComputed` leak, the `properlyDominates` overload)
-- [ ] `AGENTS.md`'s `## Current state` updated to reflect the invariant results, and its "Open"
+- [x] `AGENTS.md`'s `## Current state` updated to reflect the invariant results, and its "Open"
       line updated — this task is the last one, so it says so
-- [ ] `AGENTS.md` gained a `## Known residuals` section covering **all eight** categories in Part 4,
+- [x] `AGENTS.md` gained a `## Known residuals` section covering **all eight** categories in Part 4,
       each row carrying its reason and its evidence pointer, with the never-covered ones marked as
       inherited gaps rather than regressions
-- [ ] The PR description states in one paragraph what the port does and does not guarantee, and
+- [x] The PR description states in one paragraph what the port does and does not guarantee, and
       links the register — so the answer to "is this port finished?" does not require reading five
       task notes
 - [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
