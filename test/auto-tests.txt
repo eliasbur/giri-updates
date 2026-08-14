@@ -1,3 +1,8 @@
+# 22 tests (seq variants; Dockerfile pins TEST_PARALLELISM=seq)
+# Not included:
+#   test6 (sigusr1): signals-based, requires interactive terminal setup
+#   test7 (sigint): signals-based (SIGINT/SIGALRM)
+#   test22 (fp): requires -lm linker flag; Makefile.common has no LDFLAGS override for it
 UnitTests/test1
 UnitTests/test2
 UnitTests/test3

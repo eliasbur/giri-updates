@@ -71,14 +71,45 @@ reference invalidation above), three harness tasks (`llvm-5-harness-honesty`,
 kmeans settlement; it superseded the former `llvm-5-kmeans` and
 `llvm-5-harness-signal-detection`).
 
-Open: **`llvm-5-port-closeout`** — the last task. It verifies the three critical invariants,
-reconciles the notes and reports, and fixes one defect inherited from `llvm-5-final-defects`:
-`test/Makefile.common` writes `"$_tmperr"` where it means `"$$_tmperr"` in eight places, so
-Make swallows the `$_` and the recipe uses a fixed filename `tmperr` in the test directory
-while leaking the `mktemp` file. Crash detection works because the same wrong name is used to
-write and to read — correct, by accident.
+Done: **`llvm-5-port-closeout`** — the last task. It verified the three critical invariants
+(see below), reconciled the notes and reports, fixed one defect inherited from `llvm-5-final-defects`
+(`test/Makefile.common` `$_tmperr` quoting, 8 sites, replaced by per-test `*.trace.err` file),
+and produced the Known residuals register below.
 `porting/llvm-releases/5.0.0/api-breakings.yaml` is triaged for only 4 of its 388
 entries; finishing it is deliberately deferred.
+
+The three critical invariants are verified (2026-08-14, `llvm-5-port-closeout`):
+1. **Numbering determinism** — `-bbnum`/`-lsnum` assign identical IDs across instrumentation and
+   slicing runs, and across consecutive runs. Verified for test2 (single-file, 5 BBs, 20 LS points)
+   and test16 (multi-file via `llvm-link`, 8 BBs); repeat runs agree. Both pipelines query IDs from
+   the same `.all.bc` using `QueryBasicBlockNumbers`/`QueryLoadStoreNumbers` pass, which iterate
+   `Module::iterator` / `Function::iterator` / `BasicBlock::iterator` deterministically.
+2. **`Entry` struct ABI** — `include/Giri/Runtime.h` is byte-identical to `master` on this branch
+   (`git diff` empty). `sizeof(Entry)` = 32 on x86_64 LP64; divides sysconf(_SC_PAGESIZE) = 4096
+   exactly (128 entries per page).
+3. **Debug info** — `-srcline-mapping` produces populated `file:line` mappings matching source.
+   Verified on test2: `func` at `ifelse.c:4–5`, `main` at `ifelse.c:8–14`, with `NIL` for
+   instructions lacking debug info (allocas, unannotated stores).
+
+## Known residuals
+
+The port is functionally closed. These are the reasons a future agent might reopen work, what is
+acceptable, and where the evidence lives. Inherited gaps (never covered by any LLVM version) are
+marked [inherited]; regressions (broken by the port) are [regression].
+
+| What | Status | Why acceptable / Evidence |
+|------|--------|---------------------------|
+| `matrix_multiply-seq` — 1 FAIL | Acceptable standing failure | Criterion drift: LLVM 3.4's `matrix_mult:285` is 5.0.2's `matrix_mult:292` (+7 offset within output-printing loop). 16 extra lines are traceable data-dependence from the drift. Verdict: `FAIL-EXPECTED`. Evidence: `llvm-5-criterion-drift-sweep` (`df93296`); AGENTS.md Current state |
+| `kmeans-pthread` — cannot run | [inherited] gap | Asserts on hosts where `sysconf(_SC_NPROCESSORS_ONLN)` exceeds 100. Container reports 256 CPUs; harness now catches the abort at trace stage. A cpuset-restricted run (`--cpuset-cpus=0-3`) would be needed but is unavailable on the current Ubuntu 14.04 container runtime. Harness correctly reports `[FAIL]` with `[GIRI] Abnormal termination` marker |
+| `kmeans-seq` — 2-line golden | Verified not degenerate | Sweep of indices 114–126 in `main` found index **120** (`call @dump_matrix`, `kmeans-seq.c:276`) as the only one reproducing `[222, 276]`. Golden did not drift unlike `matrix_mult`. Evidence: `llvm-5-final-defects` (`e194151`) |
+| No pthread suite coverage | [inherited] gap | `Dockerfile:5` pins `TEST_PARALLELISM=seq`. `matrix_multiply-pthread` and `pca-pthread` checked once by hand in `llvm-5-matrix-multiply-verdict` — both clean. Not ongoing coverage; one-off measurement at that commit |
+| test6 (sigusr1), test7 (sigint), test22 (fp) | [inherited] gap | Have golden files but not in `auto-tests.txt`. test6/test7 require interactive terminal setup for signals; test22 needs `-lm` linker flag. Decision recorded in `test/auto-tests.txt` header |
+| HelloWorld, histogram, linear_regression, word_count | [inherited] gap | No golden file on **any** LLVM version. Not wired into the suite. Never verifiable |
+| `api-breakings.yaml` — 384/388 untriaged | Deferred by decision | The port demonstrably triaged and addressed the relevant entries as it fixed compiler errors. Finishing the remaining 384 (mostly header moves, unused API changes) is deferred. 4 entries carry `relevance: "affected"` / `status: "addressed"` |
+| `ensurePostDomFrontierComputed` — memory leak | Acceptable | `DynamicGiri::ensurePostDomFrontierComputed` (`Giri.cpp:67`) `new`s a `PostDominatorTreeWrapperPass` per function and never frees it. The pass's process (`opt`) exits immediately after, so the leak is bounded by process lifetime and has no observable cost |
+| `properlyDominates` overload change | Verified acceptable | The port changed `DT.properlyDominates(Node, DT[*CDFI])` (DomTreeNode overload) to `DT.properlyDominates(Node->getBlock(), *CDFI)` (BasicBlock overload). The 21-test suite exercising the repaired post-dominator path is the evidence. No divergence observed |
+| `signal(SIGKILL, …)` — no-op | Harmless | `runtime/Giri/Tracing.cpp:278`. SIGKILL cannot be caught or ignored per POSIX. The `signal()` call is a no-op (returns `SIG_ERR`). Harmless: the handler for other signals already ensures crash cleanup |
+| `signal` handlers reinstall on every trace entry | Acceptable cost | `recordInit` in `Tracing.cpp` installs handlers eagerly. Re-entry during tracing would reinstall, which is correct but slightly wasteful. Not a defect; the handlers are idempotent |
 
 ## Containers — two kinds
 

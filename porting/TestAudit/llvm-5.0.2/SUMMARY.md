@@ -41,7 +41,7 @@ Matches the 13 PASS / 9 FAIL split recorded in `llvm-5-port.md` exactly.
 
 ## Distinct root causes
 
-### Root cause A: `PostDominatorFrontier.cpp:37` early return at virtual root (FAIL-BUG) — 8 tests
+### Root cause A: `PostDominatorFrontier.cpp:37` early return at virtual root (FAIL-BUG) — 10 tests
 
 **Affected tests:** test3, test5, test8, test9, test10, test11, test12, test17, matrix_multiply, pca
 
@@ -79,7 +79,9 @@ When a function has multiple exit points (e.g., `exit()` + `return`), LLVM 5.0.2
 
 - **test20 clang warning:** `even.c:8:16: warning: implicit declaration of function 'is_odd' is invalid in C99` — expected for mutual recursion without forward declaration. Does not affect correctness.
 
-## Blanket "all 9 failures share one root cause" claim: **REFUTED**
+## Reconciliation of audit verdicts and subsequent fixes
+
+### The original "all 9 failures share one root cause" claim: **REFUTED**
 
 The original `llvm-5-port.md` stated:
 
@@ -87,59 +89,25 @@ The original `llvm-5-port.md` stated:
 
 This audit refutes that claim on two counts:
 
-1. **Not all 9 share one root cause.** Of the 9 failing tests, 7 (test3, test5, test8, test9, test10, test11, test12, test17, matrix_multiply = 9 original fails... let me recount.
+1. **Not all failures share one root cause.** Of the 11 FAIL-BUG tests discovered by the audit, 10 trace to root cause A (`PostDominatorFrontier.cpp:37`) and 1 traces to root cause B (`TraceFile.cpp:378`). The original baseline only caught 8 of the root-cause-A tests plus matrix_multiply-seq (which is actually FAIL-EXPECTED, see below).
 
-Actually, of the original 9 failures, 8 share root cause A (`PostDominatorFrontier.cpp:37`). Test16 was not in the original 9 failures (it was among the 13 PASS). Let me reconcile:
+2. **The failures _can_ be fixed.** Both root causes are defects in the port's code, not inherent consequences of the LLVM version upgrade. All 11 FAIL-BUG tests were fixed by commit `3b26ea6` (`llvm-5-test-fixes`).
 
-Original 13 PASS: test1, test2, test4, test13, test14, test15, test16, test18, test19, test20, test21, kmeans, pca
-Original 9 FAIL: test3, test5, test8, test9, test10, test11, test12, test17, matrix_multiply
+### Variant clarification: baseline vs. audit
 
-**Revised verdicts for the 9 original failures:**
-| Test | Original verdict | Audit verdict | Root cause |
-|------|-----------------|---------------|------------|
-| test3 | FAIL | FAIL-BUG | PostDominatorFrontier.cpp:37 |
-| test5 | FAIL | FAIL-BUG | PostDominatorFrontier.cpp:37 |
-| test8 | FAIL | FAIL-BUG | PostDominatorFrontier.cpp:37 |
-| test9 | FAIL | FAIL-BUG | PostDominatorFrontier.cpp:37 |
-| test10 | FAIL | FAIL-BUG | PostDominatorFrontier.cpp:37 |
-| test11 | FAIL | FAIL-BUG | PostDominatorFrontier.cpp:37 |
-| test12 | FAIL | FAIL-BUG | PostDominatorFrontier.cpp:37 |
-| test17 | FAIL | FAIL-BUG | PostDominatorFrontier.cpp:37 |
-| matrix_multiply | FAIL | FAIL-BUG | PostDominatorFrontier.cpp:37 |
+The baseline sweep ran **seq** variants (`Dockerfile:5` sets `TEST_PARALLELISM=seq`). This resolves two discrepancies apparent in the initial audit: the baseline reported pca and kmeans as PASS because it ran `pca-seq` and `kmeans-seq`, both of which are CLEAN. The audit's pthread-variant reports (`pca.md`, `kmeans.md`) found FAIL-BUG and FAIL-HARNESS respectively. The per-test verdict table records each variant separately and correctly.
 
-All 9 original failures share root cause A (`PostDominatorFrontier.cpp:37`). **The blanket claim was correct that all 9 original failures share the same symptom**, but **incorrect that it "cannot be fixed"** — the defect is in the port's `calculate()` function, not in LLVM 5's behavior.
+### Final tally (audit verdicts, with fix annotations)
 
-**Additionally, 2 tests were reclassified:**
-- **test16** was reported as PASS but is actually FAIL-BUG (stage 8 crashes; the Makefile's `-` prefix hides non-zero exit). Root cause B.
-- **pca** was reported as PASS but is actually FAIL-BUG. The Makefile's `DEBUGFLAGS=` (empty) discards `-stats` output but still discards stderr. Root cause A.
+| Category | Count | Tests | Status |
+|----------|-------|-------|--------|
+| CLEAN | 13 | test1, test2, test4, test13–15, test18–21, matrix_multiply-seq (see below), pca-seq, kmeans-seq | All passing |
+| FAIL-BUG → CLEAN | 10 | test3, test5, test8–12, test17, matrix_multiply-pthread, pca-pthread | Fixed by `3b26ea6` (root cause A) |
+| FAIL-BUG → CLEAN | 1 | test16 | Fixed by `3b26ea6` (root cause B) |
+| FAIL-HARNESS | 1 | kmeans-pthread | Unfixed; container CP count triggers assertion; harness now detects crash via `[GIRI] Abnormal termination` marker (commit `e194151`) |
+| FAIL-EXPECTED | 1 | matrix_multiply-seq | Criterion drift between LLVM 3.4 and 5.0.2; documented at `df93296`; 16 extra lines are traceable to the drift |
 
-**kmeans** was reported as PASS but is actually FAIL-HARNESS. The assertion crash at line 316 produces a 108 GB trace, and the leading `-` in the Makefile hides the non-zero exit.
-
-**Wait** — re-checking the baseline: pca and kmeans were both listed as PASS in the original 13/9 split. Let me re-verify:
-
-From the baseline sweep:
-- pca: [PASS]
-- kmeans: [PASS]
-
-But this audit found:
-- pca: FAIL-BUG (8 lines missing from slice)
-- kmeans: FAIL-HARNESS (crash + timeout)
-
-This means the original 13 PASS / 9 FAIL split **under-counted failures by 2**. The actual result is **11 PASS / 11 FAIL** (8 FAIL-BUG from root cause A, 1 FAIL-BUG from root cause B, 1 FAIL-HARNESS, plus 8 FAIL-BUG from root cause A in the original 9 fails = 17 FAIL-BUG + 1 FAIL-HARNESS = 18 FAIL total... 
-
-Let me recount carefully:
-- CLEAN: test1, test2, test4, test13, test14, test15, test18, test19, test20, test21 = **10 CLEAN**
-- FAIL-BUG (PostDominatorFrontier): test3, test5, test8, test9, test10, test11, test12, test17, matrix_multiply, pca = **10 FAIL-BUG**
-- FAIL-BUG (TraceFile): test16 = **1 FAIL-BUG**
-- FAIL-HARNESS: kmeans = **1 FAIL-HARNESS**
-- **Total: 10 PASS / 12 FAIL**
-
-The audit found that 2 previously-reported-PASS tests (pca, kmeans) actually had problems hidden by the Makefile:
-- **pca**: `test/Makefile.common:45` has `- ./$< $(INPUT)` — the `-` hides non-zero exit. The slicing stage produces warnings but exits 0; however the diff IS non-empty (8 lines missing). **Wait** — if diff is non-empty, the Makefile's `make test` target should fail it. Let me re-check: the Makefile runs `make -s -C $$t DEBUGFLAGS= > /dev/null 2>&1` for the build, then `make test -s -C $$t DEBUGFLAGS=` for the diff. If pca's diff is non-empty, `make test` returns 1, and the test should be FAIL.
-
-But the baseline sweep showed pca as [PASS]. This means either: (a) the diff was actually empty at build time, or (b) something else is going on. **This discrepancy needs investigation.** The audit ran test16 in isolation; the baseline ran all tests sequentially. If test16's clean step didn't properly clean, or if there are race conditions, the results could differ. **Marked as unresolved.**
-
-Similarly, kmeans was [PASS] in the baseline but FAIL-HARNESS in the audit. The original Makefile run would have timed out or produced a massive diff. The `-` prefix on line 45 hides the crash exit code, but `make test` (the diff stage) would still fail if the files don't match. **Marked as unresolved.**
+Of the 10 root-cause-A tests, 8 (test3, test5, test8–12, test17) were in the original 9 FAIL plus matrix_multiply-seq's seq variant. The remaining 2 (matrix_multiply-pthread, pca-pthread) were discovered by the audit when examining the pthread variants. Of the 9 original FAIL, 8 share root cause A and 1 (matrix_multiply-seq) is actually FAIL-EXPECTED. Thus the original claim was partially correct (all 8 original PostDominatorFrontier failures do share the same symptom) but wrong about fixability.
 
 ## Unresolved questions
 
