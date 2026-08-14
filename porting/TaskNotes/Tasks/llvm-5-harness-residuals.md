@@ -30,7 +30,7 @@ completedDate: 2026-08-13
 > not from the check — a crash that leaves a usable trace still scores PASS.
 >
 > Not reopened here. `porting/AgentGuide.md` has been corrected to describe the real behaviour, and
-> the fix is `llvm-5-harness-signal-detection`, which also covers the wider ambiguity this exposed:
+> the fix is `llvm-5-final-defects`, which also covers the wider ambiguity this exposed:
 > a traced binary's exit status in `1..31` may be `main`'s return value **or** a signal number.
 
 ## Goal

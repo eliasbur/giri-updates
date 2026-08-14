@@ -68,7 +68,7 @@ Write the outcome — verified, or deviating and why — into this note and into
 - `llvm-5-test-fixes.md`: two boxes are stale — the PR (`giriupdates #7`) is merged as `3b26ea6`,
   and the suite line ("21 of 22 pass; kmeans is the only expected failure") does not match the
   recorded result (the one failure is `matrix_multiply-seq`; kmeans-seq's PASS survived the honest
-  harness, kmeans-pthread was never re-run — see `llvm-5-harness-fallout` and `llvm-5-kmeans`).
+  harness, kmeans-pthread was never re-run — see `llvm-5-harness-fallout` and `llvm-5-final-defects`).
 - **Reconcile the four suite results that now exist**, in one place, and say which one is current:
   13 PASS / 9 FAIL (baseline, pre-`3b26ea6`), 21 PASS / 1 FAIL (post-fixes, suppressive harness),
   7 PASS / 15 FAIL (`2fb3b6d`, honest harness before the exit-status opt-in), and 21 PASS / 1 FAIL
@@ -83,18 +83,20 @@ Write the outcome — verified, or deviating and why — into this note and into
   `FAIL-BUG` for nine unit tests that now pass. Do not rewrite the audit's findings — downstream
   tasks treat them as the record of what was true then — but each row needs the commit it describes,
   and any row whose verdict has since changed needs the current result next to it.
-- **Decide how the port ships if `matrix_multiply-seq` stays `FAIL-EXPECTED`.** The harness has no
-  concept of an expected failure, so the suite will report `21 PASS / 1 FAIL` forever and every
-  future agent will have to be told that the red line is fine. Either document it as the accepted
-  end state in `AGENTS.md` and `AgentGuide.md`, or introduce an explicit expected-failure marker.
-  Wait for `llvm-5-criterion-drift-sweep` before choosing — if that task turns the verdict into a
-  defect and fixes it, this item disappears.
+- **Decide how the port ships with a standing `FAIL-EXPECTED`.** This is now live, not contingent:
+  `llvm-5-criterion-drift-sweep` (`df93296`) settled `matrix_multiply-seq` as a genuine criterion
+  drift — 3.4's `matrix_mult:285` is 5.0.2's `matrix_mult:292`, and the golden is exactly
+  reproducible from 292. The verdict will not change, so the suite reports `21 PASS / 1 FAIL`
+  permanently and every future agent has to be told the red line is fine. Choose one:
+  document it as the accepted end state in `AGENTS.md` and `AgentGuide.md`, or add an explicit
+  expected-failure marker to the harness so the suite can report `21 PASS / 1 XFAIL / 0 FAIL`.
+  The second is more work and touches `test/Makefile` + `test/Makefile.common`; take it only if you
+  judge a permanently red suite to be the worse outcome, and say which you chose and why.
 - `porting/TestAudit/llvm-5.0.2/SUMMARY.md`: the "Root cause A — 8 tests" heading sits above a
   10-test list, and the reconciliation block below the verdict table is unreconciled scratch work
   ("**Wait** — re-checking the baseline: … let me recount"). Rewrite that section to state the
   final numbers once. Leave the per-test verdict table alone — downstream tasks treat it as
-  authoritative — and coordinate with `llvm-5-criterion-drift-sweep` and `llvm-5-kmeans`, which
-  also edit this file.
+  authoritative — and coordinate with `llvm-5-final-defects`, which also edits this file.
 - Record a decision on `test/UnitTests/{test6,test7,test22}`: each has a golden file but is absent
   from `test/auto-tests.txt`. Either wire them in or write the exclusion reason where the suite
   list lives, so it is not rediscovered by the next audit.
@@ -139,10 +141,10 @@ Write the outcome — verified, or deviating and why — into this note and into
   (`AGENTS.md` → "Containers — two kinds").
 - The `bbid` / `lsid` targets in `test/Makefile.common` pipe into `view -` and hang under
   `docker exec` — run the underlying `opt … -dump-bbid=true` / `-dump-lsid=true` directly.
-- This task edits `SUMMARY.md`, and so do `llvm-5-criterion-drift-sweep` and `llvm-5-kmeans`.
+- This task edits `SUMMARY.md`, and so does `llvm-5-final-defects`.
   Rebase rather than resolving by hand-merging two rewrites of the same section.
 - Do not change any `ans-*.txt`, criterion file, or the test Makefiles; the remaining harness work
-  belongs to `llvm-5-harness-signal-detection`. Cleaning the tree is the only test-adjacent action
+  belongs to `llvm-5-final-defects`. Cleaning the tree is the only test-adjacent action
   in scope here.
 - Live-shared checkout: `git add` explicit paths only, never `git add -A`.
 
@@ -162,9 +164,8 @@ Write the outcome — verified, or deviating and why — into this note and into
 - ~~llvm-5-harness-residuals~~
 - ~~llvm-5-seq-variant-failures~~
 - ~~llvm-5-matrix-multiply-verdict~~
-- llvm-5-criterion-drift-sweep
-- llvm-5-kmeans
-- llvm-5-harness-signal-detection
+- ~~llvm-5-criterion-drift-sweep~~
+- llvm-5-final-defects
 
 This task runs last: the invariant checks can be done at any time, but the note and report
 reconciliation is only final once the others have stopped moving the numbers.

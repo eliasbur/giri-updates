@@ -8,7 +8,7 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 
 ## Current state
 
-As of this entry (`99423d6`), `port/llvm-5.0.2` has an honest harness with per-test exit
+As of this entry (`df93296`), `port/llvm-5.0.2` has an honest harness with per-test exit
 status opt-in (`EXPECTED_EXIT`/`EXIT_UNCHECKED` in `test/Makefile.common`). The suite
 reports **21 PASS / 1 FAIL**. The single failure is `matrix_multiply-seq`.
 
@@ -48,15 +48,19 @@ its handler ends in `exit(signum)` (`runtime/Giri/Tracing.cpp:253-256`), so a se
 traced program exits 11 and an aborting one exits 6 — `128 + n` never appears, and a small
 exit status is ambiguous between `main`'s return value and a crash. The reliable marker is
 the stderr line `[GIRI] Abnormal termination, signal number <n>`.
-`llvm-5-harness-signal-detection` closes this; `porting/AgentGuide.md` documents it.
+`llvm-5-final-defects` closes this; `porting/AgentGuide.md` documents it.
 
-The port (`llvm-5-port.md`), full-suite audit (`llvm-5-test-audit`), three test defects
-(`llvm-5-test-fixes`: PostDominanceFrontier virtual-root recursion, `findAllStoresForLoad`
-nestID issue; `llvm-5-seq-variant-failures`: the `DenseMap` reference invalidation above,
-plus seq-variant audit reports) and three harness tasks (`llvm-5-harness-honesty`,
-`llvm-5-harness-fallout`, `llvm-5-harness-residuals`) are done, as is
-`llvm-5-matrix-multiply-verdict` apart from the correction above. Open tasks, in order:
-`llvm-5-kmeans`, `llvm-5-harness-signal-detection`, `llvm-5-port-closeout`.
+Done: the port (`llvm-5-port`), the full-suite audit (`llvm-5-test-audit`), three code
+defects (`llvm-5-test-fixes` — PostDominanceFrontier virtual-root recursion and the
+`findAllStoresForLoad` nestID collision; `llvm-5-seq-variant-failures` — the `DenseMap`
+reference invalidation above), three harness tasks (`llvm-5-harness-honesty`,
+`llvm-5-harness-fallout`, `llvm-5-harness-residuals`) and the two-step
+`matrix_multiply-seq` verdict (`llvm-5-matrix-multiply-verdict`,
+`llvm-5-criterion-drift-sweep`).
+
+Open, in order: **`llvm-5-final-defects`** (harness crash detection + the kmeans decision;
+supersedes the former `llvm-5-kmeans` and `llvm-5-harness-signal-detection`), then
+`llvm-5-port-closeout`.
 `porting/llvm-releases/5.0.0/api-breakings.yaml` is triaged for only 4 of its 388
 entries; finishing it is deliberately deferred.
 

@@ -93,7 +93,7 @@ An `opt` crash always produces `[FAIL]`. A deliberately wrong `EXPECTED_EXIT` al
 >
 > The one reliable signal is on stderr: `[GIRI] Abnormal termination, signal number <n>`, printed
 > unconditionally by `ERROR` (`Tracing.cpp:41`). Grep the per-test log for it before trusting a
-> low exit status. Closing this properly is `llvm-5-harness-signal-detection`.
+> low exit status. Closing this properly is `llvm-5-final-defects`.
 
 ## Debugging
 

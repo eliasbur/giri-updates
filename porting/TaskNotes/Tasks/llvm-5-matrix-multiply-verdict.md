@@ -221,7 +221,7 @@ docker exec giri-mm make test -s -C /giri/test/matrix_multiply TEST_PARALLELISM=
 - `-debug` / `-debug-only=` are no-ops on the no-asserts 5.0.2 toolchain, as are Giri's own
   `assert()`s (`Release` CMake build).
 - A traced binary never dies by a signal — Giri's runtime handles the fatal signals and exits with
-  the signal *number* (`runtime/Giri/Tracing.cpp:253-256`). See `llvm-5-harness-signal-detection`.
+  the signal *number* (`runtime/Giri/Tracing.cpp:253-256`). See `llvm-5-final-defects`.
 - Evidence goes in the report, not in `test/_test_logs/` — that directory is gitignored scratch that
   the next suite run overwrites.
 - Live-shared checkout: `git add` explicit paths only, never `git add -A`.

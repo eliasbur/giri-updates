@@ -284,7 +284,7 @@ place, and a traced binary's exit status is checked against a per-test `EXPECTED
 must be 0) rather than swallowed. `porting/AgentGuide.md` → "Declaring an acceptable exit status"
 documents it. You should not need to run stages by hand; if you do, say why in the progress log.
 
-One caveat, tracked as `llvm-5-harness-signal-detection`: a traced binary never dies by a signal —
+One caveat, tracked as `llvm-5-final-defects`: a traced binary never dies by a signal —
 Giri's runtime handles the fatal signals and exits with the signal *number*
 (`runtime/Giri/Tracing.cpp:253-256`), so a crashing traced program looks like a normal exit with a
 small status. It does not affect `matrix_multiply-seq`, whose crash is in `opt` and is caught
