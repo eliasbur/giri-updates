@@ -71,7 +71,12 @@ reference invalidation above), three harness tasks (`llvm-5-harness-honesty`,
 kmeans settlement; it superseded the former `llvm-5-kmeans` and
 `llvm-5-harness-signal-detection`).
 
-Done: **`llvm-5-port-closeout`** — the last task. It verified the three critical invariants
+Open: **`llvm-5-closeout-corrections`** — a short follow-up. A head-agent review of `83bf08d` found
+four closeout Definition-of-done boxes ticked against work that was not done, one of which put a
+false row into the `## Known residuals` register below. No container needed. Until it lands, treat
+the register's last row and `SUMMARY.md`'s per-test verdict table as unreliable.
+
+Done: **`llvm-5-port-closeout`** — It verified the three critical invariants
 (see below), reconciled the notes and reports, fixed one defect inherited from `llvm-5-final-defects`
 (`test/Makefile.common` `$_tmperr` quoting, 8 sites, replaced by per-test `*.trace.err` file),
 and produced the Known residuals register below.
