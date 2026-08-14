@@ -18,9 +18,14 @@ Discharge the parts of the port that were declared done without evidence: fix th
 `llvm-5-final-defects` left behind, verify the three critical invariants, and bring the notes and
 reports in line with what is actually true on the branch.
 
-**This is the last task on `port/llvm-5.0.2`.** Nothing else is open. Anything you find and do not
-fix has to be written down as a known issue with a reason, because there is no later task to inherit
-it.
+**This is the last task on `port/llvm-5.0.2`.** Nothing else is open, so anything you find and do
+not fix has to be written down with a reason — Part 4 is where it goes, and it is the deliverable
+that makes the port's state legible without reading five task notes.
+
+**It is a verification task, so it can end by opening work rather than closing it.** The three
+invariants have never been checked. If invariant 1 fails, the port is not closeable and this note
+tells you to stop rather than reconcile documentation around a broken tree — see "If an invariant
+does not hold, stop". Do Parts 0 and 1 first for that reason.
 
 ## Why this task exists
 
@@ -126,6 +131,26 @@ Part 0 first and reuse the container.
 Write the outcome — verified, or deviating and why — into this note and into `AGENTS.md`'s
 `## Current state`.
 
+### If an invariant does not hold, stop
+
+"Deviating and why" covers a difference you can explain and accept. It does **not** cover a broken
+invariant, and invariant 1 is the one that can be broken:
+
+- **Invariant 1 divergence is a correctness bug, not a finding.** If the same `.all.bc` gets
+  different IDs from the two pipelines, or two consecutive runs disagree, then a trace recorded by
+  the instrumented binary does not mean what the slicer thinks it means — and the 21 passing tests
+  are luck, not evidence. Do not reconcile documentation around that. Stop Part 2, keep the dumps,
+  write a new task note describing the divergence with the exact `opt` invocations, and say plainly
+  in the PR that the port is not closeable until it is fixed.
+- **Invariant 2**: if `sizeof(Entry)` does not divide the page size on this build, same rule — the
+  runtime's buffer arithmetic (`Runtime.h:68-71`) depends on it.
+- **Invariant 3**: a mapping that is empty or wrong is a bug in `SourceLineMapping.cpp`. A mapping
+  that is populated and correct but formatted differently from 3.4 is a deviation — explain it.
+
+A verified-with-caveats outcome is fine and goes in the register (Part 4). A broken invariant ends
+the task early. Either way, do Part 0 and Part 1 before spending effort on Parts 2 and 3, so a stop
+costs you the least.
+
 > **Deliberately out of scope: the `api-breakings.yaml` triage.**
 > `porting/llvm-releases/5.0.0/api-breakings.yaml` has 388 entries, of which exactly 4 carry
 > `relevance: "affected"` / `status: "addressed"`; the other 384 are still `relevance: "unknown"` /
@@ -217,6 +242,47 @@ Write the outcome — verified, or deviating and why — into this note and into
   verification if suspect 1 is fixed" — suspect 1 **was** fixed (`3b26ea6`), so either verify it or
   record that the 21-test suite exercising the repaired path is the evidence you are accepting.
 
+## Part 4 — the residual register
+
+Everything above either fixes something or records a decision about one thing. Nothing produces the
+answer to the question the next person will actually ask: **what is still wrong with this port?**
+Today that answer is scattered across `AGENTS.md`, `SUMMARY.md` and five task notes, and after this
+task there is no one left to assemble it.
+
+Add a **`## Known residuals`** section to `AGENTS.md` on this branch, directly under
+`## Current state` — one table, one row per residual, each row saying what it is, why it is
+acceptable (or that it is not), and where the evidence lives. Keep it short enough to stay read;
+move detail into the existing reports and link them. Trim `## Current state`'s prose where the
+register now carries the fact, so the two do not drift apart.
+
+The register must account for **every** category below. Several are things this port never covered
+rather than things it broke — say which, explicitly, because "not verified" read as "regression" has
+already cost this project time:
+
+1. **Standing test failures.** `matrix_multiply-seq`, `FAIL-EXPECTED`, criterion drift +7
+   (`df93296`). Cross-reference whatever you decided about representing it in the suite.
+2. **Cannot be run here.** `kmeans-pthread` — asserts on any host where
+   `sysconf(_SC_NPROCESSORS_ONLN)` exceeds the point count; a cpuset-restricted run was found
+   unavailable on the current container runtime (`llvm-5-final-defects`). Say what a future agent
+   would need in order to run it.
+3. **Not covered by the suite.** `Dockerfile:5` pins `TEST_PARALLELISM=seq`, so no suite result says
+   anything about a pthread variant. `matrix_multiply-pthread` and `pca-pthread` were checked by
+   hand once (`llvm-5-matrix-multiply-verdict`) and were clean — record that as a one-off
+   measurement at its commit, not as ongoing coverage.
+4. **Has a golden, not wired in.** `test6`, `test7`, `test22` — carry your Part 2 decision here.
+5. **No golden at all, on any LLVM version.** `test/HelloWorld`, `test/histogram`,
+   `test/linear_regression`, `test/word_count`. These were never verifiable, including on 3.4
+   (`SUMMARY.md:152-162`), so they are a coverage gap the port inherited, not one it created. Say so
+   in those words.
+6. **Deferred paperwork.** `api-breakings.yaml`: 4 of 388 entries triaged, deferred by decision
+   2026-08-12. Point at the reason, not just the number.
+7. **Known code observations left unfixed**, with your Part 3 decisions: the
+   `ensurePostDomFrontierComputed` leak, the `properlyDominates` overload. Add the
+   `signal(SIGKILL, …)` no-op at `Tracing.cpp:278` — it cannot work, is harmless, and has now been
+   rediscovered twice.
+8. **Whatever Parts 0–3 turn up.** If you find something and do not fix it, it goes here with the
+   reason. "Not in scope" is a valid reason; silence is not.
+
 ## How to report
 
 Every Definition-of-done item below asks for a **pasted artifact** — a command's actual output, a
@@ -244,6 +310,9 @@ Parts 1–3:
 - [ ] Invariant 2 verified: `Runtime.h` unchanged against `master`, and `sizeof(Entry)` on the
       5.0.2 build recorded together with the page size it divides
 - [ ] Invariant 3 verified from a `-srcline-mapping` run, not inferred from test diffs
+- [ ] If any invariant is **broken** rather than deviating: Parts 2–3 stopped, dumps kept, a new
+      task note written, and the PR says the port is not closeable — see "If an invariant does not
+      hold, stop". If all three hold, state that explicitly instead.
 - [ ] All thirteen `llvm-5-port.md` boxes and both stale `llvm-5-test-fixes.md` boxes match reality,
       with the deferred `api-breakings.yaml` box left unticked and annotated, and `test-fixes`'
       kmeans line rewritten rather than ticked
@@ -266,6 +335,12 @@ Parts 1–3:
       `ensurePostDomFrontierComputed` leak, the `properlyDominates` overload)
 - [ ] `AGENTS.md`'s `## Current state` updated to reflect the invariant results, and its "Open"
       line updated — this task is the last one, so it says so
+- [ ] `AGENTS.md` gained a `## Known residuals` section covering **all eight** categories in Part 4,
+      each row carrying its reason and its evidence pointer, with the never-covered ones marked as
+      inherited gaps rather than regressions
+- [ ] The PR description states in one paragraph what the port does and does not guarantee, and
+      links the register — so the answer to "is this port finished?" does not require reading five
+      task notes
 - [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
 
 ## How to build and test
