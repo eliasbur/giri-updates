@@ -35,9 +35,13 @@ three benchmark Makefiles use `?=`, so a suite result says nothing about a pthre
 unless that variant was run by hand. This is also the answer to the audit's two "Unresolved
 questions": the baseline scored `pca-seq`/`kmeans-seq` (both clean), the audit analysed the
 pthread variants. Re-verified by `llvm-5-matrix-multiply-verdict`: `matrix_multiply-pthread`
-and `pca-pthread` both pass with empty diffs. `kmeans-pthread` has **not** been re-run since
-the pre-`3b26ea6` audit, whose findings (assertion abort at 256 CPUs, 108 GB trace) are its
-last measured state. Always name the variant when recording a result.
+and `pca-pthread` both pass with empty diffs. `kmeans-pthread` aborts on hosts with many CPUs
+(`sysconf(_SC_NPROCESSORS_ONLN)` = 256 inside the container; `kmeans-pthread.c:316` asserts
+`num_threads == num_procs`, but with 100 points only 100 threads are created). The harness now
+correctly catches this crash at the trace stage via the `[GIRI] Abnormal termination` marker
+(verified in `llvm-5-final-defects`). A cpuset-restricted run (`--cpuset-cpus=0-3`) would be
+needed for a many-cpu host but is unavailable on the current Ubuntu 14.04 container runtime.
+Always name the variant when recording a result.
 
 The original honest-harness run (7 PASS / 15 FAIL) has been resolved: all 15
 non-zero-exit UnitTests are inherent program behaviour and now declare their expected
@@ -46,9 +50,10 @@ exit codes in their Makefiles. `test9` (uninitialised `sum` → UB) uses `EXIT_U
 **A traced binary never dies by a signal.** Giri's runtime handles the fatal signals and
 its handler ends in `exit(signum)` (`runtime/Giri/Tracing.cpp:253-256`), so a segfaulting
 traced program exits 11 and an aborting one exits 6 — `128 + n` never appears, and a small
-exit status is ambiguous between `main`'s return value and a crash. The reliable marker is
-the stderr line `[GIRI] Abnormal termination, signal number <n>`.
-`llvm-5-final-defects` closes this; `porting/AgentGuide.md` documents it.
+exit status is ambiguous between `main`'s return value and a crash. The trace recipe
+(`test/Makefile.common`) now detects this: it captures stderr, greps for the marker
+`[GIRI] Abnormal termination`, and fails the trace stage if found — covering both
+`EXIT_UNCHECKED` and `EXPECTED_EXIT` cases. `porting/AgentGuide.md` documents the mechanism.
 
 Done: the port (`llvm-5-port`), the full-suite audit (`llvm-5-test-audit`), three code
 defects (`llvm-5-test-fixes` — PostDominanceFrontier virtual-root recursion and the

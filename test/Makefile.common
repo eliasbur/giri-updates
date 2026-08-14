@@ -49,12 +49,25 @@ $(NAME).slice : $(NAME).all.bc $(NAME).trace
 
 $(NAME).trace: $(NAME).trace.exe
 ifeq (1,$(EXIT_UNCHECKED))
-	@ ./$< $(INPUT); \
+	@ _tmperr=$$(mktemp); \
+		./$< $(INPUT) 2>"$_tmperr"; \
 		_rc=$$?; \
-		if [ "$$_rc" -ge 128 ]; then exit $$_rc; fi # signal death (>=128) fails; normal exit ignored
+		if grep -q '\[GIRI\] Abnormal termination' "$_tmperr"; then \
+			cat "$_tmperr"; rm -f "$_tmperr"; \
+			echo "Traced binary terminated abnormally"; \
+			exit 1; \
+		fi; \
+		cat "$_tmperr"; rm -f "$_tmperr"
 else
-	@ ./$< $(INPUT); \
+	@ _tmperr=$$(mktemp); \
+		./$< $(INPUT) 2>"$_tmperr"; \
 		_rc=$$?; \
+		if grep -q '\[GIRI\] Abnormal termination' "$_tmperr"; then \
+			cat "$_tmperr"; rm -f "$_tmperr"; \
+			echo "Traced binary terminated abnormally"; \
+			exit 1; \
+		fi; \
+		cat "$_tmperr"; rm -f "$_tmperr"; \
 		if [ "$(EXPECTED_EXIT)" != "-1" ] && [ "$$_rc" -ne "$(EXPECTED_EXIT)" ]; then \
 			echo "Exit status $$_rc does not match expected $(EXPECTED_EXIT)"; \
 			exit 1; \

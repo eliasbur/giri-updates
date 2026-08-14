@@ -6,7 +6,7 @@
 - **Root cause:** none — test passes cleanly on LLVM 5.0.2
 
 ## What the test does
-`kmeans-seq.c` generates 100 points in 3-dimensional space (range 0-10), runs a k-means clustering algorithm with 10 clusters for 10 iterations, prints final cluster means, and returns the number of clusters. The slicing criterion is `main:120` (the 120th LLVM instruction in the `main` function). The golden slice contains 2 source lines.
+`kmeans-seq.c` generates 100 points in 3-dimensional space (range 0-10), runs a k-means clustering algorithm with 10 clusters for 10 iterations, prints final cluster means, and returns 0 (line 287). The slicing criterion is `main:120` (the 120th LLVM instruction in the `main` function). The golden slice contains 2 source lines.
 
 ## Stage-by-stage output
 
@@ -29,7 +29,7 @@ No output (stdout or stderr).
 No output (stdout or stderr).
 
 ### Stage 7: `./kmeans-seq.trace.exe`
-Stdout: dimension info, "Generating points", "Generating means", "Starting iterative algorithm" (+ period trail), "Final Means:" (10 rows of 3 ints), "Cleaning up". Exit code 10 (expected — program returns cluster count).
+Stdout: dimension info, "Generating points", "Generating means", "Starting iterative algorithm" (+ period trail), "Final Means:" (10 rows of 3 ints), "Cleaning up". Exit code 0 (program returns 0 at line 287).
 Stderr: empty.
 
 ### Stage 8: `opt ... -dgiri ... kmeans-seq.all.bc -o /dev/null`
