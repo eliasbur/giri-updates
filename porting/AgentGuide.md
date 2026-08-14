@@ -84,16 +84,17 @@ An `opt` crash always produces `[FAIL]`. A deliberately wrong `EXPECTED_EXIT` al
 > SIGINT, SIGQUIT, SIGTERM, SIGILL and SIGFPE, and that handler ends in `exit(signum)`
 > (`Tracing.cpp:253-256`). A segfaulting traced program therefore exits **11**, an aborting one
 > **6** — normal exits, indistinguishable by status alone from a `main()` that returned the same
-> number. Two consequences:
+> number.
 >
-> - Under `EXIT_UNCHECKED=1` the `rc >= 128` guard cannot fire, so a crash in that one test
->   (`test9`) is only caught if it also breaks a later stage. Do not rely on it.
-> - Under `EXPECTED_EXIT = N`, avoid declaring an `N` that is also a handled signal number
->   (2, 3, 4, 6, 8, 11, 15) without saying why — such a test would score PASS on that crash.
+> The trace recipe (`test/Makefile.common`) captures stderr to a temp file, checks for the marker
+> `[GIRI] Abnormal termination`, and fails the stage if found. This catches crashes under both
+> `EXIT_UNCHECKED=1` and `EXPECTED_EXIT = N`, regardless of exit code. stderr is passed through via
+> `cat` so it appears in the per-test log.
 >
-> The one reliable signal is on stderr: `[GIRI] Abnormal termination, signal number <n>`, printed
-> unconditionally by `ERROR` (`Tracing.cpp:41`). Grep the per-test log for it before trusting a
-> low exit status. Closing this properly is `llvm-5-final-defects`.
+> Under `EXPECTED_EXIT = N`, avoid declaring an `N` that is also a handled signal number
+> (2, 3, 4, 6, 8, 11, 15) without saying why — the [GIRI] marker catches the crash, but the
+> collision is still worth noting. Comments documenting the collision are in-place for the four
+> tests that declare `EXPECTED_EXIT = 2` (SIGINT).
 
 ## Debugging
 
