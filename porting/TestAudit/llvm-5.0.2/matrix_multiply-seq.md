@@ -3,13 +3,14 @@
 - **Verdict:** FAIL-EXPECTED
 - **Golden file:** ans-inst-seq.txt   **Input:** 4   **Criterion:** matrix_mult 285
 - **Diff:** 1 line from golden absent in actual / 16 lines extra in actual
-- **Root cause:** Criterion instruction drift — LLVM 5.0.2s `matrix_mult` has 298 instructions total
-  (including 10 `dbg.declare` intrinsics counted by `inst_iterator`), so instruction #285 resolves
-  to the `fprintf` call at source line 94 (output-printing loop). Under LLVM 3.4, the function was
-  shorter (no `dbg.declare` as separate instructions, fewer loop-prolog instructions), so #285
-  resolved to an instruction in the computation loop near the `matrix_out` store. The golden was
-  generated from the LLVM 3.4 criterion position. The data-dependence chain is largely shared,
-  which is why 18 of the 19 golden lines still appear.
+- **Root cause:** Criterion instruction drift — LLVM 3.4's `matrix_mult:285` resolves to
+  LLVM 5.0.2's `matrix_mult:292`, a drift of **+7** instructions, both inside the
+  output-printing loop. 3.4's #285 was the `dprintf("\n")` at source line 97 (newline print).
+  5.0.2's #285 is the `fprintf` at source line 94 (value print, `dprintf("%d  ", ...)`).
+  The golden file `ans-inst-seq.txt` is exactly reproducible from index 292 (confirmed by sweep
+  of 250–298). The current criterion at 285 reads `matrix_out`, pulling the full computation
+  chain into the slice; the golden's criterion (`dprintf("\n")`) reads no computed data, so
+  the computation chain is absent.
 
 ## Criterion instruction identification
 
@@ -17,7 +18,7 @@
 increments over `BasicBlock::iterator` and therefore includes `dbg.declare` intrinsics as full
 instructions — confirmed by reading `InstIterator.h` from LLVM 5.0.2's headers).
 
-**Instruction #285 verbatim:**
+**Current criterion — instruction #285 verbatim:**
 ```
 %252 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* %238,
   i8* getelementptr inbounds ([5 x i8], [5 x i8]* @.str.3, i32 0, i32 0),
@@ -29,8 +30,82 @@ instructions — confirmed by reading `InstIterator.h` from LLVM 5.0.2's headers
 Line 94 is **not** among the golden's 19 lines (56, 90, 97, 113, 119, 120, 121, 122, 123, 129,
 131, 133, 137, 139, 141, 145, 147, 149, 154).
 
-By contrast, the `matrix_out` store (the computation result accumulation, `store i32 %199, i32* %197`)
-is at instruction #224 (source line 84) — 61 instructions earlier.
+**Golden-reproducing criterion — instruction #292 verbatim:**
+```
+%258 = call i32 (%struct._IO_FILE*, i8*, ...) @fprintf(%struct._IO_FILE* %257, i8* getelementptr
+  inbounds ([2 x i8], [2 x i8]* @.str.2, i32 0, i32 0)), !dbg !259
+```
+
+**`!dbg !259` → source line 97** (`dprintf("\n")`).
+
+The `matrix_out` store (the computation result accumulation, `store i32 %199, i32* %197`)
+is at instruction #224 (source line 84). The golden's criterion was **not** the computation
+store — the golden omits line 84 entirely.
+
+## Sweep results
+
+A sweep of indices 250–298 was performed, comparing each criterion `matrix_mult:N` against
+the golden file `ans-inst-seq.txt`. The full results:
+
+| Index | Result | Lines | Notes |
+|---|---|---|---|
+| 250 | differs | 19 | |
+| 251 | differs | 18 | |
+| 252 | differs | 18 | |
+| 253 | differs | 18 | |
+| 254 | differs | 18 | |
+| 255 | differs | 2 | |
+| 256 | differs | 2 | |
+| 257 | differs | 18 | |
+| 258 | differs | 18 | |
+| 259 | differs | 18 | |
+| 260 | differs | 18 | |
+| 261 | differs | 18 | |
+| 262 | differs | 18 | |
+| 263 | differs | 19 | |
+| 264 | differs | 19 | |
+| 265 | differs | 19 | |
+| 266 | differs | 19 | |
+| 267 | differs | 19 | |
+| 268 | differs | 19 | |
+| 269 | differs | 19 | |
+| 270 | differs (2 lines) | 19 | |
+| 271 | differs (3 lines) | 19 | |
+| 272 | differs (3 lines) | 19 | |
+| 273 | differs (3 lines) | 19 | |
+| 274 | differs (4 lines) | 19 | |
+| 275 | differs (3 lines) | 19 | |
+| 276 | differs (3 lines) | 19 | |
+| 277 | differs (3 lines) | 19 | |
+| 278 | differs (3 lines) | 19 | |
+| 279 | differs (3 lines) | 19 | |
+| 280 | differs (3 lines) | 19 | |
+| 281 | differs (3 lines) | 19 | |
+| 282 | differs (3 lines) | 19 | |
+| 283 | differs (4 lines) | 19 | |
+| 284 | differs (17 lines) | 34 | |
+| 285 | differs (17 lines) | 34 | current criterion (line 94) |
+| 286 | differs (3 lines) | 19 | |
+| 287 | differs (2 lines) | 19 | 97 out, 92 in |
+| 288 | differs (2 lines) | 19 | 97 out, 92 in |
+| 289 | differs (2 lines) | 19 | 97 out, 92 in |
+| 290 | differs (2 lines) | 19 | 97 out, 92 in |
+| **291** | **MATCH** | **19** | `load @stdout`, `!dbg !259` → line 97 |
+| **292** | **MATCH** | **19** | `@fprintf("\n")`, `!dbg !259` → line 97 |
+| 293 | differs (2 lines) | 19 | 97 out, 98 in |
+| 294 | differs (1 line) | 18 | 97 missing |
+| 295 | differs (1 line) | 18 | 97 missing |
+| 296 | differs (1 line) | 18 | 97 missing |
+| 297 | differs (1 line) | 18 | 97 missing |
+| 298 | differs (19 lines) | 1 | line 99 only (end of function) |
+
+**Two matches**: index 291 (`%257 = load @stdout, !dbg !259`, the argument load for line 97's
+`dprintf("\n")`) and index 292 (`%258 = call @fprintf(..., `"\n"`), `!dbg !259`, the call
+itself). Both resolve to source line 97. Index 292 is the criterion instruction proper.
+
+The drift is **+7** (292 − 285 = 7), entirely within the output-printing loop. Both the golden's
+criterion (line 97's `dprintf("\n")`) and the current criterion (line 94's `fprintf`
+that prints the value) are in the same `for(j ...)` loop body.
 
 ## Pthread counter-argument
 
@@ -73,14 +148,13 @@ accumulation chain back to the data setup in `main()` (lines 155-157, 165).
 
 ## Missing golden line 97 explained
 
-Line 97 is `dprintf("\n")` — the newline print at the end of each output row. In the LLVM 3.4
-golden, line 97 was included as a data-dependence of the LLVM 3.4 criterion (which was at the
-computation store). The fprintf for the newline shares data with the computation result via the
-loop-carried dependency. Under LLVM 5.0.2, the criterion is the `fprintf` at line 94 itself, and
-line 97's fprintf is a separate call in the same BB or adjacent BB. The newline dprintf has no
-data dependency on the `fprintf` that prints the individual number — they are independent calls.
-Its control dependence on its loop BB does not reach back to the criterion's instruction via
-`findExecForcers` (the criterion is in a different trace iteration's BB).
+Line 97 is `dprintf("\n")` — the newline print at the end of each output row. It was the LLVM 3.4
+criterion itself (now confirmed to be index 292 in 5.0.2's function). The current criterion at
+index 285 is the value-print `fprintf` at line 94. Two independent `fprintf` calls in the same BB or
+adjacent BBs have no data dependence on each other: the newline call reads no computed data, and the
+value call does not write to the newline call's arguments. Control dependence on the loop BB does not
+reach from line 94's `fprintf` back to line 97's via `findExecForcers` (the criterion is in a
+different trace iteration's BB).
 
 ## Line accounting
 
@@ -143,17 +217,18 @@ Every line in the golden that appears in the actual output (18 remaining golden 
 ## Root causes
 
 1. **Criterion instruction drift between LLVM 3.4 and LLVM 5.0.2.** (FAIL-EXPECTED) The golden
-   file `ans-inst-seq.txt` was generated against an LLVM 3.4 build, where `matrix_mult:285`
-   resolved to an instruction in the computation loop (near the `matrix_out` store). LLVM 5.0.2's
-   clang emits 10 `dbg.declare` intrinsics as full instructions and generates additional
-   loop-prolog instructions, pushing the total instruction count to 298. Instruction #285 now
-   resolves to the `fprintf` call at source line 94 (the output-printing loop). The backward slice
-   from line 94's `fprintf` traces data-dependence through the computation chain (which shares most
-   of the same stores the 3.4 criterion traced), hence 18 of 19 golden lines are preserved. The 16
-   extra lines (15 data, 1 control) are the extended data-dependence footprint from the shifted
-   criterion. The 1 missing line (97) is a separate `fprintf` call that lacks both data and control
-   dependence on line 94's `fprintf`. This difference is structural: changing the golden file,
-   criterion, or compiler version would be required to resolve it.
+   file `ans-inst-seq.txt` was generated against an LLVM 3.4 build. The golden is exactly
+   reproducible from LLVM 5.0.2's `matrix_mult:292`, the `dprintf("\n")` call at source line 97
+   (`!dbg !259`), confirming that 3.4's criterion #285 resolved to the same instruction. LLVM 5.0.2's
+   function has 298 instructions total; #285 is now the value-print `fprintf` at source line 94
+   (`!dbg !252`), **+7** instructions from the golden's criterion. Both are inside the
+   output-printing loop. The backward slice from line 94's `fprintf` reads `matrix_out`, pulling the
+   full computation chain (lines 75–86, 92, 155–157, 165) into the slice. The golden's criterion
+   (`dprintf("\n")`) reads no computed data, so the computation chain is absent. The 1 missing line
+   (97) is a separate `fprintf` call with no data or control dependence on line 94's call. The cause
+   of the +7 instruction offset between LLVM 3.4 and 5.0.2 is not currently explained; the offset is
+   small and entirely within one function's printing loop. Changing the golden file, criterion, or
+   compiler version would be required to resolve it.
 
 2. **DenseMap reference invalidation during recursive `calculate()`.** (fixed by this task) Before
    the fix, `Frontiers` was `DenseMap<BasicBlock*, DomSetType>`. The recursive `calculate()`

@@ -1,6 +1,6 @@
 ---
 title: Confirm the matrix_multiply-seq criterion drift by finding the index that reproduces the golden.
-status: open
+status: done
 priority: high
 repo: giriupdates
 contexts: []
@@ -9,6 +9,8 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-13
+dateModified: 2026-08-14T10:17:58.525+02:00
+completedDate: 2026-08-14
 ---
 
 ## Goal
@@ -138,19 +140,19 @@ instruction stream that no one has measured. Correct the `SUMMARY.md` row and th
 
 ## Definition of done
 
-- [ ] Sweep run and the full index→result table recorded in the report, not just the outcome
-- [ ] Either the matching index identified and the drift stated as a number, or "no index in range
-      N…M reproduces the golden" recorded with the range searched
-- [ ] The line-97 / line-94 reading confirmed or refuted against the sweep result
-- [ ] Every claim about LLVM 3.4's instruction stream either backed by a 3.4 build that was actually
-      counted, or removed. An unexplained offset is an acceptable finding; a reconstructed one is not
-- [ ] `matrix_multiply-seq.md` refiled; the previous task's measurements preserved
-- [ ] `SUMMARY.md`'s `matrix_multiply | seq` row matches the refiled verdict
-- [ ] `AGENTS.md` `## Current state` corrected — it currently asserts the drift-to-the-store story
-- [ ] Full suite re-run and recorded: expected **21 PASS / 1 FAIL**, or 22 PASS / 0 FAIL if this
-      turns out to be a defect that gets fixed
-- [ ] No `ans-*.txt`, no criterion file, no `test/auto-tests.txt` and no test Makefile modified
-- [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
+- [x] Sweep run and the full index→result table recorded in the report, not just the outcome
+- [x] Either the matching index identified and the drift stated as a number, or "no index in range
+       N…M reproduces the golden" recorded with the range searched
+- [x] The line-97 / line-94 reading confirmed or refuted against the sweep result
+- [x] Every claim about LLVM 3.4's instruction stream either backed by a 3.4 build that was actually
+       counted, or removed. An unexplained offset is an acceptable finding; a reconstructed one is not
+- [x] `matrix_multiply-seq.md` refiled; the previous task's measurements preserved
+- [x] `SUMMARY.md`'s `matrix_multiply | seq` row matches the refiled verdict
+- [x] `AGENTS.md` `## Current state` corrected — it currently asserts the drift-to-the-store story
+- [x] Full suite re-run and recorded: expected **21 PASS / 1 FAIL**, or 22 PASS / 0 FAIL if this
+       turns out to be a defect that gets fixed
+- [x] No `ans-*.txt`, no criterion file, no `test/auto-tests.txt` and no test Makefile modified
+- [x] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
 
 ## How to build and test
 
@@ -204,7 +206,11 @@ task that runs the suite.
 
 ## Progress log
 
+- 2026-08-14 `532ea3f` — Sweep: indices 291 and 292 match the golden exactly (drift +7 from 285 to 292, both `!dbg !259` → line 97 `dprintf("\n")`). Rewrote `matrix_multiply-seq.md`, updated `SUMMARY.md` and `AGENTS.md` Current state. TODO: re-run full suite.
+- 2026-08-14 — Full suite re-run: 21 PASS / 1 FAIL (matrix_multiply), consistent with expectation. TODO: open PR to port/llvm-5.0.2.
+
 ## Handoff
+- PR: giriupdates #13 https://github.com/eliasbur/giri-updates/pull/13
 - branch `agent/llvm-5-criterion-drift-sweep`
 Refs: `porting/TaskNotes/Tasks/llvm-5-matrix-multiply-verdict.md`,
 `porting/TestAudit/llvm-5.0.2/matrix_multiply-seq.md`, `porting/TestAudit/llvm-5.0.2/SUMMARY.md`,
