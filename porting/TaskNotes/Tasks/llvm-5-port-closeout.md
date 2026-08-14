@@ -9,17 +9,27 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-12
+dateModified: 2026-08-14
 ---
 
 ## Goal
 
-Discharge the parts of the port that were declared done without evidence: verify the three critical
-invariants, and bring the notes and reports in line with what is actually true on the branch.
+Discharge the parts of the port that were declared done without evidence: fix the one defect
+`llvm-5-final-defects` left behind, verify the three critical invariants, and bring the notes and
+reports in line with what is actually true on the branch.
+
+**This is the last task on `port/llvm-5.0.2`.** Nothing else is open. Anything you find and do not
+fix has to be written down as a known issue with a reason, because there is no later task to inherit
+it.
 
 ## Why this task exists
 
-`llvm-5-port.md` is marked `status: done`, but four of its Definition-of-done boxes are still
-unchecked, and one of them is substantive rather than clerical:
+`llvm-5-port.md` is marked `status: done`, but **every one of its thirteen** Definition-of-done boxes
+is still unchecked (`llvm-5-port.md:162-174`) — the note records its own completion in a prose
+`## Current state` section instead. Most of the thirteen are clerical: the CMake build, the
+`Dockerfile`, the pass loading and the suite run are all demonstrably real on this branch and just
+need ticking against the evidence that already exists. Two are not clerical — the `api-breakings.yaml`
+sweep (deliberately deferred, see the box below) and this one:
 
 > - [ ] The three invariants in `AGENTS.md` verified or their deviation explained in the PR
 
@@ -29,6 +39,70 @@ rewrote both numbering passes (`lib/Utility/BasicBlockNumbering.cpp` and
 approach of stashing `Value*` inside `MDNode` no longer exists — and numbering determinism across
 the instrumentation run and the slicing run is what makes a trace interpretable at all. 20 passing
 tests are indirect evidence, not a check.
+
+## Part 0 — the defect `llvm-5-final-defects` left in the trace recipe
+
+### Why
+
+`llvm-5-final-defects` (`e194151`) gave the harness crash detection. The mechanism is right; the
+shell quoting is not. `test/Makefile.common:52-60` and `62-70`:
+
+```make
+@ _tmperr=$$(mktemp); \
+	./$< $(INPUT) 2>"$_tmperr"; \
+	_rc=$$?; \
+	if grep -q '\[GIRI\] Abnormal termination' "$_tmperr"; then \
+```
+
+The **assignment** escapes its dollar correctly (`$$(mktemp)`, `$$?`). Every **use** of the variable
+does not: `"$_tmperr"` has one `$`, so GNU Make reads `$_` as a reference to the variable named `_`,
+finds it undefined, expands it to nothing, and hands the shell the literal word `tmperr`. There are
+**eight** such uses — lines 53, 55, 56, 60 in the `EXIT_UNCHECKED` branch and 63, 65, 66, 70 in the
+other.
+
+The recipe therefore does three things it was not written to do:
+
+1. `mktemp` creates a file under `/tmp` that is never written to, never read and never removed. One
+   per trace target per suite run.
+2. The traced binary's stderr goes to a **fixed** filename, `tmperr`, in the test's own directory.
+3. `tmperr` is not in any `.gitignore` (checked: `git check-ignore` reports no match) and `clean:`
+   (`Makefile.common:138`) does not remove it, so an interrupted run leaves an untracked file inside
+   a test directory.
+
+Crash detection works anyway, because the same wrong name is used to write and to read. That is why
+`llvm-5-final-defects` verified green. Its evidence is honest about what it observed — a crash did
+produce `[FAIL]` at the trace stage — but what it exercised is the accidental path, not the intended
+one. Re-verification is part of this task, not a formality.
+
+### What to do
+
+Correct all eight uses. Pick **A** unless you can argue otherwise:
+
+- **A — a named per-test file.** Drop `mktemp`; redirect to `$(NAME).trace.err`, `cat` it as now,
+  and leave it on disk. Add it to `clean:` and to `.gitignore` (`*.err`). This removes the `/tmp`
+  leak outright and makes a failing stage's stderr inspectable afterwards — the same reason
+  `.PRECIOUS: $(NAME).trace` (`Makefile.common:27-28`) already keeps the trace around for
+  post-mortem. Note that `2>` truncates, so a stale file from an earlier run cannot cause a false
+  failure.
+- **B — the minimal fix.** Write `$$_tmperr` in all eight places and change nothing else. Defensible
+  if you judge that a closeout task should not add a new artifact kind; it keeps the `/tmp` file
+  short-lived but discards stderr the moment the stage ends.
+
+Either way the `EXIT_UNCHECKED` branch still assigns `_rc` and never uses it (`Makefile.common:54`).
+Drop it there or leave a comment saying why it stays — do not leave it unexplained.
+
+### How to verify
+
+Not by asserting it. The suite run this part needs is the same container session Part 1 needs, so do
+Part 0 first and reuse the container.
+
+1. Re-run one crash injection end to end, the way `llvm-5-final-defects` did: a temporary
+   `raise(SIGSEGV)` in one test's `.c`, confirm `[FAIL]` at the **trace** stage, revert the edit and
+   show the revert. One test is enough — the mechanism is shared, and the earlier task already
+   covered both branches.
+2. Show that the intended file is the one being used: `ls` the test directory (option A) or confirm
+   no stray `tmperr` and no growth in `/tmp` (option B) after a run.
+3. Full suite, and it must still be 21 PASS / 1 FAIL with `matrix_multiply-seq` the only failure.
 
 ## Part 1 — verify the three invariants (`AGENTS.md` → "Critical invariants")
 
@@ -63,18 +137,27 @@ Write the outcome — verified, or deviating and why — into this note and into
 
 ## Part 2 — reconcile the notes and reports
 
-- `llvm-5-port.md`: tick or strike the four stale Definition-of-done boxes; the `AGENTS.md`
-  `## Current state` box is now satisfied.
+- `llvm-5-port.md`: tick or strike **all thirteen** Definition-of-done boxes, against the evidence
+  that already exists rather than by assertion — most are discharged by the note's own
+  `## Current state` prose, by the CMake tree, or by the suite you run in Part 0. Two exceptions:
+  the `api-breakings.yaml` box stays unticked and annotated (see the box below), and the invariants
+  box is ticked by Part 1 of this task. The `AGENTS.md` `## Current state` box is already satisfied.
 - `llvm-5-test-fixes.md`: two boxes are stale — the PR (`giriupdates #7`) is merged as `3b26ea6`,
-  and the suite line ("21 of 22 pass; kmeans is the only expected failure") does not match the
-  recorded result (the one failure is `matrix_multiply-seq`; kmeans-seq's PASS survived the honest
-  harness, kmeans-pthread was never re-run — see `llvm-5-harness-fallout` and `llvm-5-final-defects`).
-- **Reconcile the four suite results that now exist**, in one place, and say which one is current:
-  13 PASS / 9 FAIL (baseline, pre-`3b26ea6`), 21 PASS / 1 FAIL (post-fixes, suppressive harness),
-  7 PASS / 15 FAIL (`2fb3b6d`, honest harness before the exit-status opt-in), and 21 PASS / 1 FAIL
-  (`5fbca9d`, honest harness with `EXPECTED_EXIT` — the per-test table in
-  `llvm-5-harness-fallout.md` is the authoritative version). A reader currently has to know the
-  commit history to tell which number applies to the tree in front of them.
+  and the suite line ("21 of 22 pass; kmeans is the only expected failure") is now doubly wrong.
+  The one failure is `matrix_multiply-seq`, and **kmeans is settled**: `llvm-5-final-defects`
+  (`e194151`) confirmed `kmeans-seq` passes honestly and that its two-line golden is **not**
+  degenerate — a sweep of instruction indices 114–126 in `main` found index 120 to be the only one
+  reproducing `[222, 276]` (#120 is `call @dump_matrix`, `kmeans-seq.c:276`). `kmeans-pthread`
+  still aborts on a many-CPU host, the harness now catches that abort at the trace stage, and the
+  suite does not run it. Rewrite the line, do not just tick it.
+- **Reconcile the five suite results that now exist**, in one place, and say which one is current:
+  13 PASS / 9 FAIL (baseline, pre-`3b26ea6`, suppressive harness), 21 PASS / 1 FAIL (`3b26ea6`,
+  post-fixes, still suppressive), 7 PASS / 15 FAIL (`2fb3b6d`, honest harness before the
+  exit-status opt-in), 21 PASS / 1 FAIL (`5fbca9d`, honest harness with `EXPECTED_EXIT` — the
+  per-test table in `llvm-5-harness-fallout.md` is the authoritative version), and 21 PASS / 1 FAIL
+  (`e194151`, honest harness plus crash detection). A reader currently has to know the commit
+  history to tell which number applies to the tree in front of them. Your own Part 0 run is the
+  sixth and the one to record as current — quote it, and say which commit it was measured at.
 - `porting/TestAudit/llvm-5.0.2/SUMMARY.md`'s per-test verdict table now mixes **two vintages**, and
   that is worse than uniformly stale. `llvm-5-seq-variant-failures` (`3945134`) added a `Variant`
   column and post-fix rows for `matrix_multiply-seq`, `pca-seq` and `kmeans-seq`, but left every
@@ -92,69 +175,147 @@ Write the outcome — verified, or deviating and why — into this note and into
   expected-failure marker to the harness so the suite can report `21 PASS / 1 XFAIL / 0 FAIL`.
   The second is more work and touches `test/Makefile` + `test/Makefile.common`; take it only if you
   judge a permanently red suite to be the worse outcome, and say which you chose and why.
-- `porting/TestAudit/llvm-5.0.2/SUMMARY.md`: the "Root cause A — 8 tests" heading sits above a
-  10-test list, and the reconciliation block below the verdict table is unreconciled scratch work
-  ("**Wait** — re-checking the baseline: … let me recount"). Rewrite that section to state the
-  final numbers once. Leave the per-test verdict table alone — downstream tasks treat it as
-  authoritative — and coordinate with `llvm-5-final-defects`, which also edits this file.
+- `porting/TestAudit/llvm-5.0.2/SUMMARY.md`: the "Root cause A … — 8 tests" heading (`SUMMARY.md:44`)
+  sits above a 10-test list (`:46`), and the block below the verdict table (`:82-142`) is
+  unreconciled scratch work that argues with itself in the file — "let me recount", "**Wait** — 
+  re-checking the baseline", three different totals (11 PASS / 11 FAIL, 10 PASS / 12 FAIL, an
+  abandoned "18 FAIL total"), and two questions marked unresolved at `:140` and `:142` that the
+  "Unresolved questions" section immediately below already answers as **RESOLVED**. Rewrite it to
+  state the final numbers once. Leave the per-test verdict table alone — downstream tasks treat it
+  as authoritative. `llvm-5-final-defects` no longer contends for this file; it already corrected
+  the two kmeans rows at `e194151`, so build on that rather than reverting it.
 - Record a decision on `test/UnitTests/{test6,test7,test22}`: each has a golden file but is absent
-  from `test/auto-tests.txt`. Either wire them in or write the exclusion reason where the suite
-  list lives, so it is not rediscovered by the next audit.
+  from `test/auto-tests.txt`. `SUMMARY.md:154-162` already gives a per-directory exclusion reason
+  (test6/test7 are signal-driven, test22 needs `-lm`) — that is a finding, not a decision, and it
+  lives where nobody wiring up the suite will look. Either wire them in or put the reason where the
+  suite list lives, so it is not rediscovered by the next audit.
 
 ## Part 3 — housekeeping
 
-- `test/matrix_multiply/` still holds build artifacts from the last fix session
-  (`matrix_multiply-pthread.{all.bc,bc,trace,trace.bc,trace.exe,trace.s,slice,slice.loc}` and
-  `matrix_file_out_pthreads.txt`). They are gitignored, but `make clean -C test/matrix_multiply`
-  and `clean-all` should be run so the tree matches a fresh checkout.
+- The tree does not match a fresh checkout. As of `e194151` it carries, all gitignored:
+  `test/matrix_multiply/matrix_multiply-seq.{all.bc,bc,slice,slice.loc,trace,trace.bc,trace.exe,trace.s}`,
+  `test/matrix_multiply/matrix_file_out_serial.txt`, and **six core dumps totalling 6.3 MB** —
+  `test/matrix_multiply/core.{3787,4048,4053,4396,5873}` and `test/UnitTests/test9/core.3071`.
+  (The artifacts are `-seq`, not the `-pthread` set this note originally named; the `-seq` variant
+  is what the suite runs.) Run `make clean` and `clean-all` across `test/`.
+- **`clean:` does not remove the cores.** `Makefile.common:138` deletes
+  `*.ll *.bc *.o *.s *.slice *.slice.loc *.exe *.trace ans.txt` and nothing else, so `core.*` and
+  each benchmark's own output file survive every clean and accumulate across sessions — which is how
+  six of them got here. Add `core.*` to the `clean:` rule. Whatever you decide in Part 0 about the
+  stderr file belongs in the same rule.
 - `porting/AgentGuide.md` mentions `DEBUGFLAGS` and the pipeline but not that `-debug` /
   `-debug-only=` are inert on a no-asserts toolchain and that Giri's own `assert()`s are compiled
-  out by the `Release` CMake build. Both cost previous tasks time; add a line.
+  out by the `Release` CMake build (test programs' `assert()`s do still fire — that is how
+  `kmeans-pthread` aborts). Both cost previous tasks time; add a line. Still absent at `e194151`.
+- **Record the known issues nothing else will pick up.** `SUMMARY.md:174-176` notes that
+  `DynamicGiri::ensurePostDomFrontierComputed` (`Giri.cpp:67`) `new`s a
+  `PostDominatorTreeWrapperPass` per function and never frees it, and defers it to "a cleanup task"
+  that was never written. There is no later task. Decide and write it down — fixing it is a
+  defensible small change, and so is declaring it acceptable for a pass whose process exits
+  immediately after. Say which, and why. Do the same for `SUMMARY.md:170-172`'s suspect 2: the
+  `properlyDominates` overload change is still recorded as "impact unclear, would need separate
+  verification if suspect 1 is fixed" — suspect 1 **was** fixed (`3b26ea6`), so either verify it or
+  record that the 21-test suite exercising the repaired path is the evidence you are accepting.
+
+## How to report
+
+Every Definition-of-done item below asks for a **pasted artifact** — a command's actual output, a
+diff, a table. Do not tick a box by asserting the property; tick it by pasting what you saw into the
+progress log or the report. Three earlier tasks ticked boxes for steps they had not run, and each
+had to be redone. This is the last task, so nothing downstream will catch a box ticked on faith.
 
 ## Definition of done
+
+Part 0:
+
+- [ ] All eight `"$_tmperr"` uses corrected; mechanism (A or B) named with the reasoning, and the
+      unused `_rc` in the `EXIT_UNCHECKED` branch either dropped or explained
+- [ ] Crash detection re-verified end to end against the corrected recipe — paste the harness
+      output showing `[FAIL]` at the **trace** stage, and show the temporary `.c` edit reverted
+- [ ] Evidence that the intended file is the one in use: no stray `tmperr` in any test directory,
+      and no `/tmp` leak — paste the `ls` / `/tmp` check
+- [ ] Full suite re-run after the change: still 21 PASS / 1 FAIL, `matrix_multiply-seq` the only
+      failure — paste the suite output and the commit it was measured at
+
+Parts 1–3:
 
 - [ ] Invariant 1 verified with dumped ID sets from both pipelines, for at least one single-file and
       one multi-file test, plus a repeat-run comparison; the diffs (empty or not) recorded
 - [ ] Invariant 2 verified: `Runtime.h` unchanged against `master`, and `sizeof(Entry)` on the
       5.0.2 build recorded together with the page size it divides
 - [ ] Invariant 3 verified from a `-srcline-mapping` run, not inferred from test diffs
-- [ ] `llvm-5-port.md` and `llvm-5-test-fixes.md` checkboxes match reality, with the deferred
-      `api-breakings.yaml` box left unticked and annotated
+- [ ] All thirteen `llvm-5-port.md` boxes and both stale `llvm-5-test-fixes.md` boxes match reality,
+      with the deferred `api-breakings.yaml` box left unticked and annotated, and `test-fixes`'
+      kmeans line rewritten rather than ticked
 - [ ] `SUMMARY.md`'s root-cause counts and reconciliation section state one consistent set of
       numbers, and the unreconciled scratch ("**Wait** — re-checking the baseline… let me recount")
       is gone
 - [ ] Every row of the per-test verdict table carries the commit its verdict describes, and rows
       whose verdict has since changed carry the current result; the audit's original findings are
       preserved, not overwritten
-- [ ] The four historical suite results reconciled in one place, with the current one identified
+- [ ] The five historical suite results reconciled in one place, with your own Part 0 run recorded
+      as the current one and tied to its commit
 - [ ] A decision recorded on how a standing `FAIL-EXPECTED` is represented in a suite that has no
       expected-failure mechanism — or the item struck, if `llvm-5-criterion-drift-sweep` removed
       the failure
-- [ ] Decision recorded for `test6` / `test7` / `test22`
-- [ ] `test/matrix_multiply` cleaned; `porting/AgentGuide.md` gained the no-asserts note
-- [ ] `AGENTS.md`'s `## Current state` updated to reflect the invariant results
+- [ ] Decision recorded for `test6` / `test7` / `test22`, written where the suite list lives
+- [ ] Tree matches a fresh checkout: the `-seq` artifacts and all six core dumps gone, `clean:`
+      extended to `core.*` — paste `git status --ignored --short test/`
+- [ ] `porting/AgentGuide.md` gained the no-asserts note
+- [ ] Decisions recorded for the two deferred code observations (the
+      `ensurePostDomFrontierComputed` leak, the `properlyDominates` overload)
+- [ ] `AGENTS.md`'s `## Current state` updated to reflect the invariant results, and its "Open"
+      line updated — this task is the last one, so it says so
 - [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
+
+## How to build and test
+
+Nothing is built or tested in the devcontainer (`AGENTS.md` → "Containers — two kinds"). Part 0 and
+Part 1 both need `opt`, so use **one** image build and one container for the whole task:
+
+```bash
+docker build -t giri:5.0.2 .
+docker run -d --name giri-closeout -v $PWD:/giri -w /giri giri:5.0.2 sleep infinity
+docker exec giri-closeout bash -lc 'source /giri/utils/build.sh'
+```
+
+Rebuild with `make -j$(nproc) -C /giri/build`, not `docker build`. Do Part 0 first: it changes the
+harness, and Part 1's ID dumps and Part 2's suite number should both be measured against the
+corrected tree.
 
 ## Traps
 
 - Everything that runs `opt` runs inside the Giri container, never in the devcontainer
   (`AGENTS.md` → "Containers — two kinds").
-- The `bbid` / `lsid` targets in `test/Makefile.common` pipe into `view -` and hang under
-  `docker exec` — run the underlying `opt … -dump-bbid=true` / `-dump-lsid=true` directly.
-- This task edits `SUMMARY.md`, and so does `llvm-5-final-defects`.
-  Rebase rather than resolving by hand-merging two rewrites of the same section.
-- Do not change any `ans-*.txt`, criterion file, or the test Makefiles; the remaining harness work
-  belongs to `llvm-5-final-defects`. Cleaning the tree is the only test-adjacent action
-  in scope here.
+- The `bbid` / `lsid` / `prtrace` targets in `test/Makefile.common` pipe into `view -` (vim) and hang
+  under `docker exec` — run the underlying `opt … -dump-bbid=true` / `-dump-lsid=true` or
+  `/giri/build/bin/prtrace <file>` directly.
+- Never invoke a test directory's default target (`make -C <dir>` with no target) — `all:` depends on
+  `lib:` and rebuilds the CMake tree. `make test` does not.
+- `matrix_multiply-seq` is settled (`FAIL-EXPECTED`, criterion drift +7, `df93296`). It must still be
+  the one failing test when you are done. Do not reopen it.
+- `-debug` / `-debug-only=` are no-ops on the no-asserts 5.0.2 toolchain, as are Giri's own
+  `assert()`s (`Release` CMake build) — the very fact Part 3 asks you to document.
+- `test/Makefile.common` scores all 22 tests. Re-run the whole suite after every edit to it.
+- Do not change any `ans-*.txt` or criterion file. `test/Makefile.common` **is** in scope now — the
+  Part 0 fix and the `clean:` rule — but only for those two changes; `llvm-5-final-defects` is done
+  and no other harness work is pending.
+- `SUMMARY.md` is yours alone now; no other task contends for it. Do not revert `e194151`'s kmeans
+  corrections while rewriting the reconciliation block.
+- Evidence goes in the report or this note; `test/_test_logs/` is gitignored scratch that the next
+  suite run overwrites.
 - Live-shared checkout: `git add` explicit paths only, never `git add -A`.
 
 ## Files / scope
 
+- `test/Makefile.common` — Part 0's eight-site fix and the `clean:` rule only
+- `.gitignore` — only if Part 0 mechanism A is chosen
 - `porting/TaskNotes/Tasks/llvm-5-port.md`, `porting/TaskNotes/Tasks/llvm-5-test-fixes.md`
 - `porting/TestAudit/llvm-5.0.2/SUMMARY.md`
 - `porting/AgentGuide.md`, `AGENTS.md`, `test/auto-tests.txt` (only if test6/7/22 are wired in)
 - `porting/TaskNotes/Tasks/llvm-5-port-closeout.md` (this note — progress log)
-- Read-only: `lib/**`, `include/**`, `runtime/**`, `tools/**`, `test/**` apart from cleaning
+- Read-only: `lib/**`, `include/**`, `runtime/**`, `tools/**`, `test/**` apart from cleaning and the
+  two `Makefile.common` changes above
 
 ## Blocked by
 
@@ -165,14 +326,16 @@ Write the outcome — verified, or deviating and why — into this note and into
 - ~~llvm-5-seq-variant-failures~~
 - ~~llvm-5-matrix-multiply-verdict~~
 - ~~llvm-5-criterion-drift-sweep~~
-- llvm-5-final-defects
+- ~~llvm-5-final-defects~~
 
-This task runs last: the invariant checks can be done at any time, but the note and report
-reconciliation is only final once the others have stopped moving the numbers.
+Nothing blocks this task any more, and nothing follows it. The numbers have stopped moving: the last
+task to change them was `llvm-5-final-defects` (`e194151`), and it left the suite at 21 PASS / 1 FAIL.
 
 ## Progress log
 
 ## Handoff
 - branch `agent/llvm-5-port-closeout`
-Refs: `porting/TaskNotes/Tasks/llvm-5-port.md`, `porting/TestAudit/llvm-5.0.2/SUMMARY.md`,
-`porting/llvm-releases/5.0.0/api-breakings.yaml`, `AGENTS.md`, `porting/HowItWorks.md`
+Refs: `porting/TaskNotes/Tasks/llvm-5-port.md`, `porting/TaskNotes/Tasks/llvm-5-test-fixes.md`,
+`porting/TaskNotes/Tasks/llvm-5-final-defects.md`, `porting/TestAudit/llvm-5.0.2/SUMMARY.md`,
+`porting/llvm-releases/5.0.0/api-breakings.yaml`, `test/Makefile.common`, `AGENTS.md`,
+`porting/AgentGuide.md`, `porting/HowItWorks.md`

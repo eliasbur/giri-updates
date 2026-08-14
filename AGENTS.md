@@ -43,6 +43,12 @@ correctly catches this crash at the trace stage via the `[GIRI] Abnormal termina
 needed for a many-cpu host but is unavailable on the current Ubuntu 14.04 container runtime.
 Always name the variant when recording a result.
 
+`kmeans-seq`'s golden (`ans-inst-seq.txt`) is only two lines, which raised the question of whether
+its clean PASS was evidence of anything. It is: a sweep of instruction indices 114–126 in `main`
+found index **120** to be the only one reproducing `[222, 276]` (#120 is
+`call @dump_matrix`, `kmeans-seq.c:276`; `main` has 165 instructions). The golden is **not**
+degenerate, and it did not drift the way `matrix_mult`'s did.
+
 The original honest-harness run (7 PASS / 15 FAIL) has been resolved: all 15
 non-zero-exit UnitTests are inherent program behaviour and now declare their expected
 exit codes in their Makefiles. `test9` (uninitialised `sum` → UB) uses `EXIT_UNCHECKED=1`.
@@ -59,13 +65,18 @@ Done: the port (`llvm-5-port`), the full-suite audit (`llvm-5-test-audit`), thre
 defects (`llvm-5-test-fixes` — PostDominanceFrontier virtual-root recursion and the
 `findAllStoresForLoad` nestID collision; `llvm-5-seq-variant-failures` — the `DenseMap`
 reference invalidation above), three harness tasks (`llvm-5-harness-honesty`,
-`llvm-5-harness-fallout`, `llvm-5-harness-residuals`) and the two-step
+`llvm-5-harness-fallout`, `llvm-5-harness-residuals`), the two-step
 `matrix_multiply-seq` verdict (`llvm-5-matrix-multiply-verdict`,
-`llvm-5-criterion-drift-sweep`).
+`llvm-5-criterion-drift-sweep`) and `llvm-5-final-defects` (harness crash detection + the
+kmeans settlement; it superseded the former `llvm-5-kmeans` and
+`llvm-5-harness-signal-detection`).
 
-Open, in order: **`llvm-5-final-defects`** (harness crash detection + the kmeans decision;
-supersedes the former `llvm-5-kmeans` and `llvm-5-harness-signal-detection`), then
-`llvm-5-port-closeout`.
+Open: **`llvm-5-port-closeout`** — the last task. It verifies the three critical invariants,
+reconciles the notes and reports, and fixes one defect inherited from `llvm-5-final-defects`:
+`test/Makefile.common` writes `"$_tmperr"` where it means `"$$_tmperr"` in eight places, so
+Make swallows the `$_` and the recipe uses a fixed filename `tmperr` in the test directory
+while leaking the `mktemp` file. Crash detection works because the same wrong name is used to
+write and to read — correct, by accident.
 `porting/llvm-releases/5.0.0/api-breakings.yaml` is triaged for only 4 of its 388
 entries; finishing it is deliberately deferred.
 
