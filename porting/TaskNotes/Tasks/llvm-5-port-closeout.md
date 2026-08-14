@@ -1,6 +1,6 @@
 ---
 title: Close the LLVM 5.0.2 port's verification and documentation debt.
-status: open
+status: done
 priority: medium
 repo: giriupdates
 contexts: []
@@ -9,7 +9,8 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-12
-dateModified: 2026-08-14
+dateModified: 2026-08-14T13:13:56.944+02:00
+completedDate: 2026-08-14
 ---
 
 ## Goal
@@ -411,6 +412,7 @@ task to change them was `llvm-5-final-defects` (`e194151`), and it left the suit
 - `4cd2451` — Parts 0-4: verified crash detection (injected `raise(SIGSEGV)` in test2, confirmed `[GIRI] Abnormal termination` marker causes `[FAIL]` at trace stage, verified no stray `tmperr` or `/tmp` leak, full suite 21 PASS / 1 FAIL at commit `4cd2451`). Verified invariant 1 (BB/LS numbering deterministic across runs, test2 single-file: 5 BBs/20 LS, test16 multi-file: 8 BBs, repeat runs agree). Verified invariant 2 (`Runtime.h` unchanged against `port/llvm-5.0.2`, `sizeof(Entry)`=32 divides PAGESIZE 4096 → 128 entries/page). Verified invariant 3 (`-srcline-mapping` on test2: mapped `ifelse.c` lines 4-14 correctly, `NIL` for no-debug-info instructions). Verified all three invariants hold. Ticked all 13 `llvm-5-port.md` boxes (api-breakings deferred with pointer); rewrote `llvm-5-test-fixes.md` stale boxes; reconciled `SUMMARY.md` (root cause A: 10 tests, not 8; replaced scratch work with clean reconciliation block; recorded five suite results). FAIL-EXPECTED: documented as accepted end state in AGENTS.md Known residuals. test6/test7/test22: added exclusion reasons to `auto-tests.txt` header. Added no-asserts note to AgentGuide.md. Added Known residuals table to AGENTS.md covering all 8 categories. Next: open PR.
 
 ## Handoff
+- PR: giriupdates #15 https://github.com/eliasbur/giri-updates/pull/15
 - branch `agent/llvm-5-port-closeout`
 Refs: `porting/TaskNotes/Tasks/llvm-5-port.md`, `porting/TaskNotes/Tasks/llvm-5-test-fixes.md`,
 `porting/TaskNotes/Tasks/llvm-5-final-defects.md`, `porting/TestAudit/llvm-5.0.2/SUMMARY.md`,
