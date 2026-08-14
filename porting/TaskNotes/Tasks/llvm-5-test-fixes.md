@@ -37,9 +37,9 @@ scope.
 - [x] Giri builds clean in the Giri container (see "How to build and test") with no new warnings from the two touched files
 - [x] test16 completes stage 8 (`opt … -dgiri`) with no `LLVM ERROR`, and its `.slice.loc` matches `ans-inst.txt`
 - [x] Each of the 10 root-cause-A tests (list under Defect 1) produces an empty `diff` against its golden file, checked per test — **not** inferred from the suite's PASS/FAIL line (see "Verification is not the suite's PASS count")
-- [ ] Full suite: 21 of 22 tests pass; kmeans is the only expected failure (FAIL-HARNESS, separate task)
+- [x] Full suite: 21 of 22 tests pass; matrix_multiply-seq is the only failure (FAIL-EXPECTED, criterion drift +7, settled by llvm-5-criterion-drift-sweep); kmeans-seq passes cleanly (kmeans-pthread aborts on many-CPU host, not in suite)
 - [x] No golden files, test Makefiles, or build files modified
-- [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly (see "Traps")
+- [x] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly (PR #7, merged as 3b26ea6)
 
 ## Defect 1: PostDominatorFrontier.cpp early return (FAIL-BUG, 10 tests)
 

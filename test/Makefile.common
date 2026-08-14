@@ -49,25 +49,21 @@ $(NAME).slice : $(NAME).all.bc $(NAME).trace
 
 $(NAME).trace: $(NAME).trace.exe
 ifeq (1,$(EXIT_UNCHECKED))
-	@ _tmperr=$$(mktemp); \
-		./$< $(INPUT) 2>"$_tmperr"; \
-		_rc=$$?; \
-		if grep -q '\[GIRI\] Abnormal termination' "$_tmperr"; then \
-			cat "$_tmperr"; rm -f "$_tmperr"; \
+	@ ./$< $(INPUT) 2>$(NAME).trace.err; \
+		if grep -q '\[GIRI\] Abnormal termination' $(NAME).trace.err; then \
+			cat $(NAME).trace.err; \
 			echo "Traced binary terminated abnormally"; \
 			exit 1; \
 		fi; \
-		cat "$_tmperr"; rm -f "$_tmperr"
+		cat $(NAME).trace.err
 else
-	@ _tmperr=$$(mktemp); \
-		./$< $(INPUT) 2>"$_tmperr"; \
-		_rc=$$?; \
-		if grep -q '\[GIRI\] Abnormal termination' "$_tmperr"; then \
-			cat "$_tmperr"; rm -f "$_tmperr"; \
+	@ ./$< $(INPUT) 2>$(NAME).trace.err; _rc=$$?; \
+		if grep -q '\[GIRI\] Abnormal termination' $(NAME).trace.err; then \
+			cat $(NAME).trace.err; \
 			echo "Traced binary terminated abnormally"; \
 			exit 1; \
 		fi; \
-		cat "$_tmperr"; rm -f "$_tmperr"; \
+		cat $(NAME).trace.err; \
 		if [ "$(EXPECTED_EXIT)" != "-1" ] && [ "$$_rc" -ne "$(EXPECTED_EXIT)" ]; then \
 			echo "Exit status $$_rc does not match expected $(EXPECTED_EXIT)"; \
 			exit 1; \
@@ -135,5 +131,5 @@ prtrace: $(NAME).trace
 rebuild: clean all
 
 clean: clean-all
-	@ rm -f *.ll *.bc *.o *.s *.slice *.slice.loc *.exe *.trace ans.txt
+	@ rm -f *.ll *.bc *.o *.s *.slice *.slice.loc *.exe *.trace *.trace.err ans.txt core.*
 clean-all:

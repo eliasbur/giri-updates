@@ -15,6 +15,7 @@ autom4te.cache
 
 # runtime artifacts
 core.*
+*.err
 *.loc
 
 # CMake build artifacts (should only live in build/)

@@ -101,6 +101,7 @@ An `opt` crash always produces `[FAIL]`. A deliberately wrong `EXPECTED_EXIT` al
 - **`DEBUGFLAGS`** in test Makefiles controls extra `opt` flags (set to empty string for LLVM 5+).
 - **`prtrace`** (`tools/PrintTrace/`) dumps a `.trace` file's `Entry` records in human-readable form.
 - When debugging a slice that looks wrong, use `prtrace` to inspect the trace file.
+- **-debug/-debug-only= are inert** on the no-asserts 5.0.2 prebuilt toolchain — `opt` ignores them. Giri's own `assert()`s are also compiled out by the `Release` CMake build. Note that test programs' `assert()`s (from C source) still fire through libc — that is how `kmeans-pthread` aborts on many-CPU hosts.
 
 ## The opt invocation pipeline
 

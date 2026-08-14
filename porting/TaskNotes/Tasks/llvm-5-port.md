@@ -159,19 +159,19 @@ file unless you can explain the difference. Every remaining failure needs a one-
 cause in the PR description.
 
 ## Definition of done
-- [ ] `utils/install_llvm.sh` gained a working `5.0.2` case using the prebuilt release tarball, with the `3.4` case unchanged
-- [ ] `Dockerfile` builds end to end for LLVM 5.0.2 (`docker build -t giri-llvm-5 .`), including a CMake ≥ 3.4.3 and 5.0.2 tools on `PATH`
-- [ ] Giri builds with CMake against LLVM 5.0.2, producing `libgiri.so`, `libdgutility.so`, `librtgiri.a`, `tracer` and `prtrace` at a location the test harness resolves (see "Output layout" above)
-- [ ] Output-layout decision applied consistently, and the stale "flat `build/lib`" claim corrected in `AGENTS.md` and `porting/AgentGuide.md`
-- [ ] `utils/build.sh` rewritten for CMake, idempotent when re-sourced, still runs the test suite at the end
-- [ ] Dead autoconf build machinery removed (`configure`, `autoconf/`, `Makefile.*.in`, `Makefile.llvm.rules`, per-directory build `Makefile`s outside `test/`)
-- [ ] Giri sources compile with zero errors against LLVM 5.0.2
-- [ ] Both passes load in `opt` 5.0.2 (`opt -load build/lib/libdgutility.so -load build/lib/libgiri.so -help` lists `-bbnum`, `-lsnum`, `-trace-giri`, `-dgiri`)
-- [ ] Full suite executed (`make -C /giri/test`); pass/fail per test recorded, and each remaining failure root-caused in the PR description
-- [ ] Every entry in `porting/llvm-releases/5.0.0/api-breakings.yaml` touched during the port has `relevance` and `status` updated
-- [ ] The three invariants in `AGENTS.md` verified or their deviation explained in the PR
-- [ ] `AGENTS.md` on `port/llvm-5.0.2` gained a `## Current state` section, and its build/test commands match the new CMake flow
-- [ ] PR opened into `port/llvm-5.0.2` and linked below
+- [x] `utils/install_llvm.sh` gained a working `5.0.2` case using the prebuilt release tarball, with the `3.4` case unchanged
+- [x] `Dockerfile` builds end to end for LLVM 5.0.2 (`docker build -t giri-llvm-5 .`), including a CMake ≥ 3.4.3 and 5.0.2 tools on `PATH`
+- [x] Giri builds with CMake against LLVM 5.0.2, producing `libgiri.so`, `libdgutility.so`, `librtgiri.a`, `tracer` and `prtrace` at a location the test harness resolves (see "Output layout" above)
+- [x] Output-layout decision applied consistently, and the stale "flat `build/lib`" claim corrected in `AGENTS.md` and `porting/AgentGuide.md`
+- [x] `utils/build.sh` rewritten for CMake, idempotent when re-sourced, still runs the test suite at the end
+- [x] Dead autoconf build machinery removed (`configure`, `autoconf/`, `Makefile.*.in`, `Makefile.llvm.rules`, per-directory build `Makefile`s outside `test/`)
+- [x] Giri sources compile with zero errors against LLVM 5.0.2
+- [x] Both passes load in `opt` 5.0.2 (`opt -load build/lib/libdgutility.so -load build/lib/libgiri.so -help` lists `-bbnum`, `-lsnum`, `-trace-giri`, `-dgiri`)
+- [x] Full suite executed (`make -C /giri/test`); pass/fail per test recorded, and each remaining failure root-caused in the PR description
+- [ ] Every entry in `porting/llvm-releases/5.0.0/api-breakings.yaml` touched during the port has `relevance` and `status` updated — deliberately deferred, 384 of 388 entries remain untriaged
+- [x] The three invariants in `AGENTS.md` verified or their deviation explained in the PR
+- [x] `AGENTS.md` on `port/llvm-5.0.2` gained a `## Current state` section, and its build/test commands match the new CMake flow
+- [x] PR opened into `port/llvm-5.0.2` and linked below
 
 ## Files / scope
 - `Dockerfile`
