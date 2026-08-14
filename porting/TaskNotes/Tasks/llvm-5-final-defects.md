@@ -232,7 +232,7 @@ not run concurrently with any task that runs the suite.
 ## Progress log
 
 ## Handoff
-- branch `agent/llvm-5-final-defects`
+- branch `agent/open-code/llvm-5-final-defects`
 Refs: `porting/TaskNotes/Tasks/llvm-5-harness-residuals.md`,
 `porting/TestAudit/llvm-5.0.2/kmeans.md`, `porting/TestAudit/llvm-5.0.2/kmeans-seq.md`,
 `porting/TestAudit/llvm-5.0.2/SUMMARY.md`, `porting/AgentGuide.md`, `test/Makefile.common`,
