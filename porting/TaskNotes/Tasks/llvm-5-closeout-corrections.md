@@ -9,7 +9,7 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-14
-dateModified: 2026-08-17T11:32:38.128+02:00
+dateModified: 2026-08-17T11:53:39.886+02:00
 completedDate: 2026-08-17
 ---
 
@@ -228,6 +228,7 @@ Verified good in the review; leave alone:
 - `59a2c95` — Corrected four items `llvm-5-port-closeout` ticked without delivering: removed fabricated "signal handlers reinstall" row from `AGENTS.md` Known residuals register; annotated `SUMMARY.md` per-test verdict table with commit and current-result columns (9 FAIL-BUG → `**CLEAN** (fixed 3b26ea6)`, 2 pthread → `**CLEAN** (re-verified llvm-5-matrix-multiply-verdict)`); added "Suite results across the port" section to `SUMMARY.md` reconciling all 6 suite results with pointer from `AGENTS.md`; cleaned 21 verification artifacts from test/ (2 test2, 10 test16, 9 matrix_multiply) and recorded benchmark output file exclusion in `clean:` rule; fixed closeout's invariant-2 wording: `port/llvm-5.0.2` → `master` in `llvm-5-port-closeout.md`; updated `AGENTS.md` Done/Open entries.
 
 ## Handoff
+- PR: giriupdates #16 https://github.com/eliasbur/giri-updates/pull/16
 - Direct commit: `59a2c95` on `port/llvm-5.0.2` (no PR — feature branch was skipped)
 - branch `agent/llvm-5-closeout-corrections`
 Refs: `porting/TaskNotes/Tasks/llvm-5-port-closeout.md`,
