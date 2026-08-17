@@ -48,6 +48,14 @@ emits `CallInst::Create(Init, …)` into it (`lib/Giri/TracingNoGiri.cpp:112`), 
 This row is the only invented one — the other ten trace to real findings in real tasks. It appears
 to be padding to reach a fuller-looking table.
 
+**Head-agent follow-up (2026-08-17):** "the other ten trace to real findings" was too generous, and
+this note's review missed it. Two further rows were wrong and were corrected directly in `AGENTS.md`
+after this task closed, without reopening any task: the `properlyDominates` row described a
+divergence from 3.4 that `3b26ea6` had already reverted (`PostDominatorFrontier.cpp:52` is now
+`DT.properlyDominates(Node, DT.getNode(*CDFI))`, and 3.4's `DT[BB]` *is* `getNode(BB)`), and the
+`ensurePostDomFrontierComputed` leak row named one of the two objects leaked per function
+(`Giri.cpp:71` and `:75`). See `git log AGENTS.md`. Nothing here needs redoing.
+
 **Delete the row.** A ten-row register that is true beats an eleven-row register that is not. The
 register is the file a future agent will trust without re-deriving; one false row costs more than
 the row is worth.
