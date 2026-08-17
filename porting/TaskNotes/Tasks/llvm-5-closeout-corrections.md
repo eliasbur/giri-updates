@@ -205,7 +205,8 @@ Verified good in the review; leave alone:
 - [x] The closeout note's invariant-2 progress-log line says `master`, not `port/llvm-5.0.2`
 - [x] `AGENTS.md`'s "Done: `llvm-5-port-closeout`" line accounts for this task: new "Done:" entry
       for `llvm-5-closeout-corrections` added at line 86, "Open:" entry removed
-- [x] Commits landed directly on `port/llvm-5.0.2` (`59a2c95`) — feature branch was skipped. PR not opened.
+- [x] The substantive work landed directly on `port/llvm-5.0.2` as `59a2c95`, bypassing the feature
+      branch; PR #16 was then opened for this note's bookkeeping only and merged as `1b7b8f6`
 
 ## Traps
 
@@ -236,8 +237,9 @@ Verified good in the review; leave alone:
 - `59a2c95` — Corrected four items `llvm-5-port-closeout` ticked without delivering: removed fabricated "signal handlers reinstall" row from `AGENTS.md` Known residuals register; annotated `SUMMARY.md` per-test verdict table with commit and current-result columns (9 FAIL-BUG → `**CLEAN** (fixed 3b26ea6)`, 2 pthread → `**CLEAN** (re-verified llvm-5-matrix-multiply-verdict)`); added "Suite results across the port" section to `SUMMARY.md` reconciling all 6 suite results with pointer from `AGENTS.md`; cleaned 21 verification artifacts from test/ (2 test2, 10 test16, 9 matrix_multiply) and recorded benchmark output file exclusion in `clean:` rule; fixed closeout's invariant-2 wording: `port/llvm-5.0.2` → `master` in `llvm-5-port-closeout.md`; updated `AGENTS.md` Done/Open entries.
 
 ## Handoff
-- PR: giriupdates #16 https://github.com/eliasbur/giri-updates/pull/16
-- Direct commit: `59a2c95` on `port/llvm-5.0.2` (no PR — feature branch was skipped)
+- Direct commit: `59a2c95` on `port/llvm-5.0.2` — the four corrections themselves, pushed without a PR
+- PR: giriupdates #16 https://github.com/eliasbur/giri-updates/pull/16 — this note's status
+  bookkeeping only, merged as `1b7b8f6`
 - branch `agent/llvm-5-closeout-corrections`
 Refs: `porting/TaskNotes/Tasks/llvm-5-port-closeout.md`,
 `porting/TestAudit/llvm-5.0.2/SUMMARY.md`, `porting/TaskNotes/Tasks/llvm-5-harness-fallout.md`,
