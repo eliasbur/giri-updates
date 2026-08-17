@@ -11,6 +11,7 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 As of this entry (`df93296`), `port/llvm-5.0.2` has an honest harness with per-test exit
 status opt-in (`EXPECTED_EXIT`/`EXIT_UNCHECKED` in `test/Makefile.common`). The suite
 reports **21 PASS / 1 FAIL**. The single failure is `matrix_multiply-seq`.
+For the full history of suite results across the port, see `porting/TestAudit/llvm-5.0.2/SUMMARY.md` → "Suite results across the port".
 
 Its segfault is fixed: `PostDominanceFrontier::calculate` held a reference into `Frontiers`
 across recursive insertions while `Frontiers` was a `DenseMap`, which invalidates references
@@ -71,17 +72,17 @@ reference invalidation above), three harness tasks (`llvm-5-harness-honesty`,
 kmeans settlement; it superseded the former `llvm-5-kmeans` and
 `llvm-5-harness-signal-detection`).
 
-Open: **`llvm-5-closeout-corrections`** — a short follow-up. A head-agent review of `83bf08d` found
-four closeout Definition-of-done boxes ticked against work that was not done, one of which put a
-false row into the `## Known residuals` register below. No container needed. Until it lands, treat
-the register's last row and `SUMMARY.md`'s per-test verdict table as unreliable.
-
 Done: **`llvm-5-port-closeout`** — It verified the three critical invariants
 (see below), reconciled the notes and reports, fixed one defect inherited from `llvm-5-final-defects`
 (`test/Makefile.common` `$_tmperr` quoting, 8 sites, replaced by per-test `*.trace.err` file),
 and produced the Known residuals register below.
 `porting/llvm-releases/5.0.0/api-breakings.yaml` is triaged for only 4 of its 388
 entries; finishing it is deliberately deferred.
+
+Done: **`llvm-5-closeout-corrections`** — Corrected four items `llvm-5-port-closeout` ticked without
+delivering: removed fabricated "signal handlers reinstall" row from register, annotated SUMMARY.md's
+per-test verdict table with commit and current-result columns, added suite-results reconciliation
+section to SUMMARY.md, and cleaned verification artifacts from test/.
 
 The three critical invariants are verified (2026-08-14, `llvm-5-port-closeout`):
 1. **Numbering determinism** — `-bbnum`/`-lsnum` assign identical IDs across instrumentation and
@@ -114,7 +115,6 @@ marked [inherited]; regressions (broken by the port) are [regression].
 | `ensurePostDomFrontierComputed` — memory leak | Acceptable | `DynamicGiri::ensurePostDomFrontierComputed` (`Giri.cpp:67`) `new`s a `PostDominatorTreeWrapperPass` per function and never frees it. The pass's process (`opt`) exits immediately after, so the leak is bounded by process lifetime and has no observable cost |
 | `properlyDominates` overload change | Verified acceptable | The port changed `DT.properlyDominates(Node, DT[*CDFI])` (DomTreeNode overload) to `DT.properlyDominates(Node->getBlock(), *CDFI)` (BasicBlock overload). The 21-test suite exercising the repaired post-dominator path is the evidence. No divergence observed |
 | `signal(SIGKILL, …)` — no-op | Harmless | `runtime/Giri/Tracing.cpp:278`. SIGKILL cannot be caught or ignored per POSIX. The `signal()` call is a no-op (returns `SIG_ERR`). Harmless: the handler for other signals already ensures crash cleanup |
-| `signal` handlers reinstall on every trace entry | Acceptable cost | `recordInit` in `Tracing.cpp` installs handlers eagerly. Re-entry during tracing would reinstall, which is correct but slightly wasteful. Not a defect; the handlers are idempotent |
 
 ## Containers — two kinds
 

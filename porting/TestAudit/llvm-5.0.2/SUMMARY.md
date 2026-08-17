@@ -11,33 +11,33 @@ Matches the 13 PASS / 9 FAIL split recorded in `llvm-5-port.md` exactly.
 
 ## Per-test verdict table
 
-| Test | Variant | Verdict | Root cause | Report |
-|------|---------|---------|------------|--------|
-| test1 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test1.md](UnitTests-test1.md) |
-| test2 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test2.md](UnitTests-test2.md) |
-| test3 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return empties frontier map, missing line 17 | [UnitTests-test3.md](UnitTests-test3.md) |
-| test4 | seq (no pthread variant) | CLEAN | Diff empty; "Start slicing..." messages are routine per-criterion output | [UnitTests-test4.md](UnitTests-test4.md) |
-| test5 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 2 "Could not find Control-dep", 10 lines missing | [UnitTests-test5.md](UnitTests-test5.md) |
-| test8 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 2 "Could not find Control-dep", line 12 missing | [UnitTests-test8.md](UnitTests-test8.md) |
-| test9 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 28 "Could not find Control-dep", line 9 missing | [UnitTests-test9.md](UnitTests-test9.md) |
-| test10 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, "Could not find Control-dep", line 13 missing | [UnitTests-test10.md](UnitTests-test10.md) |
-| test11 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 5 "Could not find Control-dep", 4 lines missing | [UnitTests-test11.md](UnitTests-test11.md) |
-| test12 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 32 "Could not find Control-dep", 3 lines missing | [UnitTests-test12.md](UnitTests-test12.md) |
-| test13 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test13.md](UnitTests-test13.md) |
-| test14 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test14.md](UnitTests-test14.md) |
-| test15 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test15.md](UnitTests-test15.md) |
-| test16 | seq (no pthread variant) | FAIL-BUG | TraceFile.cpp:378 findNextNestedID: store ID collides with BB ID, fatal crash | [UnitTests-test16.md](UnitTests-test16.md) |
-| test17 | seq (no pthread variant) | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 5 "Could not find Control-dep", 2 lines missing | [UnitTests-test17.md](UnitTests-test17.md) |
-| test18 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test18.md](UnitTests-test18.md) |
-| test19 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test19.md](UnitTests-test19.md) |
-| test20 | seq (no pthread variant) | CLEAN | Diff empty; clang stage 2 warning about implicit declaration is expected for mutual recursion | [UnitTests-test20.md](UnitTests-test20.md) |
-| test21 | seq (no pthread variant) | CLEAN | Diff empty, no non-routine output | [UnitTests-test21.md](UnitTests-test21.md) |
-| matrix_multiply | seq | FAIL-EXPECTED | Criterion `matrix_mult:285` is 3.4's equivalent of 5.0.2's `matrix_mult:292` (both `dprintf("\n")` at line 97, +7 drift within output-printing loop); 5.0.2's #285 is the value-print `fprintf` at line 94 — 18/19 golden lines preserved (shared data chain), 16 DD-sourced extras, 1 missing (line 97, separate fprintf) | [matrix_multiply-seq.md](matrix_multiply-seq.md) |
-| matrix_multiply | pthread | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 30 "Could not find Control-dep", 25 lines missing | [matrix_multiply.md](matrix_multiply.md) |
-| pca | seq | CLEAN | Diff empty, no non-routine output | [pca-seq.md](pca-seq.md) |
-| pca | pthread | FAIL-BUG | PostDominatorFrontier.cpp:37 early return, 40 "Could not find Control-dep", 8 lines missing | [pca.md](pca.md) |
-| kmeans | seq | CLEAN | Diff empty, no non-routine output | [kmeans-seq.md](kmeans-seq.md) |
-| kmeans | pthread | FAIL-HARNESS | 256-CPU container triggers assertion failure, 108 GB trace, slicing times out; criterion `main 402` is an instruction index, not a source line | [kmeans.md](kmeans.md) |
+| Test | Variant | Verdict | Commit | Current result | Root cause | Report |
+|------|---------|---------|--------|----------------|------------|--------|
+| test1 | seq (no pthread variant) | CLEAN | pre-`3b26ea6` | unchanged | Diff empty, no non-routine output | [UnitTests-test1.md](UnitTests-test1.md) |
+| test2 | seq (no pthread variant) | CLEAN | pre-`3b26ea6` | unchanged | Diff empty, no non-routine output | [UnitTests-test2.md](UnitTests-test2.md) |
+| test3 | seq (no pthread variant) | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`) | PostDominatorFrontier.cpp:37 early return empties frontier map, missing line 17 | [UnitTests-test3.md](UnitTests-test3.md) |
+| test4 | seq (no pthread variant) | CLEAN | pre-`3b26ea6` | unchanged | Diff empty; "Start slicing..." messages are routine per-criterion output | [UnitTests-test4.md](UnitTests-test4.md) |
+| test5 | seq (no pthread variant) | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`) | PostDominatorFrontier.cpp:37 early return, 2 "Could not find Control-dep", 10 lines missing | [UnitTests-test5.md](UnitTests-test5.md) |
+| test8 | seq (no pthread variant) | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`) | PostDominatorFrontier.cpp:37 early return, 2 "Could not find Control-dep", line 12 missing | [UnitTests-test8.md](UnitTests-test8.md) |
+| test9 | seq (no pthread variant) | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`) | PostDominatorFrontier.cpp:37 early return, 28 "Could not find Control-dep", line 9 missing | [UnitTests-test9.md](UnitTests-test9.md) |
+| test10 | seq (no pthread variant) | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`) | PostDominatorFrontier.cpp:37 early return, "Could not find Control-dep", line 13 missing | [UnitTests-test10.md](UnitTests-test10.md) |
+| test11 | seq (no pthread variant) | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`) | PostDominatorFrontier.cpp:37 early return, 5 "Could not find Control-dep", 4 lines missing | [UnitTests-test11.md](UnitTests-test11.md) |
+| test12 | seq (no pthread variant) | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`) | PostDominatorFrontier.cpp:37 early return, 32 "Could not find Control-dep", 3 lines missing | [UnitTests-test12.md](UnitTests-test12.md) |
+| test13 | seq (no pthread variant) | CLEAN | pre-`3b26ea6` | unchanged | Diff empty, no non-routine output | [UnitTests-test13.md](UnitTests-test13.md) |
+| test14 | seq (no pthread variant) | CLEAN | pre-`3b26ea6` | unchanged | Diff empty, no non-routine output | [UnitTests-test14.md](UnitTests-test14.md) |
+| test15 | seq (no pthread variant) | CLEAN | pre-`3b26ea6` | unchanged | Diff empty, no non-routine output | [UnitTests-test15.md](UnitTests-test15.md) |
+| test16 | seq (no pthread variant) | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`) | TraceFile.cpp:378 findNextNestedID: store ID collides with BB ID, fatal crash | [UnitTests-test16.md](UnitTests-test16.md) |
+| test17 | seq (no pthread variant) | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`) | PostDominatorFrontier.cpp:37 early return, 5 "Could not find Control-dep", 2 lines missing | [UnitTests-test17.md](UnitTests-test17.md) |
+| test18 | seq (no pthread variant) | CLEAN | pre-`3b26ea6` | unchanged | Diff empty, no non-routine output | [UnitTests-test18.md](UnitTests-test18.md) |
+| test19 | seq (no pthread variant) | CLEAN | pre-`3b26ea6` | unchanged | Diff empty, no non-routine output | [UnitTests-test19.md](UnitTests-test19.md) |
+| test20 | seq (no pthread variant) | CLEAN | pre-`3b26ea6` | unchanged | Diff empty; clang stage 2 warning about implicit declaration is expected for mutual recursion | [UnitTests-test20.md](UnitTests-test20.md) |
+| test21 | seq (no pthread variant) | CLEAN | pre-`3b26ea6` | unchanged | Diff empty, no non-routine output | [UnitTests-test21.md](UnitTests-test21.md) |
+| matrix_multiply | seq | FAIL-EXPECTED | pre-`3b26ea6` | unchanged | Criterion `matrix_mult:285` is 3.4's equivalent of 5.0.2's `matrix_mult:292` (both `dprintf("\n")` at line 97, +7 drift within output-printing loop); 5.0.2's #285 is the value-print `fprintf` at line 94 — 18/19 golden lines preserved (shared data chain), 16 DD-sourced extras, 1 missing (line 97, separate fprintf) | [matrix_multiply-seq.md](matrix_multiply-seq.md) |
+| matrix_multiply | pthread | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`; re-verified `llvm-5-matrix-multiply-verdict`) | PostDominatorFrontier.cpp:37 early return, 30 "Could not find Control-dep", 25 lines missing | [matrix_multiply.md](matrix_multiply.md) |
+| pca | seq | CLEAN | pre-`3b26ea6` | unchanged | Diff empty, no non-routine output | [pca-seq.md](pca-seq.md) |
+| pca | pthread | FAIL-BUG | pre-`3b26ea6` | **CLEAN** (fixed `3b26ea6`; re-verified `llvm-5-matrix-multiply-verdict`) | PostDominatorFrontier.cpp:37 early return, 40 "Could not find Control-dep", 8 lines missing | [pca.md](pca.md) |
+| kmeans | seq | CLEAN | pre-`3b26ea6` | unchanged | Diff empty, no non-routine output | [kmeans-seq.md](kmeans-seq.md) |
+| kmeans | pthread | FAIL-HARNESS | pre-`3b26ea6` | **unchanged** (harness enhanced `e194151` to detect crash via `[GIRI] Abnormal termination`) | 256-CPU container triggers assertion failure, 108 GB trace, slicing times out; criterion `main 402` is an instruction index, not a source line | [kmeans.md](kmeans.md) |
 
 ## Distinct root causes
 
@@ -108,6 +108,21 @@ The baseline sweep ran **seq** variants (`Dockerfile:5` sets `TEST_PARALLELISM=s
 | FAIL-EXPECTED | 1 | matrix_multiply-seq | Criterion drift between LLVM 3.4 and 5.0.2; documented at `df93296`; 16 extra lines are traceable to the drift |
 
 Of the 10 root-cause-A tests, 8 (test3, test5, test8–12, test17) were in the original 9 FAIL plus matrix_multiply-seq's seq variant. The remaining 2 (matrix_multiply-pthread, pca-pthread) were discovered by the audit when examining the pthread variants. Of the 9 original FAIL, 8 share root cause A and 1 (matrix_multiply-seq) is actually FAIL-EXPECTED. Thus the original claim was partially correct (all 8 original PostDominatorFrontier failures do share the same symptom) but wrong about fixability.
+
+## Suite results across the port
+
+Six suite runs have been recorded during the `port/llvm-5.0.2` port. The last row is the current result.
+
+| Result | Commit | Harness |
+|--------|--------|---------|
+| 13 PASS / 9 FAIL | pre-`3b26ea6` | suppressive |
+| 21 PASS / 1 FAIL | `3b26ea6` | suppressive (post code-fixes) |
+| 7 PASS / 15 FAIL | `2fb3b6d` | honest, before the exit-status opt-in |
+| 21 PASS / 1 FAIL | `5fbca9d` | honest, with `EXPECTED_EXIT` (per-test breakdown at [llvm-5-harness-fallout.md](../../TaskNotes/Tasks/llvm-5-harness-fallout.md)) |
+| 21 PASS / 1 FAIL | `e194151` | honest + crash detection |
+| 21 PASS / 1 FAIL | `4cd2451` | honest + crash detection, `*.trace.err` recipe — **current** |
+
+The single standing failure in every post-fix run is `matrix_multiply-seq` (`FAIL-EXPECTED`, criterion drift). `kmeans-pthread` crashes on the container's 256-CPU host and is caught by the harness's `[GIRI] Abnormal termination` marker; it is not in the automated suite (`Dockerfile:5` pins `TEST_PARALLELISM=seq`).
 
 ## Unresolved questions
 

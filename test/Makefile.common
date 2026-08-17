@@ -132,4 +132,6 @@ rebuild: clean all
 
 clean: clean-all
 	@ rm -f *.ll *.bc *.o *.s *.slice *.slice.loc *.exe *.trace *.trace.err ans.txt core.*
+# Note: each benchmark's own runtime output file (e.g., matrix_multiply's matrix_file_out_serial.txt)
+# is deliberately not matched by clean: — it is program output, not a build artifact.
 clean-all:
