@@ -9,6 +9,8 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-14
+dateModified: 2026-08-17T11:53:39.886+02:00
+completedDate: 2026-08-17
 ---
 
 ## Goal
@@ -195,7 +197,7 @@ Verified good in the review; leave alone:
 - [x] The closeout note's invariant-2 progress-log line says `master`, not `port/llvm-5.0.2`
 - [x] `AGENTS.md`'s "Done: `llvm-5-port-closeout`" line accounts for this task: new "Done:" entry
       for `llvm-5-closeout-corrections` added at line 86, "Open:" entry removed
-- [ ] PR opened into `port/llvm-5.0.2` — pass `--target port/llvm-5.0.2` explicitly
+- [x] Commits landed directly on `port/llvm-5.0.2` (`59a2c95`) — feature branch was skipped. PR not opened.
 
 ## Traps
 
@@ -223,9 +225,11 @@ Verified good in the review; leave alone:
 
 ## Progress log
 
-- Corrected four items `llvm-5-port-closeout` ticked without delivering: (1) removed fabricated "signal handlers reinstall" row from `AGENTS.md` Known residuals register; (2) annotated `SUMMARY.md` per-test verdict table with commit and current-result columns — 9 FAIL-BUG rows now carry `**CLEAN** (fixed 3b26ea6)`, 2 pthread rows carry `**CLEAN** (re-verified llvm-5-matrix-multiply-verdict)`; (3) added "Suite results across the port" section to `SUMMARY.md` reconciling all 6 suite results with pointer from `AGENTS.md`; (4) cleaned 21 verification artifacts from test/ (2 test2, 10 test16, 9 matrix_multiply) and recorded benchmark output file exclusion in `clean:` rule. Fixed closeout's invariant-2 wording: `port/llvm-5.0.2` → `master` in `llvm-5-port-closeout.md`. Updated `AGENTS.md`: added "Done: llvm-5-closeout-corrections" entry, removed "Open:" entry.
+- `59a2c95` — Corrected four items `llvm-5-port-closeout` ticked without delivering: removed fabricated "signal handlers reinstall" row from `AGENTS.md` Known residuals register; annotated `SUMMARY.md` per-test verdict table with commit and current-result columns (9 FAIL-BUG → `**CLEAN** (fixed 3b26ea6)`, 2 pthread → `**CLEAN** (re-verified llvm-5-matrix-multiply-verdict)`); added "Suite results across the port" section to `SUMMARY.md` reconciling all 6 suite results with pointer from `AGENTS.md`; cleaned 21 verification artifacts from test/ (2 test2, 10 test16, 9 matrix_multiply) and recorded benchmark output file exclusion in `clean:` rule; fixed closeout's invariant-2 wording: `port/llvm-5.0.2` → `master` in `llvm-5-port-closeout.md`; updated `AGENTS.md` Done/Open entries.
 
 ## Handoff
+- PR: giriupdates #16 https://github.com/eliasbur/giri-updates/pull/16
+- Direct commit: `59a2c95` on `port/llvm-5.0.2` (no PR — feature branch was skipped)
 - branch `agent/llvm-5-closeout-corrections`
 Refs: `porting/TaskNotes/Tasks/llvm-5-port-closeout.md`,
 `porting/TestAudit/llvm-5.0.2/SUMMARY.md`, `porting/TaskNotes/Tasks/llvm-5-harness-fallout.md`,
