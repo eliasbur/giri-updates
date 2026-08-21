@@ -1,0 +1,39 @@
+{
+  "name": "jcode",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "initializeCommand": "mkdir -p ${localEnv:HOME}/.local/state/jcode ${localEnv:HOME}/.local/share/jcode && docker build -t agent-base:local -f ${localWorkspaceFolder}/.devcontainer/jcode/Dockerfile.base ${localWorkspaceFolder}/.devcontainer/jcode",
+  "workspaceFolder": "${localWorkspaceFolder}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind,consistency=cached",
+  "remoteUser": "root",
+  "updateRemoteUserUID": false,
+  "hostRequirements": { "gpu": "optional" },
+  "containerEnv": {
+    "DOCKER_HOST": "unix:///var/run/docker.sock"
+  },
+  "postCreateCommand": "(mkdir -p .claude && ln -sfn $(pwd)/.devcontainer/skills .claude/skills 2>/dev/null) || true; (mkdir -p /root/.jcode/skills && cp -r $(pwd)/.devcontainer/skills/* /root/.jcode/skills/ 2>/dev/null) || true; bash $PWD/.devcontainer/jcode/probe-docker.sh || echo \"warn: Docker probe failed (socket not mounted or daemon not running)\"",
+  "runArgs": [
+    "--add-host=host.docker.internal:host-gateway",
+    "--env-file", "${localWorkspaceFolder}/.devcontainer/jcode/.env",
+    "--security-opt", "seccomp=unconfined",
+    "--security-opt", "apparmor=unconfined",
+    "--network=host"
+  ],
+  "mounts": [
+    "source=${localEnv:HOME}/.local/state/jcode,target=/root/.local/state/jcode,type=bind",
+    "source=${localEnv:HOME}/.local/share/jcode,target=/root/.local/share/jcode,type=bind",
+    "source=${localEnv:XDG_RUNTIME_DIR}/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=/dev/fuse,target=/dev/fuse,type=bind"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "ms-toolsai.jupyter",
+        "eamodio.gitlens"
+      ]
+    }
+  }
+}

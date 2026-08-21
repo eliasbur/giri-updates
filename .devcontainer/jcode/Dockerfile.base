@@ -1,0 +1,137 @@
+# ── Slim base image (no CUDA) ──────────────────────────────────────
+# GPU workloads run via docker run --gpus all nvidia/cuda:... from
+# within the container (Docker-out-of-Docker). This keeps the base
+# image ~2 GB instead of ~6 GB for the CUDA devel image.
+FROM ubuntu:24.04
+
+ARG TARGETARCH
+ARG LOCAL_TOOLS="git curl jq ripgrep vim nano make zip unzip ssh-client wget tree imagemagick ca-certificates gnupg procps build-essential python3"
+
+# 0. Environment
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV LC_ALL=C.UTF-8
+
+# 1. Install System Dependencies
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends ${LOCAL_TOOLS} && \
+  ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+  echo $TZ > /etc/timezone && \
+  rm -rf /var/lib/apt/lists/*
+
+# 1.5. Docker CLI client only (DooD — no daemon, no dind)
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+    | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] \
+    https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+    | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+  apt-get update && \
+  apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin docker-buildx-plugin && \
+  rm -rf /var/lib/apt/lists/*
+
+# 2. Install Node.js 22.x LTS (pinned via NodeSource setup script hash)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install GH CLI (not in the official apt source)
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+    | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+  && apt-get update && apt-get install -y gh \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install glab (GitLab CLI) for MR creation — pinned to v1.109.0
+# NOTE: amd64 only; arm64 users should install manually
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+      cd /tmp && \
+      curl -fsSL https://gitlab.com/gitlab-org/cli/-/releases/v1.109.0/downloads/glab_1.109.0_linux_amd64.tar.gz \
+        | tar -xzf - && \
+      cp bin/glab /usr/local/bin/glab && \
+      rm -rf /tmp/{bin,CHANGELOG.md,LICENSE,README.md} && \
+      mkdir -p /root/.config/glab-cli && \
+      GLAB_NO_PROMPT=1 glab config set -g host git.tu-berlin.de && \
+      GLAB_NO_PROMPT=1 glab config set -g telemetry false && \
+      GLAB_NO_PROMPT=1 glab config set -g display_hyperlinks false && \
+      GLAB_NO_PROMPT=1 glab config set -g no_prompt true; \
+    else \
+      echo "warn: glab binary only available for amd64, skipping"; \
+    fi
+
+ENV GLAB_NO_PROMPT=true
+
+# Install Bun — pinned to v1.3.14
+COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
+
+# Playwright system dependencies for Chromium (used by agent-browser)
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+      apt-get update && \
+      apt-get install -y --no-install-recommends chromium chromium-sandbox && \
+      rm -rf /var/lib/apt/lists/*; \
+    else \
+      npx playwright install-deps chromium; \
+    fi
+
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD_ARM64=1
+
+# Corepack (no longer bundled with Node since v25, install manually)
+RUN npm install -g corepack && corepack enable
+
+# 3. Configure NPM/Bun global locations (under root's real home)
+ENV NPM_CONFIG_PREFIX=/root/.npm-global
+ENV PATH=$NPM_CONFIG_PREFIX/bin:$PATH
+
+ENV BUN_INSTALL=/root/.bun
+ENV PATH=$BUN_INSTALL/bin:$PATH
+
+RUN mkdir -p /root/.npm-global && \
+  mkdir -p /root/.config && \
+  mkdir -p /root/.local && \
+  mkdir -p /root/.bun/bin
+
+# 4. Install agent-browser — pinned to v0.34.0
+RUN npm install -g agent-browser@0.34.0 && \
+    if [ "$TARGETARCH" != "arm64" ]; then agent-browser install; fi
+
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
+
+# 5. Install uv for Python projects — pinned to v0.12.5
+RUN curl -LsSf https://astral.sh/uv/0.12.5/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Install pyyaml (required by handle-task skill driver)
+RUN python3 -c "import yaml" 2>/dev/null || uv pip install --system --break-system-packages pyyaml -q
+
+# 5.5. Apptainer (non-setuid) for running Apptainer/SIF containers inside the devcontainer.
+# Uses user namespaces + FUSE instead of setuid mounts, which works inside a container.
+# Requires /dev/fuse mount and --security-opt seccomp=unconfined at runtime (see devcontainer.json.tpl).
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends software-properties-common && \
+    add-apt-repository universe && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends fuse3 squashfuse fuse-overlayfs uidmap e2fsprogs squashfs-tools fakeroot && \
+    rm -rf /var/lib/apt/lists/* && \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+      curl -fsSL https://github.com/apptainer/apptainer/releases/download/v1.3.6/apptainer_1.3.6_amd64.deb \
+        -o /tmp/apptainer.deb && \
+      apt-get install -y /tmp/apptainer.deb || echo "warn: apptainer .deb installation failed, continuing with FUSE deps only" && \
+      rm -f /tmp/apptainer.deb; \
+    else \
+      echo "warn: apptainer .deb only available for amd64, skipping (FUSE deps still installed)"; \
+    fi
+# Container runs as root; subuid/subgid ranges needed for fakeroot builds
+RUN echo "root:100000:65536" >> /etc/subuid && \
+    echo "root:100000:65536" >> /etc/subgid
+
+# 6. Bash configuration
+RUN echo "export PATH=${NPM_CONFIG_PREFIX}/bin:${BUN_INSTALL}/bin:/root/.local/bin:\$PATH" >> /root/.bashrc
+COPY ./.bash_aliases /root/.bash_aliases
+COPY ./pnpm-config.yaml /root/.config/pnpm/config.yaml
+RUN echo "if [ -f ~/.bash_aliases ]; then . ~/.bash_aliases; fi" >> /root/.bashrc
+
+CMD ["/bin/bash"]

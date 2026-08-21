@@ -27,3 +27,7 @@ cmake/
 # Agent workspace artifacts
 .env
 .claude
+
+# infra helper scripts
+*-tunnel.sh
+

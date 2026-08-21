@@ -1,0 +1,36 @@
+[provider]
+default_provider = "dgx2"
+default_model = "unsloth/Qwen3.8-27b-NVFP4"
+
+[providers.dgx2]
+type = "openai-compatible"
+base_url = "http://localhost:50339/v1"
+api_key_env = "JCODE_PROVIDER_DGX_API_KEY"
+env_file = "dgx2.env"
+default_model = "unsloth/Qwen3.8-27b-NVFP4"
+
+[[providers.dgx2.models]]
+id = "unsloth/Qwen3.8-27b-NVFP4"
+
+
+[features]
+memory = true
+optimizations = true
+todo_planning_skill = true
+
+[memory]
+scope = "project"
+persist_injections = true
+auto_index = true
+respect_gitignore = true
+
+[agents]
+swarm_spawn_mode = "inline"
+memory_sidecar_enabled = true
+memory_rerank_cadence = 3
+memory_rerank_votes = 2
+
+[skills]
+auto_load = true
+endorsed = ["optimizations", "todo-planning-skill"]
+custom = ["skill-factory", "failure-pattern-learner", "manage-experiments", "docs-from-code", "overhaul"]
