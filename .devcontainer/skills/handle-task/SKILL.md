@@ -31,6 +31,7 @@ If the driver exits complaining that a variable is missing (`no token for repo '
    ```bash
    cd <repo_root> && git fetch && git log --oneline <target_branch>..<branch>   # <branch> from resolve
    ```
+   **If the branch does not exist yet, this command exits with a hard `fatal: ambiguous argument … unknown revision` (exit 128). That is the normal "fresh start" outcome, not an error** — confirm with `git branch -r --list "origin/<branch>"` and proceed to step 3. Only a successful `git log` that prints commits means prior work exists.
    If that branch exists and has commits, **do not start over**: read the `## Progress log` section of the task note, `git checkout <branch>`, skip step 5 (branch creation), rebuild the TODO list in step 4 from the remaining unchecked `Definition of done` items, and continue from the "next:" pointer of the last progress-log entry.
 
    Also check for a stash the interrupted run never restored — `git stash list | grep "stash/agent-<slug>"`. If one is there, leave it stashed for now and restore it in step 12 as usual; just don't create a second one in step 3.
