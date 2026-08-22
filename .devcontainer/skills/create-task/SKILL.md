@@ -9,14 +9,15 @@ Creating a task means turning "what we just agreed to do" into a task note under
 
 ## Driver
 
-Mechanical work goes through the driver next to this file (it lives beside the `handle-task` skill and locates that driver itself for the round-trip check):
+Mechanical work goes through the driver next to this file (it lives beside the `handle-task` skill and locates that driver itself for the round-trip check). From the repo root:
 
 ```bash
-DRIVER=$(dirname "$(readlink -f .claude/skills/handle-task/SKILL.md)")/../create-task/driver.py
-python3 $DRIVER new <slug> --repo <key> --title "Imperative summary" [--note "seed line"] [--blocked-by <slug>]
-python3 $DRIVER check <slug>
-python3 $DRIVER commit <slug>
+python3 .devcontainer/skills/create-task/driver.py new <slug> --repo <key> --title "Imperative summary" [--note "seed line"] [--blocked-by <slug>]
+python3 .devcontainer/skills/create-task/driver.py check <slug>
+python3 .devcontainer/skills/create-task/driver.py commit <slug>
 ```
+
+If your CWD is not the repo root, resolve the path first: `python3 "$(git rev-parse --show-toplevel)/.devcontainer/skills/create-task/driver.py" ...`
 
 The driver prints JSON. It needs `AGENT_BRANCH_PREFIX` in the environment (for the Handoff branch line); it never needs tokens.
 
