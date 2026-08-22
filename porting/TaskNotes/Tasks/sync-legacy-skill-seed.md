@@ -36,6 +36,10 @@ AGENTS.md                                 (only if it mentions docs/TaskNotes)
 
 ## Notes
 - Discovered while building the create-task skill (session 2026-08-22): the seeded handle-task is a docs/-lineage copy whose driver computes REPO_ROOT=parents[3] of its own file, so in the seeded location it resolves to /root and points at /root/docs/TaskNotes/Tasks (absent).
+- Known environment quirk (2026-08-22): `repo: giriupdates` has no `GITHUB_GIRIUPDATES_TOKEN`/`GITLAB_GIRIUPDATES_TOKEN` in the open-code devcontainer (only MYTHBUSTER/MYTHLLM tokens are set) — `handle-task` will ask the user for one at pickup; that is expected, not a defect.
+- The live copy in a running container is at `/root/.jcode/skills/` (seeded from `.devcontainer/skills/` by `postCreateCommand`, over the legacy image-baked copy). A running container will need `cp -r .devcontainer/skills/* /root/.jcode/skills/` or a restart after this fix.
+- The two `handle-task` lineages diverge in SKILL.md wording (docs-variant says "Do NOT just tick checkboxes…"; porting-variant adds the per-commit Progress-log rule). The porting-variant is the one agents are instructed by in-session; keep it.
+- Pickup rehearsal (2026-08-22, fresh agent, read-only): a context-free agent picked this note up correctly — found it where the skill says notes live, reproduced the expected token error verbatim, confirmed no prior work on the branch, and planned the correct first steps. It surfaced one follow-up for the current skill text: step 2's resume check `git log <target>..<branch>` exits with a hard fatal when the branch does not exist yet; `handle-task` should treat that as "fresh start". Fix belongs in `.devcontainer/skills/handle-task/SKILL.md` (it propagates to the seed with this task's sync), so it is out of scope here unless the diff makes it trivial.
 
 ## Blocked by
 - ~~none~~
