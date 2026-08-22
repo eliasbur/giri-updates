@@ -31,3 +31,4 @@ cmake/
 # infra helper scripts
 *-tunnel.sh
 
+__pycache__/
