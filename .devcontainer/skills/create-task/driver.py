@@ -330,7 +330,7 @@ def cmd_commit(args):
     rel = path.relative_to(root)
     for step in (
         ["git", "add", str(rel)],
-        ["git", "commit", "-m", f"Add task note {args.slug}"],
+        ["git", "commit", "-m", args.message or f"Add task note {args.slug}"],
     ):
         r = subprocess.run(step, cwd=root, capture_output=True, text=True)
         if r.returncode != 0:
@@ -374,6 +374,8 @@ def main():
         p.add_argument("--repo-root", help="explicit repo root (default: detect from cwd)")
         if name == "commit":
             p.add_argument("--force", action="store_true", help="commit even if check fails")
+            p.add_argument("--message", help="commit message (default: 'Add task note <slug>'; "
+                                             "use for amendments so the history reads correctly)")
         p.set_defaults(func=cmd_check if name == "check" else cmd_commit)
 
     args = ap.parse_args()
