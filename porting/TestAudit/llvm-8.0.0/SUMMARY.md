@@ -59,7 +59,7 @@ audit is therefore against the pristine 3.4 goldens.
 
 | Test | Verdict | Diff vs golden | Root cause | Report |
 |------|---------|----------------|------------|--------|
-| matrix_multiply-pthread | **FAIL-EXPECTED** | 10 of 60 lines missing; 0 extra (monotonic subset) | Criterion instruction drift: 3.4's `matrixmult_map:138` ≠ 8.0.0's #138 (`matrixmult_map` has 148 instructions under 8.0.0 codegen). Sweep 120–148: N=136 closest (58/60, missing only lines 102/103); N=138 gives 50/60. Same drift class as the 5.0.2 seq finding. Out of the automated suite. | [matrix_multiply-pthread.md](matrix_multiply-pthread.md) |
+| matrix_multiply-pthread | **FAIL-EXPECTED** | 10 of 60 lines missing; 0 extra (monotonic subset) | Criterion instruction drift: 3.4's `matrixmult_map:138` ≠ 8.0.0's #138 (`matrixmult_map` has 148 instructions under 8.0.0 codegen). Full-function sweep (1–148): **no index reproduces the 60-line golden exactly**; N=136 closest (58/60, missing only lines 102/103 — a cross-iteration write in `map` no `matrixmult_map` slice covers), N=138 gives 50/60; N=31/32/43/44 abort on the pre-existing `getLastDynValue` "Cannot find instruction in trace!" assert. Same drift class as the 5.0.2 seq finding. Out of the automated suite. | [matrix_multiply-pthread.md](matrix_multiply-pthread.md) |
 | pca-pthread | CLEAN | empty (34 lines) | none; the 5.0.2 root-cause-A fix (`3b26ea6`) is inherited | [pca-pthread.md](pca-pthread.md) |
 | kmeans-pthread | **FAIL-HARNESS** | not reached | `kmeans-pthread.c:316` assert `num_threads == num_procs` fires on the 256-CPU host (100 points < 256 CPUs → 100 threads); SIGABRT caught by the harness's `[GIRI] Abnormal termination` marker; runaway pre-crash iteration wrote a 101 GB trace and slicing timed out. Identical to the 5.0.2 finding (108 GB trace then). | [kmeans-pthread.md](kmeans-pthread.md) |
 
@@ -69,17 +69,15 @@ This is the **only** non-CLEAN result of the whole audit, and it is not in the
 automated suite. It is a criterion-file (instruction index) drift, not a golden
 mismatch and not a slicing bug (the slice is a monotonic subset of the golden with
 no extra/wrong lines). Per the golden-file constraint, no test file was changed.
-Two resolution options are documented in
-[matrix_multiply-pthread.md](matrix_multiply-pthread.md) and deferred to a user
-decision:
 
-1. Retune `test/matrix_multiply/criterion-inst-pthread.txt` to the 8.0.0-codegen
-   equivalent (the sweep points at `matrixmult_map:136`, with a residual 2-line
-   diff on the `out->length` tail-assignment branch; a finer search may find an
-   exact reproduction).
-2. Leave the criterion at `:138` and carry the FAIL-EXPECTED pthread result as
-   documented (consistent with how the 5.0.2 port first carried the seq
-   FAIL-EXPECTED before retuning it).
+**The full 1–148 sweep (see the per-test report) is conclusive:** under 8.0.0
+codegen no single `matrixmult_map:N` instruction reproduces the 60-line golden, so
+the 5.0.2-style criterion retune has no exact equivalent here — `:136` (58/60)
+leaves a structural residual (lines 102/103, a cross-iteration `out->length`
+write in `map` that no `matrixmult_map` slice covers). **FAIL-EXPECTED stands as
+the final, evidence-backed state.** Making the pthread variant green on 8.0.0 would
+require either a golden regeneration (explicit user consent) or a pinned-CPU host;
+neither is applied.
 
 ## Re-verification of the three critical invariants (AGENTS.md)
 

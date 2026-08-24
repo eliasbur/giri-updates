@@ -264,7 +264,9 @@ change any of them, stop and write down why in the PR description instead of sil
   golden 19/19 (manual re-diff, artifacts kept) — the 5.0.2 FAIL-EXPECTED did NOT recur.
   Manual pthread runs: pca-pthread CLEAN (34/34); matrix_multiply-pthread FAIL-EXPECTED
   (10 of 60 lines missing, 0 extra — criterion drift, 3.4's `matrixmult_map:138` ≠ 8.0.0's
-  #138; sweep 120–148 → #136 closest at 58/60); kmeans-pthread FAIL-HARNESS (assert
+  #138; full 1–148 sweep: no index reproduces the 60-line golden, #136 closest at 58/60
+  with a structural residual on lines 102/103, N=31/32/43/44 abort on the pre-existing
+  `getLastDynValue` assert); kmeans-pthread FAIL-HARNESS (assert
   `num_threads == num_procs` at `kmeans-pthread.c:316` on the 256-CPU host; 101 GB trace
   written then removed; identical to the 5.0.2 finding). Audit at
   `porting/TestAudit/llvm-8.0.0/` (SUMMARY + 21 seq + 3 pthread reports). Three invariants
@@ -273,11 +275,11 @@ change any of them, stop and write down why in the PR description instead of sil
   swarm worker `ram` extracted 6.0.0/7.0.0/8.0.0 per-version + consolidated
   `api-breakings.yaml` (35 entries); coordinator triaged all 35 (2 `affected`/`addressed`:
   DEBUG macro, min-compiler-version; 8 `unlikely`; 25 `irrelevant`). AGENTS.md `## Current
-  state` + `## Known residuals` replaced with the 8.0.0 state (branch copy). One open item
-  deferred to a user decision (golden-file constraint): whether to retune
-  `criterion-inst-pthread.txt` for matrix_multiply-pthread. next: Phase 4 — handoff PR into
-  `port/llvm-8.0.0`, then `driver.py finish` once the user has ruled on the pthread
-  criterion.
+  state` + `## Known residuals` replaced with the 8.0.0 state (branch copy). The
+  matrix_multiply-pthread drift is settled as FAIL-EXPECTED after the full 1–148 sweep
+  (no exact retune exists; the criterion and golden are both untouched — the golden-file
+  constraint is respected without a decision still pending). next: Phase 4 — handoff PR into
+  `port/llvm-8.0.0`, then `driver.py finish`.
 
 ## Handoff
 - PR: llvm-8-port #18 https://github.com/eliasbur/giri-updates/pull/18

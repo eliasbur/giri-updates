@@ -27,37 +27,29 @@ slice-output sensitivity).
 
 ## Criterion sweep (8.0.0, `matrixmult_map:N`, diff against the 60-line golden)
 
-| N | slice lines | diff lines | note |
-|---|-------------|------------|------|
-| 120–122 | 51 | 9–11 | |
-| 123 | 57 | 3 | |
-| 124–126 | 51 | 9 | |
-| 127 | 52 | 8 | |
-| 128–130 | 51 | 9 | |
-| 131 | 52 | 8 | |
-| 132–135 | 51–52 | 8–9 | |
-| **136** | **58** | **2** | **closest to the 60-line golden** |
-| 137 | 51 | 11 | |
-| **138** | **50** | **10** | **the 3.4-era criterion** |
-| 139–141 | 50 | 10 | |
-| 142–144 | 49 | 13 | |
-| 145 | 48 | 12 | |
-| 146–148 | 42 | 20 | |
+**Full function sweep, N = 1..148 (the complete 8.0.0 instruction count):**
 
-The N=136 slice differs from the golden by exactly lines `102, 103`
-(the `if (i == num_procs-1) out->length = ...` tail assignment at the end of the
-thread-spawn loop in `map`):
+- **No index exactly reproduces the 60-line golden.**
+- **N = 136 is the best (58/60; the only residual is lines 102/103).**
+- Runners-up: N = 123 (57/60), N = 100/101/102 (56/60), N = 99 (55/60).
+- N = 138 (the 3.4-era criterion): 50/60, 10 lines missing.
+- **N = 31, 32, 43, 44 abort** (SIGABRT) with the assertion
+  `TraceFile.cpp:86 getLastDynValue: "Cannot find instruction in trace!"` —
+  pre-existing Giri behavior for criteria that reference an instruction never
+  executed in the trace (a `map`-function instruction in a 256-thread run);
+  this is a property of the criterion choice, not a port regression.
+
+**N=136 diff vs golden (the residual 2 lines):**
 ```
 19a20,21
 > 102
 > 103
 ```
-So the 8.0.0-codegen golden-equivalent criterion is approximately `matrixmult_map:136`
-(with a residual 2-line diff on the tail-assignment branch), not `:138`. The residual
-diff is because the criterion instruction's data-flow reachability at 136 does not cover
-the cross-iteration `out->length` write at lines 102–103 under 8.0.0 codegen — the same
-class of per-instruction reachability difference that produced the +7 drift on the
-5.0.2 seq variant.
+Lines 102–103 are the `if (i == num_procs-1) out->length = ...` tail assignment at
+the end of the thread-spawn loop in `map` — a cross-iteration write that no
+single `matrixmult_map`-body instruction's backward slice covers under 8.0.0
+codegen. The same class of per-instruction reachability difference that produced
+the +7 drift on the 5.0.2 seq variant.
 
 ## Why this is FAIL-EXPECTED and not a port bug
 
@@ -83,17 +75,29 @@ normal slice; no "Could not find Control-dep" warnings, no assertion, no fatal e
 The exit code is non-zero only because the `diff` at stage 10 fails (the golden
 mismatch), not because any stage crashed.
 
-## Proposed resolution (needs a decision, per the golden-file constraint)
+## Resolution
 
-Two options, both consistent with the 5.0.2 precedent:
-1. **Retune the criterion file** `test/matrix_multiply/criterion-inst-pthread.txt`
-   from `matrixmult_map 138` to the 8.0.0-codegen equivalent (the sweep suggests `:136`
-   with a residual 2-line diff, or a finer search around it). This changes the
-   *criterion*, not the golden — the 5.0.2 port did exactly this for the seq variant.
-2. **Leave as-is** and document the FAIL-EXPECTED pthread drift in the PR, since the
-   pthread variant is out of scope for the automated suite and the 5.0.2 port also
-   documented (rather than retuned) the seq FAIL-EXPECTED at first.
+The **full** 1–148 sweep (above) is definitive: under 8.0.0 codegen no single
+`matrixmult_map:N` instruction reproduces the 60-line 3.4 golden, so the
+5.0.2-style criterion retune (the fix used for the seq variant, `ec0e6b7`) has
+**no exact equivalent here**. The closest index (`:136`, 58/60) still leaves a
+residual diff (lines 102/103), so retuning would not make the variant pass the
+harness `diff` — it would only move the failure. The residual is structural:
+the golden's lines 102/103 are a cross-iteration write in `map` that no
+`matrixmult_map`-body instruction's slice covers under 8.0.0 codegen.
 
-Per the user constraint ("do NOT change test cases (golden files, `ans-*.txt`) without
-explicit user consent"), neither option has been applied; both are deferred to a user
-decision.
+Verdict: **FAIL-EXPECTED stands as the final, evidence-backed state.** The
+pthread variant is out of the automated suite, the slice it does produce is a
+correct monotonic subset (no wrong lines), and the only test-file changes
+across the port lineage remain the pre-existing 5.0.2 seq criterion retune and
+this untouched criterion.
+
+If a future pass wants the pthread variant green on 8.0.0, the honest options
+are: (a) regenerate `ans-inst-pthread.txt` from a chosen 8.0.0-codegen criterion
+(a golden regeneration — requires explicit user consent per the project
+constraint), or (b) run the variant on a pinned-CPU host (e.g.
+`--cpuset-cpus=0-3`) so `matrixmult_map`'s codegen is closer to the 3.4-era
+one the golden was generated under. Neither is applied here.
+
+Per the user constraint ("do NOT change test cases (golden files, `ans-*.txt`)
+without explicit user consent"), no test file was changed.
