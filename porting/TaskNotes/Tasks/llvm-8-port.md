@@ -121,17 +121,17 @@ change any of them, stop and write down why in the PR description instead of sil
 - Add a `## Current state` section to `AGENTS.md` on this branch, matching the new flow.
 
 ## Definition of done
-- [ ] `port/llvm-8.0.0` exists, created from `port/llvm-5.0.2` (see Notes on the deprecated remote branch), with the base commit recorded in the Progress log
-- [ ] Phase 0 spike result (chosen base image + gcc version + hello-world pass proof) recorded in the Progress log
-- [ ] `utils/install_llvm.sh` gained a working `8.0.0` case using the prebuilt release tarball, with the `3.4` and `5.0.2` cases unchanged
-- [ ] `Dockerfile` builds end to end for LLVM 8.0.0 (`docker build -t giri-llvm-8 .`), with 8.0.0 tools on `PATH`
-- [ ] CMake pins `find_package(LLVM 8.0 REQUIRED CONFIG)`; build produces `libgiri.so`, `libdgutility.so`, `librtgiri.a`, `tracer`, `prtrace` in the established flat `build/{lib,bin}` layout
-- [ ] Both passes load in `opt` 8.0.0 (`opt -load build/lib/libdgutility.so -load build/lib/libgiri.so -help` lists `-bbnum`, `-lsnum`, `-trace-giri`, `-dgiri`)
-- [ ] Giri sources compile with zero errors against 8.0.0
-- [ ] Full suite executed on the honest harness; pass/fail per test recorded, and each remaining failure root-caused (reports under `porting/TestAudit/llvm-8.0.0/`)
-- [ ] `porting/llvm-releases/8.0.0/api-breakings.yaml` (+ per-version files) exists; every entry touched has `relevance` and `status` updated
-- [ ] The three invariants in `AGENTS.md` verified or their deviation explained in the PR
-- [ ] `AGENTS.md` on `port/llvm-8.0.0` gained a `## Current state` section, and its build/test commands match the CMake flow
+- [x] `port/llvm-8.0.0` exists, created from `port/llvm-5.0.2` (see Notes on the deprecated remote branch), with the base commit recorded in the Progress log
+- [x] Phase 0 spike result (chosen base image + gcc version + hello-world pass proof) recorded in the Progress log
+- [x] `utils/install_llvm.sh` gained a working `8.0.0` case using the prebuilt release tarball, with the `3.4` and `5.0.2` cases unchanged
+- [x] `Dockerfile` builds end to end for LLVM 8.0.0 (`docker build -t giri-llvm-8 .`), with 8.0.0 tools on `PATH`
+- [x] CMake pins `find_package(LLVM 8.0 REQUIRED CONFIG)`; build produces `libgiri.so`, `libdgutility.so`, `librtgiri.a`, `tracer`, `prtrace` in the established flat `build/{lib,bin}` layout
+- [x] Both passes load in `opt` 8.0.0 (`opt -load build/lib/libdgutility.so -load build/lib/libgiri.so -help` lists `-bbnum`, `-lsnum`, `-trace-giri`, `-dgiri`)
+- [x] Giri sources compile with zero errors against 8.0.0
+- [x] Full suite executed on the honest harness; pass/fail per test recorded, and each remaining failure root-caused (reports under `porting/TestAudit/llvm-8.0.0/`)
+- [x] `porting/llvm-releases/8.0.0/api-breakings.yaml` (+ per-version files) exists; every entry touched has `relevance` and `status` updated
+- [x] The three invariants in `AGENTS.md` verified or their deviation explained in the PR
+- [x] `AGENTS.md` on `port/llvm-8.0.0` gained a `## Current state` section, and its build/test commands match the CMake flow
 - [ ] PR opened into `port/llvm-8.0.0` and linked below
 
 ## Files / scope
@@ -241,6 +241,41 @@ change any of them, stop and write down why in the PR description instead of sil
   (remote + local). No repo content changed. next: `handle-task llvm-8-port` can run
   end-to-end in this environment (token + `TARGET_BRANCH` export + the one user-confirmed
   force-push of the deprecated remote `port/llvm-8.0.0`).
+
+- 2026-08-24 `16236bd` — Phases 1+2 COMPLETE (build green). `find_package(LLVM 8.0 REQUIRED
+  CONFIG)`; image rebuilt with `libxml2-dev` (LLVM 8's `libLLVMSupport.a` needs `-lxml2` to
+  link `tracer`). Source fixes: (1) the bare `DEBUG(X)` macro is gone from LLVM 8's
+  `Debug.h` (renamed `LLVM_DEBUG` in 7.0.0) — one-line compat shim
+  `#define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)` added in the four files that used it
+  (each already defines `DEBUG_TYPE` + includes `Debug.h`); (2) `Tracer.cpp`:
+  `WriteBitcodeToFile` takes `const Module &` in 8.0.0 (`M.get()` → `*M`, 2 sites).
+  Reconciliation: `CallSite` still exists in 8.0.0 (deprecated, removed later) — no
+  migration needed. Fresh clean build on the rebuilt `giri-llvm-8` image: all five
+  artifacts in `build/{lib,bin}`; real `-trace-giri` pass runs through `opt` 8.0.0 on a
+  trivial module; `opt -help` lists `-bbnum`/`-lsnum`/`-trace-giri`/`-dgiri` (+ query/
+  remove variants). next: Phase 3.
+- 2026-08-24 — Phase 3 COMPLETE (tests + audit + invariants + change-data + AGENTS.md).
+  Honest-harness suite on 8.0.0: **21 PASS / 0 FAIL** (seq variants per the Dockerfile env).
+  Golden provenance proven: `git diff 86f3b8a..HEAD -- 'test/**/ans-*.txt'` empty (the only
+  test-file change in the whole lineage is the 5.0.2 criterion retune
+  `criterion-inst-seq.txt` 285→291, `ec0e6b7`); matrix_multiply-seq reproduces its 19-line
+  golden 19/19 (manual re-diff, artifacts kept) — the 5.0.2 FAIL-EXPECTED did NOT recur.
+  Manual pthread runs: pca-pthread CLEAN (34/34); matrix_multiply-pthread FAIL-EXPECTED
+  (10 of 60 lines missing, 0 extra — criterion drift, 3.4's `matrixmult_map:138` ≠ 8.0.0's
+  #138; sweep 120–148 → #136 closest at 58/60); kmeans-pthread FAIL-HARNESS (assert
+  `num_threads == num_procs` at `kmeans-pthread.c:316` on the 256-CPU host; 101 GB trace
+  written then removed; identical to the 5.0.2 finding). Audit at
+  `porting/TestAudit/llvm-8.0.0/` (SUMMARY + 21 seq + 3 pthread reports). Three invariants
+  re-verified (Runtime.h byte-identical to 3.4 base; `-g` mandatory; identical `-bbnum
+  -lsnum` sequence in both pipeline stages + 21/21 behavioral proof). Change data complete:
+  swarm worker `ram` extracted 6.0.0/7.0.0/8.0.0 per-version + consolidated
+  `api-breakings.yaml` (35 entries); coordinator triaged all 35 (2 `affected`/`addressed`:
+  DEBUG macro, min-compiler-version; 8 `unlikely`; 25 `irrelevant`). AGENTS.md `## Current
+  state` + `## Known residuals` replaced with the 8.0.0 state (branch copy). One open item
+  deferred to a user decision (golden-file constraint): whether to retune
+  `criterion-inst-pthread.txt` for matrix_multiply-pthread. next: Phase 4 — handoff PR into
+  `port/llvm-8.0.0`, then `driver.py finish` once the user has ruled on the pthread
+  criterion.
 
 ## Handoff
 - branch `agent/open-code/llvm-8-port`
