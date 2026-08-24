@@ -1,0 +1,7 @@
+# Keep credentials and host-specific files out of the image:
+# `ADD . giri` copies the working tree, and .devcontainer/jcode/.env carries
+# real tokens.
+.env
+*.env
+.devcontainer/jcode/
+*.local
