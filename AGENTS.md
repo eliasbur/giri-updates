@@ -62,10 +62,14 @@ The three critical invariants are verified (this port):
 suite result says nothing about a pthread variant unless run by hand. Manual pthread
 runs (this port): `pca-pthread` CLEAN (34/34); `matrix_multiply-pthread`
 **FAIL-EXPECTED** — criterion instruction drift, 3.4's `matrixmult_map:138` ≠ 8.0.0's
-#138 (148 instructions in the function under 8.0.0 codegen); full 1–148 sweep:
-**no index reproduces the 60-line golden**, #136 closest (58/60, missing only
-lines 102/103); 10 golden lines absent at `:138`, 0 extra (monotonic subset, no
-wrong lines). No exact retune exists, so the criterion file was **not** touched —
+#138 (**153** instructions in the function under 8.0.0 codegen); corrected full 1–154
+sweep: **N=136 reproduces the 60-line golden exactly (60/60, 0 missing, 0 extra)** — a
+valid criterion retune exists (reproducible across fresh traces); as shipped, `:138`
+gives 52/60 (8 golden lines absent: 140,144,145,147,149,150,152,155; 0 extra — monotonic
+subset, no wrong lines). Correction note: the earlier "148 instructions / no index
+reproduces the golden" claim came from a sweep run against a stale build state and is
+retracted. The criterion file was **not** touched (golden-file constraint); the ready-made
+forward option is retuning it to `matrixmult_map 136` (needs explicit user consent) —
 see the open item in `porting/TestAudit/llvm-8.0.0/matrix_multiply-pthread.md`.
 `kmeans-pthread`
 **FAIL-HARNESS** — asserts `num_threads == num_procs` (`kmeans-pthread.c:316`) on the
@@ -80,7 +84,7 @@ are [regression]. There are no [regression] rows.
 
 | What | Status | Why acceptable / Evidence |
 |------|--------|---------------------------|
-| `matrix_multiply-pthread` — FAIL-EXPECTED | Final state (not in the automated suite) | Criterion instruction drift (3.4's `matrixmult_map:138` ≠ 8.0.0's #138; 148 instructions under 8.0.0 codegen). Full 1–148 sweep: no index reproduces the 60-line golden; #136 closest (58/60, residual lines 102/103). Golden untouched (pristine 3.4); criterion untouched (no exact retune exists). Evidence: `porting/TestAudit/llvm-8.0.0/matrix_multiply-pthread.md` |
+| `matrix_multiply-pthread` — FAIL-EXPECTED | Final state for the *shipped* criterion (not in the automated suite) | Criterion instruction drift (3.4's `matrixmult_map:138` ≠ 8.0.0's #138; **153** instructions under 8.0.0 codegen). Corrected full 1–154 sweep: **N=136 reproduces the 60-line golden exactly (60/60)** — a valid retune exists; as shipped `:138` gives 52/60 (8 lines absent, 0 extra). Golden untouched (pristine 3.4); criterion untouched (retuning to `:136` needs explicit user consent). The earlier "148 / no retune exists" claim is retracted (stale-build-state sweep). Evidence: `porting/TestAudit/llvm-8.0.0/matrix_multiply-pthread.md` |
 | `kmeans-pthread` — cannot run | [inherited] gap | Asserts on hosts where `sysconf(_SC_NPROCESSORS_ONLN)` exceeds 100 (256 in this container). Harness catches the abort via the `[GIRI] Abnormal termination` marker. Same as 5.0.2 |
 | No pthread suite coverage | [inherited] gap | `Dockerfile` pins `TEST_PARALLELISM=seq`. pthread variants are one-off manual measurements, not ongoing coverage |
 | test6 (sigusr1), test7 (sigint), test22 (fp) | [inherited] gap | Have golden files but not in `auto-tests.txt`; signals tests need interactive terminal setup, test22 needs `-lm`. Same as 5.0.2 |

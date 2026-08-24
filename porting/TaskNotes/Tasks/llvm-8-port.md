@@ -302,6 +302,27 @@ change any of them, stop and write down why in the PR description instead of sil
   though PR #18 is open and linked in the Handoff section — checked it off. Next: none;
   awaiting review/merge of PR #18.
 
+- 2026-08-24 — CORRECTION: the matrix_multiply-pthread sweep recorded earlier (this
+  session) is retracted. A faithful re-run — clean rebuild, fresh traced binary, exact
+  `Makefile.common` commands, and a small `inst_begin`/`inst_end` counter compiled against
+  LLVM 8.0.0 (counting the same way `Giri.cpp:300` does) — shows: `matrixmult_map` has
+  **153** instructions under 8.0.0 codegen (154 in the module fed to `-dgiri`, post
+  `-mergereturn -bbnum -lsnum`), **not 148**; and **N=136 reproduces the 60-line golden
+  exactly (60/60, 0 missing, 0 extra)**, reproducibly across 5 independently regenerated
+  traces. So a valid criterion retune **exists** (the earlier "no exact retune exists"
+  came from a sweep run against a stale/different build state). At the shipped criterion
+  `:138` the slice is 52/60, 0 extra (8 golden lines absent: 140,144,145,147,149,150,152,155
+  — a monotonic subset). N=31/32/43/44/154 crash in the pre-existing, port-untouched
+  `findPreviousID` code (0 lines of the port diff touch it). The pthread `.trace` is
+  run-to-run non-deterministic (3 runs → 3 distinct md5s), an inherent property of the
+  tool. **No test file was changed** — the criterion is still `matrixmult_map 138` (golden
+  untouched), per the user constraint; the ready-made forward option (retune the criterion
+  file to `matrixmult_map 136`, a criterion-file edit rather than a golden regeneration)
+  requires explicit user consent. The audit report
+  (`porting/TestAudit/llvm-8.0.0/matrix_multiply-pthread.md`), SUMMARY, and `AGENTS.md`
+  Known residuals were all corrected to match, with a correction note recording the
+  retraction. The FAIL-EXPECTED verdict for the *shipped* criterion still stands.
+
 ## Handoff
 - PR: llvm-8-port #18 https://github.com/eliasbur/giri-updates/pull/18
 - branch `agent/open-code/llvm-8-port`
