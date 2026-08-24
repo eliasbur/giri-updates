@@ -159,6 +159,14 @@ change any of them, stop and write down why in the PR description instead of sil
   from-`master` 8.0.0 port would redo the entire 5.0.2 build-system + harness work. Branching
   from the completed 5.0.2 port is the sanctioned fallback and the decision the user endorsed
   (2026-08-24). Record the exact base commit in the Progress log.
+- **Set `TARGET_BRANCH=port/llvm-8.0.0` in the shell before running the driver.** The
+  `handle-task` driver reads the target branch **only** from the `TARGET_BRANCH` env var
+  (defaulting to `development`); it does not read it from the note. Without this export,
+  `resolve` reports `target_branch: development` and skill step 5 (`git checkout -b <branch>
+  <target_branch>`) would cut the working branch from the raw 3.4 tree — the exact base this
+  note forbids. The rehearsal pickup (2026-08-24) flagged this. Export it for the whole
+  session, and also pass `--target port/llvm-8.0.0` to `open-mr` (the flag exists so the MR
+  target is correct even if the env var is lost).
 - **The remote still carries a deprecated `port/llvm-8.0.0`** (identical to
   `origin/deprecated/port/llvm-8.0.0`, commit `6088dc6` — an old scaffold). User decision
   (2026-08-24): ignore both. Before pushing the real work, the remote `port/llvm-8.0.0` must be
@@ -177,10 +185,23 @@ change any of them, stop and write down why in the PR description instead of sil
 - ~~none~~
 
 ## Progress log
+- 2026-08-24 — Fresh-agent pickup rehearsal (context-free swarm worker, no token, dry run):
+  verdict "pickable from the note alone". `resolve` correctly fails token-less; the step-2
+  resume check exits 128 (branch absent = normal fresh start); all Phase-2 hazard lines verified
+  against `origin/port/llvm-5.0.2`; the deprecated remote branch confirmed at `6088dc6`.
+  Two gaps fixed inline in this note: (1) the Refs path `porting/TestAudit/llvm-5.0.2/SUMMARY.md`
+  does not exist on `development` — it lives on `origin/port/llvm-5.0.2`, now annotated in the
+  Refs line; (2) the driver reads the target branch only from the `TARGET_BRANCH` env var, so
+  following skill step 5 verbatim would cut from `development` — a Notes bullet now requires
+  exporting `TARGET_BRANCH=port/llvm-8.0.0` before driver use. next: a token-holding session
+  exports that variable and runs `handle-task llvm-8-port`.
 
 ## Handoff
 - branch `agent/open-code/llvm-8-port`
 - (MR/PR line is written by `driver.py finish`: `- {PR|MR}: <label> {#|!}<iid> <url>`)
 Refs: `AGENTS.md`, `porting/README.md`, `porting/AgentGuide.md`, `porting/HowItWorks.md`,
-`porting/TaskNotes/Tasks/llvm-5-port.md`, `porting/llvm-releases/5.0.0/api-breakings.yaml`,
-`porting/TestAudit/llvm-5.0.2/SUMMARY.md`
+`porting/TaskNotes/Tasks/llvm-5-port.md`, `porting/llvm-releases/5.0.0/api-breakings.yaml` (all
+on `development`). **Branch-dependent refs — on `origin/port/llvm-5.0.2`, not on `development`**
+(read them with `git show origin/port/llvm-5.0.2:<path>` before the branch is cut, then directly
+afterward): `porting/TestAudit/llvm-5.0.2/SUMMARY.md` (audit + "Suite results across the port"
+exemplar) and the `## Current state` section of the 5.0.2 `AGENTS.md`.
