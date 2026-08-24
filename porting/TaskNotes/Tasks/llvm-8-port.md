@@ -193,6 +193,19 @@ change any of them, stop and write down why in the PR description instead of sil
 - ~~none~~
 
 ## Progress log
+- 2026-08-24 — Phase 0 toolchain edits (this run, pre-spike): Dockerfile moved
+  ubuntu:14.04 -> ubuntu:16.04 -> **ubuntu:18.04** (16.04/xenial apt repos are dead:
+  old-releases.ubuntu.com no longer serves `dists/xenial`; bionic is still served by the
+  normal archive.ubuntu.com, verified 200, so 18.04 needs no repo redirection and gives
+  gcc 7.4 headroom). `install_llvm.sh` gained an `8.0.0` case using the prebuilt
+  `clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz` (URL verified 200); the `3.4`
+  and `5.0.2` cases are unchanged. New `.dockerignore` keeps `.env`/credentials out of
+  `ADD . giri` (the env file now carries real tokens). Environment finding: Docker's
+  creds-store helper `dev-containers-*` is gone from PATH, so every Docker Hub pull fails
+  with "error getting credentials — exit 255"; work around it with
+  `DOCKER_CONFIG=/root/.jcode/scratch/dockercfg` (a `{}` config). Image build is running
+  (`giri-llvm-8`); next: hello-world spike (compile a legacy pass against 8.0.0 headers
+  with the real flags, load it in `opt`).
 - 2026-08-24 `40a322a` — Setup: created `port/llvm-8.0.0` at the 5.0.2 tip `5527588` and published
   it (fast-forward, new branch). Note: the deprecated remote `port/llvm-8.0.0` (scaffold `6088dc6`)
   was deleted from the remote before this run started, so the force-push step in the plan was moot;
