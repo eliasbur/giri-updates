@@ -193,6 +193,13 @@ change any of them, stop and write down why in the PR description instead of sil
 - ~~none~~
 
 ## Progress log
+- 2026-08-24 `40a322a` — Setup: created `port/llvm-8.0.0` at the 5.0.2 tip `5527588` and published
+  it (fast-forward, new branch). Note: the deprecated remote `port/llvm-8.0.0` (scaffold `6088dc6`)
+  was deleted from the remote before this run started, so the force-push step in the plan was moot;
+  the scaffold remains preserved at `origin/deprecated/port/llvm-8.0.0`. Cut working branch
+  `agent/open-code/llvm-8-port`; brought the task note onto the port branch (it lives on
+  `development`, not on the 5.0.2 base). next: Phase 0 — `install_llvm.sh` 8.0.0 case,
+  `Dockerfile` ubuntu:16.04 + `.dockerignore`, image build, hello-world spike.
 - 2026-08-24 — Fresh-agent pickup rehearsal (context-free swarm worker, no token, dry run):
   verdict "pickable from the note alone". `resolve` correctly fails token-less; the step-2
   resume check exits 128 (branch absent = normal fresh start); all Phase-2 hazard lines verified
