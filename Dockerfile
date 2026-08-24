@@ -13,7 +13,7 @@ ENV PATH=/usr/local/llvm/bin:$PATH
 
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -qq -y wget make g++ python zip unzip autoconf libtool automake xz-utils libtinfo-dev zlib1g-dev libncurses5-dev libedit-dev libz-dev
+    apt-get install -qq -y wget make g++ python zip unzip autoconf libtool automake xz-utils libtinfo-dev zlib1g-dev libncurses5-dev libedit-dev libz-dev libxml2-dev
 
 # Install CMake >= 3.4.3 (Ubuntu 18.04 ships 3.10; pin a known-good 3.12 binary)
 RUN wget -q https://cmake.org/files/v3.12/cmake-3.12.4-Linux-x86_64.tar.gz && \
