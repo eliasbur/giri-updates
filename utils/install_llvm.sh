@@ -46,10 +46,12 @@ case $VERSION in
 		;;
 	"8.0.0")
 		# Use prebuilt release tarball — no build from source needed.
-		# Requires the ubuntu:18.04 base image (see Dockerfile): LLVM 8 needs
-		# GCC >= 5.1 (C++14) to compile passes against its headers, and
-		# ubuntu:14.04's gcc 4.8 cannot do that. (The 16.04 tarball would work
-		# too, but xenial apt repos are dead, so the Dockerfile uses 18.04.)
+		# Requires the ubuntu:18.04 base image (see Dockerfile): the LLVM 8
+		# release notes require GCC >= 5.1, and ubuntu:14.04's gcc 4.8 is below
+		# that. (LLVM 8's own build standard is C++11 per `llvm-config
+		# --cxxflags`; the 14.04 gcc predates the required 5.1.) (The 16.04
+		# tarball would work too, but xenial apt repos are dead, so the
+		# Dockerfile uses 18.04.)
 		wget https://releases.llvm.org/8.0.0/clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
 		tar xf clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
 		rm -f clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz

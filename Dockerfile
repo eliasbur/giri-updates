@@ -1,9 +1,9 @@
-# ubuntu:18.04 base: LLVM 8.0.0 headers need GCC >= 5.1 / C++14 to compile
-# passes, and ubuntu:14.04's gcc 4.8 cannot do that. 18.04 ships gcc 7.4
-# (plenty of headroom over the minimum). Note: this run started as 16.04 but
-# ubuntu:16.04 (xenial) is no longer served by old-releases.ubuntu.com, so we
-# escalated to 18.04 per the plan's fallback — bionic is still on the normal
-# archive.ubuntu.com (verified 200) and needs no repo redirection.
+# ubuntu:18.04 base: the LLVM 8.0.0 release notes require GCC >= 5.1, and
+# ubuntu:14.04's gcc 4.8 is below that (18.04 ships gcc 7.5). Note: this run
+# started as 16.04 but ubuntu:16.04 (xenial) is no longer served by
+# old-releases.ubuntu.com, so we escalated to 18.04 per the plan's fallback —
+# bionic is still on the normal archive.ubuntu.com (verified 200) and needs no
+# repo redirection.
 FROM ubuntu:18.04
 
 ENV LLVM_HOME=/usr/local/llvm

@@ -193,6 +193,16 @@ change any of them, stop and write down why in the PR description instead of sil
 - ~~none~~
 
 ## Progress log
+- 2026-08-24 — Phase 0 spike PASSED: `giri-llvm-8` image builds (ubuntu:18.04, gcc 7.5,
+  cmake 3.12.4, prebuilt LLVM 8.0.0 tools on PATH, `LLVMConfig.cmake` present). A
+  `ModulePass` compiled with the real build flags (`-std=c++11 -fno-rtti -fno-exceptions
+  -fPIC -O2`, matching `HandleLLVMOptions` Release) loads and runs in `opt` 8.0.0.
+  Measured facts: LLVM 8's build standard is **C++11** (`llvm-config --cxxflags`), not
+  C++14 — comments in Dockerfile/install_llvm.sh corrected. New hazard discovered
+  (spike-derived, low impact): `Pass::createPrinterPass` is now pure-virtual in the base
+  `Pass` class (Pass.h:124); Giri's passes all derive from `ModulePass`/`FunctionPass`,
+  which override it, so no source change needed. next: Phase 1 — `find_package(LLVM 8.0)`
+  pin, real build, collect the full error list.
 - 2026-08-24 — Phase 0 toolchain edits (this run, pre-spike): Dockerfile moved
   ubuntu:14.04 -> ubuntu:16.04 -> **ubuntu:18.04** (16.04/xenial apt repos are dead:
   old-releases.ubuntu.com no longer serves `dists/xenial`; bionic is still served by the
