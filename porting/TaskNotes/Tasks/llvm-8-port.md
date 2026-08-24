@@ -10,7 +10,7 @@ tags:
 timeEstimate: 0          # minutes
 dateCreated: 2026-08-24
 # dateModified / completedDate are added automatically by `driver.py finish`
-dateModified: 2026-08-24T18:15:16.360+02:00
+dateModified: 2026-08-24T17:13:05+00:00
 completedDate: 2026-08-24
 ---
 ## Goal
@@ -134,7 +134,7 @@ change any of them, stop and write down why in the PR description instead of sil
 - [x] `porting/llvm-releases/8.0.0/api-breakings.yaml` (+ per-version files) exists; every entry touched has `relevance` and `status` updated
 - [x] The three invariants in `AGENTS.md` verified or their deviation explained in the PR
 - [x] `AGENTS.md` on `port/llvm-8.0.0` gained a `## Current state` section, and its build/test commands match the CMake flow
-- [ ] PR opened into `port/llvm-8.0.0` and linked below
+- [x] PR opened into `port/llvm-8.0.0` and linked below
 
 ## Files / scope
 - `Dockerfile`
@@ -280,6 +280,27 @@ change any of them, stop and write down why in the PR description instead of sil
   (no exact retune exists; the criterion and golden are both untouched — the golden-file
   constraint is respected without a decision still pending). next: Phase 4 — handoff PR into
   `port/llvm-8.0.0`, then `driver.py finish`.
+- 2026-08-24 — Post-handoff verification pass (this run): re-ran the flagged weak points
+  with direct evidence. (a) Clean-state acceptance: deleted `build/` and re-ran the
+  documented `source /giri/utils/build.sh` — reconfigured against `Found LLVM 8.0.0`,
+  rebuilt all artifacts, re-ran the honest suite: **21 PASS / 0 FAIL** (exit 0, ~31s),
+  so the result reproduces from scratch. (b) Toolchain failure modes: `install_llvm.sh`
+  `LLVM_HOME` guard prints its message and exits 1; unknown version is a no-op (pre-existing
+  case-statement design). (c) The `find_package(LLVM 8.0 REQUIRED CONFIG)` pin is live:
+  a control project demanding 99.0 FAILS with "Could not find ... compatible with
+  requested version 99.0" (LLVMConfig.cmake reports 8.0.0) while demanding 8.0 succeeds.
+  (d) Change-data packaging: 8.0.0 lineage conforms to the 5.0.0 structural precedent
+  (`version`/`baseVersion`/`sourceFiles`/`generatedBy`/`generatedDate` + consolidated
+  `api-breakings.yaml`); `dockerfile-snippet.yaml` (named in `porting/README.md` line 27)
+  was deleted from the workflow in `35d0130` and has no template or precedent in either
+  lineage — README line 27 is stale repo docs, out of port scope; no lineage artifact added.
+  (e) Merge gate: PR #18 has `statusCheckRollup: []` (no CI workflows on the branch),
+  `mergeable: MERGEABLE`, `isDraft: false`; the `BLOCKED` merge state is the review/approval
+  requirement only (branch-protection read is 403 for this token — a config-permission
+  limit, not a defect). (f) Handoff-doc fix: the final Definition-of-done box ("PR opened
+  into `port/llvm-8.0.0` and linked below") was left unchecked by `driver.py finish` even
+  though PR #18 is open and linked in the Handoff section — checked it off. Next: none;
+  awaiting review/merge of PR #18.
 
 ## Handoff
 - PR: llvm-8-port #18 https://github.com/eliasbur/giri-updates/pull/18
