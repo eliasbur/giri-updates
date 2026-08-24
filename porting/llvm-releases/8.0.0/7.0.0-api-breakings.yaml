@@ -1,0 +1,285 @@
+---
+version: "7.0.0"
+sourceUrl: "https://releases.llvm.org/7.0.0/docs/ReleaseNotes.html"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-24"
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes in this release") ---
+
+  - id: libraries-renamed-7-0-to-7
+    category: "general"
+    changeType: "renamed"
+    severity: "high"
+    summary: "Libraries renamed from 7.0 to 7, impacting downstream libraries like lldb"
+    description: "Libraries have been renamed from 7.0 to 7. This change also impacts downstream libraries like lldb."
+    affectedApi:
+      - "libLLVM-7"
+      - "libLLVM-7.0"
+    notes: "Giri links via find_package(LLVM CONFIG) + LLVMConfig.cmake, not a libLLVM-7.0 shared lib."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: loopinstsimplify-removed
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "LoopInstSimplify pass (-loop-instsimplify) removed"
+    description: "The LoopInstSimplify pass (-loop-instsimplify) has been removed."
+    affectedApi:
+      - "LoopInstSimplify"
+      - "-loop-instsimplify"
+    notes: "Giri pipelines never use -loop-instsimplify."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: windows-mangling-question-mark-symbols
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Symbols starting with ? are no longer mangled when using the Windows x or w IR mangling schemes"
+    description: "Symbols starting with ? are no longer mangled by LLVM when using the Windows x or w IR mangling schemes."
+    affectedApi:
+      - "Windows IR mangling"
+      - "x mangling"
+      - "w mangling"
+    notes: "Windows mangling only; port targets Linux."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvm-exegesis-added
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "New tool llvm-exegesis added to measure instruction scheduling properties (latency/uops)"
+    description: "A new tool named llvm-exegesis has been added. llvm-exegesis automatically measures instruction scheduling properties (latency/uops) and provides a principled way to edit scheduling models."
+    affectedApi:
+      - "llvm-exegesis"
+    notes: "New tool; not used."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvm-mca-added
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "New tool llvm-mca added for static performance analysis of machine code"
+    description: "A new tool named llvm-mca has been added. llvm-mca is a static performance analysis tool that uses information available in LLVM to statically predict the performance of machine code for a specific CPU."
+    affectedApi:
+      - "llvm-mca"
+    notes: "New tool; not used."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: float-cast-overflow-attribute
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Improved floating-point cast folding; new strict-float-cast-overflow function attribute to opt out of overflow-folding behavior"
+    description: |-
+      Optimization of floating-point casts is improved. This may cause surprising results for code that is relying on the undefined behavior of overflowing casts. The optimization can be disabled by specifying a function attribute: "strict-float-cast-overflow"="false". This attribute may be created by the clang option -fno-strict-float-cast-overflow. Code sanitizers can be used to detect affected patterns. The clang option for detecting this problem alone is -fsanitize=float-cast-overflow.
+    affectedApi:
+      - "strict-float-cast-overflow"
+      - "-fno-strict-float-cast-overflow"
+      - "-fsanitize=float-cast-overflow"
+    notes: "New opt-out attribute for improved float-cast folding; Giri sets no fast-math/strict-cast flags and all 21 suite tests pass against the 3.4 goldens, so no codegen drift materialized."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: llvm-on-win32-macro-removed
+    category: "general"
+    changeType: "removed"
+    severity: "medium"
+    summary: "LLVM_ON_WIN32 no longer set by config.h / llvm-config.h; use compiler-set _WIN32 instead"
+    description: |-
+      LLVM_ON_WIN32 is no longer set by llvm/Config/config.h and llvm/Config/llvm-config.h. If you used this macro, use the compiler-set _WIN32 instead which is set exactly when LLVM_ON_WIN32 used to be set.
+    affectedApi:
+      - "LLVM_ON_WIN32"
+      - "llvm/Config/config.h"
+      - "llvm/Config/llvm-config.h"
+      - "_WIN32"
+    notes: "Windows-only macro; port targets Linux."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: debug-macro-renamed-llvm-debug
+    category: "general"
+    changeType: "renamed"
+    severity: "high"
+    summary: "DEBUG macro renamed to LLVM_DEBUG; interface remains the same"
+    description: |-
+      The DEBUG macro has been renamed to LLVM_DEBUG, the interface remains the same. If you used this macro you need to migrate to the new one. You should also clang-format your code to make it easier to integrate future changes locally.
+    affectedApi:
+      - "DEBUG"
+      - "LLVM_DEBUG"
+    notes: "Giri sources use the bare DEBUG(X) macro (Giri.cpp, TraceFile.cpp, BasicBlockNumbering.cpp, LoadStoreNumbering.cpp). LLVM 8's Debug.h defines only LLVM_DEBUG/DEBUG_WITH_TYPE, so the port added a one-line compat shim DEBUG(X)->DEBUG_WITH_TYPE(DEBUG_TYPE, X) in each of the four files (commit 16236bd). Behavior preserved: still no-op under NDEBUG, per-file DEBUG_TYPE retained."
+    relevance: "affected"
+    status: "addressed"
+
+  - id: smallvector-tiny-size-shrank
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "SmallVector<T, 0> shrank to sizeof(void*) + sizeof(unsigned) * 2; maximum capacity now restricted to UINT32_MAX"
+    description: |-
+      SmallVector<T, 0> shrank from sizeof(void*) * 4 + sizeof(T) to sizeof(void*) + sizeof(unsigned) * 2, smaller than std::vector<T> on 64-bit platforms. The maximum capacity is now restricted to UINT32_MAX. Since SmallVector doesn't have the exception-safety pessimizations some implementations saddle std::vector with and is better at using realloc, it's now a better choice even on the heap (although when TinyPtrVector works, that's even smaller).
+    affectedApi:
+      - "SmallVector"
+      - "TinyPtrVector"
+    notes: "Giri declares SmallVector<Value*, 0> (include/Utility/Utils.h:241) — the exact affected variant — but the change is size/capacity-only; the clean LLVM 8.0.0 build and 21/21 test pass confirm no behavioral impact."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: dwarf-v5-preliminary
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Preliminary/experimental support for DWARF v5 debugging information, including the new .debug_names accelerator table"
+    description: |-
+      Preliminary/experimental support for DWARF v5 debugging information, including the new .debug_names accelerator table. DWARF emitted at -O0 should be fully DWARF v5 compliant. Type units and split DWARF are known not to be compliant, and higher optimization levels will still emit some information in v4 format.
+    affectedApi:
+      - "DWARF v5"
+      - ".debug_names"
+    notes: "Giri reads DWARF via -g debug info (SourceLineMapping). Preliminary DWARF v5 support did not change the mappings on this toolchain: the 21/21 pass against 3.4-era goldens is the evidence."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: opt-load-pass-plugin
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "opt now supports the -load-pass-plugin option for loading pass plugins for the new PassManager"
+    description: "The opt tool now supports the -load-pass-plugin option for loading pass plugins for the new PassManager."
+    affectedApi:
+      - "opt"
+      - "-load-pass-plugin"
+      - "new PassManager"
+    notes: "Giri uses the legacy -load plugin path (Makefile.common, tools); the new -load-pass-plugin PM is not used."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: memcpy-memmove-memset-align-attribute
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "@llvm.memcopy/@llvm.memmove/@llvm.memset signatures changed; alignment is now a parameter attribute instead of an argument"
+    description: |-
+      The signatures for the builtins @llvm.memcpy, @llvm.memmove, and @llvm.memset have changed. Alignment is no longer an argument, and are instead conveyed as parameter attributes.
+    affectedApi:
+      - "llvm.memcpy"
+      - "llvm.memmove"
+      - "llvm.memset"
+      - "align attribute"
+    notes: "Giri only matches these intrinsic NAMES by prefix (TracingNoGiri.cpp:228,241; TraceFile.cpp:689,696) to classify load/store/memset traffic; it never constructs or inspects the intrinsics' operand layout. The alignment-parameter change is invisible to that logic, and the clean build + passing suite confirm it."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: invariant-group-barrier-renamed
+    category: "llvm-ir"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "invariant.group.barrier renamed to launder.invariant.group"
+    description: "invariant.group.barrier has been renamed to launder.invariant.group."
+    affectedApi:
+      - "invariant.group.barrier"
+      - "launder.invariant.group"
+    notes: "No invariant.group metadata in Giri or the test suite."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: invariant-group-only-empty-nodes
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "invariant.group metadata can now refer only to empty metadata nodes"
+    description: "invariant.group metadata can now refer only to empty metadata nodes."
+    affectedApi:
+      - "invariant.group"
+    notes: "No invariant.group metadata in Giri or the test suite."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Hexagon Target ---
+
+  - id: hexagon-isa-v4-deprecated
+    category: "target-hexagon"
+    targetName: "hexagon"
+    changeType: "deprecated"
+    severity: "high"
+    summary: "Support for Hexagon ISA V4 deprecated; will be removed in the next release"
+    description: "The support for Hexagon ISA V4 is deprecated and will be removed in the next release."
+    affectedApi:
+      - "Hexagon ISA V4"
+    notes: "Giri does not target Hexagon."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the C API ---
+
+  - id: c-api-llvmbbvectorizepass-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "LLVMAddBBVectorizePass removed; use LLVMAddSLPVectorizePass instead"
+    description: |-
+      Removed LLVMAddBBVectorizePass. The implementation was removed and the C interface was made a deprecated no-op in LLVM 5. Use LLVMAddSLPVectorizePass instead to get the supported SLP vectorizer.
+    affectedApi:
+      - "LLVMAddBBVectorizePass"
+      - "LLVMAddSLPVectorizePass"
+    notes: "Completes the 5.0 deprecation recorded in the 5.0.0 release notes"
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the DAG infrastructure ---
+
+  - id: dag-addc-subc-opcodes-deprecated
+    category: "general"
+    changeType: "deprecated"
+    severity: "high"
+    summary: "ADDC/ADDE/SUBC/SUBE opcodes deprecated, default to expand; backends must opt in via setOperationAction; use UADDO/ADDCARRY/USUBO/SUBCARRY instead"
+    description: |-
+      ADDC/ADDE/SUBC/SUBE are now deprecated and will default to expand. Backends that wish to continue to use these opcodes should explicitely request to do so using setOperationAction in their TargetLowering. New backends should use UADDO/ADDCARRY/USUBO/SUBCARRY instead of the deprecated opcodes.
+    affectedApi:
+      - "ADDC"
+      - "ADDE"
+      - "SUBC"
+      - "SUBE"
+      - "setOperationAction"
+      - "TargetLowering"
+      - "UADDO"
+      - "ADDCARRY"
+      - "USUBO"
+      - "SUBCARRY"
+    notes: "TableGen DAG opcodes; Giri is not a target backend."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: dag-setcce-removed
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "SETCCE opcode removed in favor of SETCCCARRY"
+    description: "The SETCCE opcode has now been removed in favor of SETCCCARRY."
+    affectedApi:
+      - "SETCCE"
+      - "SETCCCARRY"
+    notes: "TableGen DAG opcodes; Giri is not a target backend."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: tablegen-patfrag-patfrags
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "TableGen adds multi-alternative pattern fragments via PatFrags; PatFrag now derived from PatFrags, possibly requiring minor backend changes"
+    description: |-
+      TableGen now supports multi-alternative pattern fragments via the PatFrags class. PatFrag is now derived from PatFrags, which may require minor changes to backends that directly access PatFrag members.
+    affectedApi:
+      - "PatFrag"
+      - "PatFrags"
+    notes: "LLVM 7 tablegen requires CMake >= 3.4.3; the image base (bionic) ships 3.10.4 and the image additionally pins cmake 3.12.4 (Dockerfile) — mitigation carried over from the 5.0.2 image."
+    relevance: "unlikely"
+    status: "mitigated"

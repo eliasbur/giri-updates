@@ -1,0 +1,134 @@
+---
+version: "8.0.0"
+sourceUrl: "https://releases.llvm.org/8.0.0/docs/ReleaseNotes.html"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-24"
+
+changes:
+
+  # --- Minimum Required Compiler Version ---
+
+  - id: min-compiler-version-bump-clang-gcc
+    category: "general"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "Building LLVM will soon require more recent toolchains (Clang 3.5, Apple Clang 6.0, GCC 5.1, Visual Studio 2017); new LLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN CMake soft-error opt-out"
+    description: |-
+      As discussed on the mailing list, building LLVM will soon require more recent toolchains as follows: Clang 3.5, Apple Clang 6.0, GCC 5.1, Visual Studio 2017. A new CMake check when configuring LLVM provides a soft-error if your toolchain will become unsupported soon. You can opt out of the soft-error by setting the LLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN CMake variable to ON.
+    affectedApi:
+      - "Clang 3.5"
+      - "Apple Clang 6.0"
+      - "GCC 5.1"
+      - "Visual Studio 2017"
+      - "LLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN"
+    notes: "Directly informed the base-image choice: the port image is ubuntu:18.04 with gcc 7.5, satisfying the GCC >= 5.1 requirement (Dockerfile comment records the escalation from 14.04 gcc 4.8 for this reason; 16.04 had to be skipped as it is no longer served by old-releases.ubuntu.com). No opt-out variable needed."
+    relevance: "affected"
+    status: "addressed"
+
+  # --- General changes (top-level "Non-comprehensive list of changes in this release") ---
+
+  - id: llvm-cov-lcov-export
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "llvm-cov can now export lcov trace files using the -format=lcov option of the export command"
+    description: "The llvm-cov tool can now export lcov trace files using the -format=lcov option of the export command."
+    affectedApi:
+      - "llvm-cov"
+      - "-format=lcov"
+    notes: "New llvm-cov feature; Giri does not use llvm-cov."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: add-llvm-loadable-module-removed
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "add_llvm_loadable_module CMake macro removed; add_llvm_library with MODULE provides the same functionality"
+    description: |-
+      The add_llvm_loadable_module CMake macro has been removed. The add_llvm_library macro with the MODULE argument now provides the same functionality. See Writing an LLVM Pass.
+    affectedApi:
+      - "add_llvm_loadable_module"
+      - "add_llvm_library"
+    notes: "Giri has its own CMakeLists (add_library MODULE); does not call add_llvm_loadable_module."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: speculative-load-hardening-attribute
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "New speculative_load_hardening function attribute indicates Speculative Load Hardening must be enabled for the function body"
+    description: "Function attribute speculative_load_hardening has been introduced to allow indicating that Speculative Load Hardening must be enabled for the function body."
+    affectedApi:
+      - "speculative_load_hardening"
+    notes: "New attribute; not emitted by the test suite."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the JIT APIs ---
+
+  - id: orc-legacy-prefix-deprecated
+    category: "general"
+    changeType: "deprecated"
+    severity: "high"
+    summary: "Existing non-concurrent ORC layer classes deprecated and renamed with a 'Legacy' prefix; removal planned for LLVM 9"
+    description: |-
+      The ORC (On Request Compilation) JIT APIs have been updated to support concurrent compilation. The existing (non-concurrent) ORC layer classes and related APIs are deprecated, have been renamed with a "Legacy" prefix (e.g. LegacyIRCompileLayer). The deprecated clasess will be removed in LLVM 9.
+    affectedApi:
+      - "ORC"
+      - "LegacyIRCompileLayer"
+    notes: "ORC/JIT APIs a static pass never links against; recorded because the notes dedicate a section to this change"
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: lljit-added
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "New LLJIT JIT stack added using the concurrent ORC APIs; lli updated to use LLJIT"
+    description: |-
+      An example JIT stack using the concurrent ORC APIs, called LLJIT, has been added (see include/llvm/ExecutionEngine/Orc/LLJIT.h). The lli tool has been updated to use LLJIT. MCJIT and ExecutionEngine continue to be supported, though ORC should be preferred for new projects.
+    affectedApi:
+      - "LLJIT"
+      - "include/llvm/ExecutionEngine/Orc/LLJIT.h"
+      - "lli"
+      - "MCJIT"
+      - "ExecutionEngine"
+    notes: "New LLJIT; not used."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the X86 Target ---
+
+  - id: x86-avx512-gather-scatter-masked-intrinsics
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "New AVX512F gather/scatter intrinsics take an <X x i1> mask (llvm.avx512.mask.*); the old intrinsics will be removed in a future release"
+    description: |-
+      New AVX512F gather and scatter intrinsics were added that take a <X x i1> mask instead of a scalar integer. This removes the need for a bitcast in IR. The new intrinsics are named like the old intrinsics with llvm.avx512. replaced with llvm.avx512.mask.. The old intrinsics will be removed in a future release.
+    affectedApi:
+      - "llvm.avx512.mask.*"
+      - "llvm.avx512.*"
+    notes: "AVX512 intrinsics; not emitted by the test suite."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Nios2 Target ---
+
+  - id: nios2-target-removed
+    category: "target-nios2"
+    targetName: "nios2"
+    changeType: "removed"
+    severity: "medium"
+    summary: "The Nios2 target was removed from this release"
+    description: "The Nios2 target was removed from this release."
+    affectedApi:
+      - "Nios2 target"
+    notes: "Giri does not target Nios2."
+    relevance: "irrelevant"
+    status: "pending"

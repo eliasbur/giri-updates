@@ -8,120 +8,89 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 
 ## Current state
 
-`port/llvm-5.0.2` has an honest harness: per-test exit-status opt-in
-(`EXPECTED_EXIT`/`EXIT_UNCHECKED` in `test/Makefile.common`) plus crash detection at the trace
-stage. The suite reports **21 PASS / 1 FAIL**, last measured at `4cd2451`; the single failure is
-`matrix_multiply-seq`. For the full history of suite results across the port, see
-`porting/TestAudit/llvm-5.0.2/SUMMARY.md` → "Suite results across the port".
+`port/llvm-8.0.0` was cut from the completed `port/llvm-5.0.2` port (base `5527588`) and
+carries its honest harness (per-test `EXPECTED_EXIT`/`EXIT_UNCHECKED` in
+`test/Makefile.common` + `[GIRI] Abnormal termination` crash detection). The automated
+suite (`make -C /giri/test`, `TEST_PARALLELISM=seq`) reports **21 PASS / 0 FAIL** on the
+8.0.0 port — the 5.0.2 standing failure (`matrix_multiply-seq`, criterion drift) did
+**not** recur: the 5.0.2-era retuned criterion (`matrix_mult 291`, commit `ec0e6b7`)
+reproduces the 19-line golden exactly under 8.0.0 codegen (19/19 identical, verified by
+fresh clean build + manual slice). Every PASS is against the pristine 3.4 goldens —
+`git diff 86f3b8a..HEAD -- 'test/**/ans-*.txt'` is empty. Full history and root causes:
+`porting/TestAudit/llvm-8.0.0/SUMMARY.md` → "Suite results across the port".
 
-Its segfault is fixed: `PostDominanceFrontier::calculate` held a reference into `Frontiers`
-across recursive insertions while `Frontiers` was a `DenseMap`, which invalidates references
-when it grows. `Frontiers` is now a `std::map`, matching LLVM 3.4
-(`include/Utility/PostDominanceFrontier.h:28`); reverting the change reproduces the 13
-`Could not find Control-dep` warnings.
+The 8.0.0 image is `giri-llvm-8` (base **ubuntu:18.04**, gcc 7.5, prebuilt x86_64 LLVM
+8.0.0 tools, cmake 3.12.4, `libxml2-dev`). The base-image choice is recorded in the
+`Dockerfile` comment: 14.04's gcc 4.8 is below LLVM 8's GCC ≥ 5.1 requirement, and
+16.04 (xenial) is no longer served by old-releases.ubuntu.com, so the port used bionic
+from the normal archive (no repo redirection needed). LLVM 8 builds with C++11
+(measured via `llvm-config --cxxflags`), so the CMake flags stay `-std=c++11`.
 
-The remaining diff against `ans-inst-seq.txt` (16 extra lines, 1 missing line 97) is
-resolved by criterion drift: LLVM 3.4's `matrix_mult:285` is 5.0.2's `matrix_mult:292`, the
-`dprintf("\n")` call at source line 97 (both `!dbg !259`), a drift of **+7** instructions
-within the output-printing loop. 5.0.2's #285 is now the value-print `fprintf` at line 94
-(`!dbg !252`). The golden is exactly reproducible from index 292 (confirmed by sweep of
-250–298; index 291, the `load @stdout` argument to the same call, also matches). The 16
-extras (15 data-dependence, 1 control-dependence) enter because the value-print reads
-`matrix_out`, pulling the computation chain into the slice. The cause of the +7 offset
-between LLVM 3.4 and 5.0.2 is unexplained but does not affect the verdict: `FAIL-EXPECTED`.
-Measured facts preserved: 298 instructions, #285 = line 94, #224 = line 84 store,
-`-trace-cd=false` classifies 15 DD / 1 CD extras.
+Build/test (inside a `giri-llvm-8` container; see `porting/AgentGuide.md`):
 
-**The suite measures the seq variants.** `Dockerfile:5` sets `TEST_PARALLELISM=seq` and the
-three benchmark Makefiles use `?=`, so a suite result says nothing about a pthread variant
-unless that variant was run by hand. This is also the answer to the audit's two "Unresolved
-questions": the baseline scored `pca-seq`/`kmeans-seq` (both clean), the audit analysed the
-pthread variants. Re-verified by `llvm-5-matrix-multiply-verdict`: `matrix_multiply-pthread`
-and `pca-pthread` both pass with empty diffs. `kmeans-pthread` aborts on hosts with many CPUs
-(`sysconf(_SC_NPROCESSORS_ONLN)` = 256 inside the container; `kmeans-pthread.c:316` asserts
-`num_threads == num_procs`, but with 100 points only 100 threads are created). The harness now
-correctly catches this crash at the trace stage via the `[GIRI] Abnormal termination` marker
-(verified in `llvm-5-final-defects`). A cpuset-restricted run (`--cpuset-cpus=0-3`) would be
-needed for a many-cpu host but is unavailable on the current Ubuntu 14.04 container runtime.
-Always name the variant when recording a result.
+```bash
+docker build -t giri-llvm-8 .          # from the repo root
+docker run -it --rm giri-llvm-8 bash
+source /giri/utils/build.sh            # cmake + make + make -C test
+```
 
-`kmeans-seq`'s golden (`ans-inst-seq.txt`) is only two lines, which raised the question of whether
-its clean PASS was evidence of anything. It is: a sweep of instruction indices 114–126 in `main`
-found index **120** to be the only one reproducing `[222, 276]` (#120 is
-`call @dump_matrix`, `kmeans-seq.c:276`; `main` has 165 instructions). The golden is **not**
-degenerate, and it did not drift the way `matrix_mult`'s did.
+Source changes for 8.0.0 were minimal (commit `16236bd`):
+- Four one-line `#define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)` compat shims
+  (`lib/Giri/Giri.cpp`, `lib/Giri/TraceFile.cpp`,
+  `lib/Utility/BasicBlockNumbering.cpp`, `lib/Utility/LoadStoreNumbering.cpp`) —
+  LLVM 8's `Debug.h` no longer defines the bare `DEBUG` macro (renamed to
+  `LLVM_DEBUG` in 7.0.0); each file already defines `DEBUG_TYPE` and includes
+  `Debug.h`, so behavior is preserved (no-op under `NDEBUG`).
+- `tools/Tracer/Tracer.cpp`: `WriteBitcodeToFile` takes `const Module &` in 8.0.0
+  (2 call sites changed from `M.get()` to `*M`).
+- `CallSite` **survives in 8.0.0** (deprecated there, removed in a later release), so
+  the three `CallSite` call sites (`TracingNoGiri.cpp`, `TraceFile.cpp`,
+  `SourceLineMapping.cpp`) needed no migration.
 
-The original honest-harness run (7 PASS / 15 FAIL) has been resolved: all 15
-non-zero-exit UnitTests are inherent program behaviour and now declare their expected
-exit codes in their Makefiles. `test9` (uninitialised `sum` → UB) uses `EXIT_UNCHECKED=1`.
+The three critical invariants are verified (this port):
+1. **Numbering determinism** — identical pass sequence in both pipeline stages
+   (`-mergereturn -bbnum -lsnum … -remove-bbnum -remove-lsnum`, `test/Makefile.common`
+   lines 45 and 85); behaviorally proven by the 21/21 PASS against the 3.4 goldens.
+2. **`Entry` struct ABI** — `include/Giri/Runtime.h` byte-identical to the 3.4 base
+   (`git diff 86f3b8a..HEAD` empty); `sizeof(Entry)` = 32 on x86_64 LP64, divides the
+   4096 page size exactly.
+3. **Debug info** — `-g` mandatory in the test compile
+   (`CFLAGS += -g -O0 -c -emit-llvm`); `SourceLineMapping` yields the 3.4-era
+   `file:line` slices across all 21 passing tests.
 
-**A traced binary never dies by a signal.** Giri's runtime handles the fatal signals and
-its handler ends in `exit(signum)` (`runtime/Giri/Tracing.cpp:253-256`), so a segfaulting
-traced program exits 11 and an aborting one exits 6 — `128 + n` never appears, and a small
-exit status is ambiguous between `main`'s return value and a crash. The trace recipe
-(`test/Makefile.common`) now detects this: it captures stderr, greps for the marker
-`[GIRI] Abnormal termination`, and fails the trace stage if found — covering both
-`EXIT_UNCHECKED` and `EXPECTED_EXIT` cases. `porting/AgentGuide.md` documents the mechanism.
-
-Done: the port (`llvm-5-port`), the full-suite audit (`llvm-5-test-audit`), three code
-defects (`llvm-5-test-fixes` — PostDominanceFrontier virtual-root recursion and the
-`findAllStoresForLoad` nestID collision; `llvm-5-seq-variant-failures` — the `DenseMap`
-reference invalidation above), three harness tasks (`llvm-5-harness-honesty`,
-`llvm-5-harness-fallout`, `llvm-5-harness-residuals`), the two-step
-`matrix_multiply-seq` verdict (`llvm-5-matrix-multiply-verdict`,
-`llvm-5-criterion-drift-sweep`) and `llvm-5-final-defects` (harness crash detection + the
-kmeans settlement; it superseded the former `llvm-5-kmeans` and
-`llvm-5-harness-signal-detection`).
-
-Done: **`llvm-5-port-closeout`** — It verified the three critical invariants
-(see below), reconciled the notes and reports, fixed one defect inherited from `llvm-5-final-defects`
-(`test/Makefile.common` `$_tmperr` quoting, 8 sites, replaced by per-test `*.trace.err` file),
-and produced the Known residuals register below.
-`porting/llvm-releases/5.0.0/api-breakings.yaml` is triaged for only 4 of its 388
-entries; finishing it is deliberately deferred.
-
-Done: **`llvm-5-closeout-corrections`** — Corrected four items `llvm-5-port-closeout` ticked without
-delivering: removed fabricated "signal handlers reinstall" row from register, annotated SUMMARY.md's
-per-test verdict table with commit and current-result columns, added suite-results reconciliation
-section to SUMMARY.md, and cleaned verification artifacts from test/.
-
-**No task is open.** Every note in `porting/TaskNotes/Tasks/` is `status: done`. The reasons a future
-agent might reopen work — and the items deferred by decision — are the `## Known residuals` table
-below; there is no hidden backlog elsewhere. A head-agent review after
-`llvm-5-closeout-corrections` corrected two more register rows (`properlyDominates`, which had been
-reverted and was not a residual at all, and the leak row, which named one of two leaked objects).
-
-The three critical invariants are verified (2026-08-14, `llvm-5-port-closeout`):
-1. **Numbering determinism** — `-bbnum`/`-lsnum` assign identical IDs across instrumentation and
-   slicing runs, and across consecutive runs. Verified for test2 (single-file, 5 BBs, 20 LS points)
-   and test16 (multi-file via `llvm-link`, 8 BBs); repeat runs agree. Both pipelines query IDs from
-   the same `.all.bc` using `QueryBasicBlockNumbers`/`QueryLoadStoreNumbers` pass, which iterate
-   `Module::iterator` / `Function::iterator` / `BasicBlock::iterator` deterministically.
-2. **`Entry` struct ABI** — `include/Giri/Runtime.h` is byte-identical to `master` on this branch
-   (`git diff` empty). `sizeof(Entry)` = 32 on x86_64 LP64; divides sysconf(_SC_PAGESIZE) = 4096
-   exactly (128 entries per page).
-3. **Debug info** — `-srcline-mapping` produces populated `file:line` mappings matching source.
-   Verified on test2: `func` at `ifelse.c:4–5`, `main` at `ifelse.c:8–14`, with `NIL` for
-   instructions lacking debug info (allocas, unannotated stores).
+**The suite measures the seq variants.** `Dockerfile` sets `TEST_PARALLELISM=seq`, so a
+suite result says nothing about a pthread variant unless run by hand. Manual pthread
+runs (this port): `pca-pthread` CLEAN (34/34); `matrix_multiply-pthread`
+**FAIL-EXPECTED** — criterion instruction drift, 3.4's `matrixmult_map:138` ≠ 8.0.0's
+#138 (**153** instructions in the function under 8.0.0 codegen); corrected full 1–154
+sweep: **N=136 reproduces the 60-line golden exactly (60/60, 0 missing, 0 extra)** — a
+valid criterion retune exists (reproducible across fresh traces); as shipped, `:138`
+gives 52/60 (8 golden lines absent: 140,144,145,147,149,150,152,155; 0 extra — monotonic
+subset, no wrong lines). Correction note: the earlier "148 instructions / no index
+reproduces the golden" claim came from a sweep run against a stale build state and is
+retracted. The criterion file was **not** touched (golden-file constraint); the ready-made
+forward option is retuning it to `matrixmult_map 136` (needs explicit user consent) —
+see the open item in `porting/TestAudit/llvm-8.0.0/matrix_multiply-pthread.md`.
+`kmeans-pthread`
+**FAIL-HARNESS** — asserts `num_threads == num_procs` (`kmeans-pthread.c:316`) on the
+256-CPU host (100 points → 100 threads), caught by the `[GIRI] Abnormal termination`
+marker; identical to the 5.0.2 finding (108 GB trace then, 101 GB here).
 
 ## Known residuals
 
-The port is functionally closed. These are the reasons a future agent might reopen work, what is
-acceptable, and where the evidence lives. Inherited gaps (never covered by any LLVM version) are
-marked [inherited]; regressions (broken by the port) are [regression].
+The port is functionally closed (21/21 on the honest seq suite). Inherited gaps (never
+covered by any LLVM version) are marked [inherited]; regressions (broken by the port)
+are [regression]. There are no [regression] rows.
 
 | What | Status | Why acceptable / Evidence |
 |------|--------|---------------------------|
-| `matrix_multiply-seq` — 1 FAIL | Acceptable standing failure | Criterion drift: LLVM 3.4's `matrix_mult:285` is 5.0.2's `matrix_mult:292` (+7 offset within output-printing loop). 16 extra lines are traceable data-dependence from the drift. Verdict: `FAIL-EXPECTED`. Evidence: `llvm-5-criterion-drift-sweep` (`df93296`); AGENTS.md Current state |
-| `kmeans-pthread` — cannot run | [inherited] gap | Asserts on hosts where `sysconf(_SC_NPROCESSORS_ONLN)` exceeds 100. Container reports 256 CPUs; harness now catches the abort at trace stage. A cpuset-restricted run (`--cpuset-cpus=0-3`) would be needed but is unavailable on the current Ubuntu 14.04 container runtime. Harness correctly reports `[FAIL]` with `[GIRI] Abnormal termination` marker |
-| `kmeans-seq` — 2-line golden | Verified not degenerate | Sweep of indices 114–126 in `main` found index **120** (`call @dump_matrix`, `kmeans-seq.c:276`) as the only one reproducing `[222, 276]`. Golden did not drift unlike `matrix_mult`. Evidence: `llvm-5-final-defects` (`e194151`) |
-| No pthread suite coverage | [inherited] gap | `Dockerfile:5` pins `TEST_PARALLELISM=seq`. `matrix_multiply-pthread` and `pca-pthread` checked once by hand in `llvm-5-matrix-multiply-verdict` — both clean. Not ongoing coverage; one-off measurement at that commit |
-| test6 (sigusr1), test7 (sigint), test22 (fp) | [inherited] gap | Have golden files but not in `auto-tests.txt`. test6/test7 require interactive terminal setup for signals; test22 needs `-lm` linker flag. Decision recorded in `test/auto-tests.txt` header |
-| HelloWorld, histogram, linear_regression, word_count | [inherited] gap | No golden file on **any** LLVM version. Not wired into the suite. Never verifiable |
-| `api-breakings.yaml` — 384/388 untriaged | Deferred by decision | The port demonstrably triaged and addressed the relevant entries as it fixed compiler errors. Finishing the remaining 384 (mostly header moves, unused API changes) is deferred. 4 entries carry `relevance: "affected"` / `status: "addressed"` |
-| `ensurePostDomFrontierComputed` — memory leak | Acceptable | `DynamicGiri::ensurePostDomFrontierComputed` (`Giri.cpp:67`) `new`s **two** objects per function — a `PostDominatorTreeWrapperPass` (`:71`) and a `PostDominanceFrontier` (`:75`) — and frees neither. The pass's process (`opt`) exits immediately after, so the leak is bounded by process lifetime and has no observable cost |
-| `properlyDominates` overload change | Reverted — not a residual | The port (`c1f9f62`) did change 3.4's `DT.properlyDominates(Node, DT[*CDFI])` (DomTreeNode overload) to `DT.properlyDominates(Node->getBlock(), *CDFI)` (BasicBlock overload), but `3b26ea6` (`llvm-5-test-fixes`) reverted it. The call is now `DT.properlyDominates(Node, DT.getNode(*CDFI))` (`PostDominatorFrontier.cpp:52`), and `DT[BB]` *is* `getNode(BB)` — identical to 3.4. The only other site, `PDT.properlyDominates(&*bb, &entryBlock)` (`Giri.cpp:102`), is 3.4's call with the `Function::iterator`→`BasicBlock*` conversion made explicit. Nothing is being accepted here; the row stays only so the earlier "accepted divergence" claim is not re-derived |
-| `signal(SIGKILL, …)` — no-op | Harmless | `runtime/Giri/Tracing.cpp:278`. SIGKILL cannot be caught or ignored per POSIX. The `signal()` call is a no-op (returns `SIG_ERR`). Harmless: the handler for other signals already ensures crash cleanup |
+| `matrix_multiply-pthread` — FAIL-EXPECTED | Final state for the *shipped* criterion (not in the automated suite) | Criterion instruction drift (3.4's `matrixmult_map:138` ≠ 8.0.0's #138; **153** instructions under 8.0.0 codegen). Corrected full 1–154 sweep: **N=136 reproduces the 60-line golden exactly (60/60)** — a valid retune exists; as shipped `:138` gives 52/60 (8 lines absent, 0 extra). Golden untouched (pristine 3.4); criterion untouched (retuning to `:136` needs explicit user consent). The earlier "148 / no retune exists" claim is retracted (stale-build-state sweep). Evidence: `porting/TestAudit/llvm-8.0.0/matrix_multiply-pthread.md` |
+| `kmeans-pthread` — cannot run | [inherited] gap | Asserts on hosts where `sysconf(_SC_NPROCESSORS_ONLN)` exceeds 100 (256 in this container). Harness catches the abort via the `[GIRI] Abnormal termination` marker. Same as 5.0.2 |
+| No pthread suite coverage | [inherited] gap | `Dockerfile` pins `TEST_PARALLELISM=seq`. pthread variants are one-off manual measurements, not ongoing coverage |
+| test6 (sigusr1), test7 (sigint), test22 (fp) | [inherited] gap | Have golden files but not in `auto-tests.txt`; signals tests need interactive terminal setup, test22 needs `-lm`. Same as 5.0.2 |
+| HelloWorld, histogram, linear_regression, word_count | [inherited] gap | No golden file on any LLVM version; not wired into the suite |
+| `ensurePostDomFrontierComputed` — memory leak | Acceptable | `DynamicGiri::ensurePostDomFrontierComputed` (`Giri.cpp:67`) `new`s the `PostDominatorTreeWrapperPass` and `PostDominanceFrontier` and frees neither; bounded by `opt` process lifetime, no observable cost. Inherited from 5.0.2 |
+| `signal(SIGKILL, …)` — no-op | Harmless | `runtime/Giri/Tracing.cpp`. SIGKILL cannot be caught per POSIX; the `signal()` call returns `SIG_ERR`. Inherited from 5.0.2 |
 
 ## Containers — two kinds
 

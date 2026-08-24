@@ -1,0 +1,131 @@
+---
+version: "6.0.0"
+sourceUrl: "https://releases.llvm.org/6.0.0/docs/ReleaseNotes.html"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-24"
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes in this release") ---
+
+  - id: sys-execute-redirects-arrayref-optional
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Redirects argument of sys::ExecuteAndWait / sys::ExecuteNoWait changed to ArrayRef of optional StringRef"
+    description: |-
+      The Redirects argument of llvm::sys::ExecuteAndWait and llvm::sys::ExecuteNoWait was changed to an ArrayRef of optional StringRef's to make it safer and more convenient to use.
+    affectedApi:
+      - "llvm::sys::ExecuteAndWait"
+      - "llvm::sys::ExecuteNoWait"
+      - "ArrayRef"
+      - "StringRef"
+    notes: "Giri tools do not call sys::Execute/ExecuteAndWait; the substring match was only on the generic ArrayRef/StringRef names."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: target-registry-backend-name
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Backend name added to the Target Registry; out-of-tree targets must pass the def X : Target name to RegisterTarget"
+    description: |-
+      The backend name was added to the Target Registry to allow run-time information to be fed back into TableGen. Out-of-tree targets will need to add the name used in the def X : Target definition to the call to RegisterTarget.
+    affectedApi:
+      - "Target Registry"
+      - "RegisterTarget"
+      - "def X : Target"
+    notes: "Giri loads backend-independent opt passes; no target registration involved."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: debugify-pass-added
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "New Debugify and CheckDebugify passes added to opt for testing debug info preservation"
+    description: |-
+      The Debugify pass was added to opt to facilitate testing of debug info preservation. This pass attaches synthetic DILocations and DIVariables to the instructions in a Module. The CheckDebugify pass determines how much of the metadata is lost.
+    affectedApi:
+      - "Debugify"
+      - "CheckDebugify"
+      - "DILocation"
+      - "DIVariable"
+    notes: "New opt passes; Giri does not use Debugify."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: codeview-debug-info-windows
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Significantly improved quality of CodeView debug info for Windows"
+    description: "Significantly improved quality of CodeView debug info for Windows."
+    affectedApi:
+      - "CodeView"
+      - "debug info"
+    notes: "Windows CodeView only; port targets Linux ELF/DWARF."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: fast-math-flags-reassoc-afn
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "FMF updates: new 'reassoc' and 'afn' fast-math flags; 'fast' no longer implies all flags"
+    description: |-
+      The fast-math-flags (FMF) have been updated. Previously, the 'fast' flag indicated that floating-point reassociation was allowed and all other flags were set too. The 'fast' flag still exists, but there is a new flag called 'reassoc' to indicate specifically that reassociation is allowed. A new bit called 'afn' was also added to selectively allow approximations for common mathlib functions like square-root. The new flags provide more flexibility to enable/disable specific floating-point optimizations. Making the optimizer respond appropriately to these flags is an ongoing effort.
+    affectedApi:
+      - "FastMathFlags"
+      - "reassoc"
+      - "afn"
+      - "fast"
+    notes: "FMF semantics change affects only IR with fast-math flags; Giri test programs and passes set none, and 21/21 pass against 3.4 goldens."
+    relevance: "unlikely"
+    status: "pending"
+
+  # --- Changes to the AArch64 Target ---
+
+  - id: aarch64-globalisel-o0-default
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "GlobalISel instruction selection framework enabled by default at -O0"
+    description: "Enabled the new GlobalISel instruction selection framework by default at -O0."
+    affectedApi:
+      - "GlobalISel"
+      - "O0"
+    notes: "Default change is aarch64-only; this port targets x86_64 (prebuilt x86_64 Linux LLVM 8.0.0)."
+    relevance: "unlikely"
+    status: "pending"
+
+  # --- Changes to the MIPS Target ---
+
+  - id: mips-micromips64r6-removed
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "removed"
+    severity: "high"
+    summary: "microMIPS64R6 support, deprecated since 5.0, has been completely removed"
+    description: "microMIPS64R6 support was been deprecated since 5.0, and has now been completely removed."
+    affectedApi:
+      - "microMIPS64R6"
+    notes: "Completes the 5.0 deprecation recorded in the 5.0.0 release notes"
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: mips-mt-ase-full-support
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS MT ASE is now fully supported"
+    description: "The MIPS MT ASE is now fully supported."
+    affectedApi:
+      - "MT ASE"
+    notes: "Giri does not target MIPS."
+    relevance: "irrelevant"
+    status: "pending"

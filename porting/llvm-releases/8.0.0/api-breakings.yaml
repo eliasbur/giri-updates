@@ -1,0 +1,648 @@
+# Consolidated LLVM API Breakings: 5.0.2 to 8.0.0
+# Single source of truth for all LLVM API changes across versions.
+# Every unique change from all 3 source files is represented here after deduplication,
+# plus cross-version entries that complete deprecations recorded in the 5.0.0 series
+# (which are cited via originalIds into the 5.0.0 consolidated file).
+#
+# Schema follows the template at porting/llvm-releases/.release-notes-changes-template.yaml
+# with two added fields per entry:
+#   - versions: array of version strings where this change appears
+#   - originalIds: array of the original id values from each source file
+#
+# NOTE: All entries are untriaged (relevance "unknown", status "pending"); the
+#       5.0.2 -> 8.0.0 port is expected to update these fields.
+
+version: "8.0.0"
+baseVersion: "5.0.2"
+sourceFiles:
+  - "6.0.0-api-breakings.yaml"
+  - "7.0.0-api-breakings.yaml"
+  - "8.0.0-api-breakings.yaml"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-24"
+
+changes:
+
+  - id: "aarch64-globalisel-o0-default"
+    category: "target-aarch64"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "GlobalISel instruction selection framework enabled by default at -O0"
+    description: |-
+      Enabled the new GlobalISel instruction selection framework by default at -O0.
+    affectedApi: ["GlobalISel", "O0"]
+    versions: [6.0.0]
+    originalIds: [aarch64-globalisel-o0-default]
+    notes: |-
+      Default change is aarch64-only; this port targets x86_64 (prebuilt x86_64 Linux LLVM 8.0.0).
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: "add-llvm-loadable-module-removed"
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: |-
+      add_llvm_loadable_module CMake macro removed; add_llvm_library with MODULE provides the same functionality
+    description: |-
+      The add_llvm_loadable_module CMake macro has been removed. The add_llvm_library macro with the MODULE argument now provides the same functionality. See Writing an LLVM Pass.
+    affectedApi: ["add_llvm_loadable_module", "add_llvm_library"]
+    versions: [8.0.0]
+    originalIds: [add-llvm-loadable-module-removed]
+    notes: |-
+      Giri has its own CMakeLists (add_library MODULE); does not call add_llvm_loadable_module.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "codeview-debug-info-windows"
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Significantly improved quality of CodeView debug info for Windows"
+    description: "Significantly improved quality of CodeView debug info for Windows."
+    affectedApi: ["CodeView", "debug info"]
+    versions: [6.0.0]
+    originalIds: [codeview-debug-info-windows]
+    notes: |-
+      Windows CodeView only; port targets Linux ELF/DWARF.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "dag-addc-subc-opcodes-deprecated"
+    category: "general"
+    changeType: "deprecated"
+    severity: "high"
+    summary: |-
+      ADDC/ADDE/SUBC/SUBE opcodes deprecated, default to expand; backends must opt in via setOperationAction; use UADDO/ADDCARRY/USUBO/SUBCARRY instead
+    description: |-
+      ADDC/ADDE/SUBC/SUBE are now deprecated and will default to expand. Backends that wish to continue to use these opcodes should explicitely request to do so using setOperationAction in their TargetLowering. New backends should use UADDO/ADDCARRY/USUBO/SUBCARRY instead of the deprecated opcodes.
+    affectedApi:
+      - "ADDC"
+      - "ADDE"
+      - "SUBC"
+      - "SUBE"
+      - "setOperationAction"
+      - "TargetLowering"
+      - "UADDO"
+      - "ADDCARRY"
+      - "USUBO"
+      - "SUBCARRY"
+    versions: [7.0.0]
+    originalIds: [dag-addc-subc-opcodes-deprecated]
+    notes: |-
+      TableGen DAG opcodes; Giri is not a target backend.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "dag-setcce-removed"
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "SETCCE opcode removed in favor of SETCCCARRY"
+    description: "The SETCCE opcode has now been removed in favor of SETCCCARRY."
+    affectedApi: ["SETCCE", "SETCCCARRY"]
+    versions: [7.0.0]
+    originalIds: [dag-setcce-removed]
+    notes: |-
+      TableGen DAG opcodes; Giri is not a target backend.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "debug-macro-renamed-llvm-debug"
+    category: "general"
+    changeType: "renamed"
+    severity: "high"
+    summary: "DEBUG macro renamed to LLVM_DEBUG; interface remains the same"
+    description: |-
+      The DEBUG macro has been renamed to LLVM_DEBUG, the interface remains the same. If you used this macro you need to migrate to the new one. You should also clang-format your code to make it easier to integrate future changes locally.
+    affectedApi: ["DEBUG", "LLVM_DEBUG"]
+    versions: [7.0.0]
+    originalIds: [debug-macro-renamed-llvm-debug]
+    notes: |-
+      Giri sources use the bare DEBUG(X) macro (Giri.cpp, TraceFile.cpp, BasicBlockNumbering.cpp, LoadStoreNumbering.cpp). LLVM 8's Debug.h defines only LLVM_DEBUG/DEBUG_WITH_TYPE, so the port added a one-line compat shim DEBUG(X)->DEBUG_WITH_TYPE(DEBUG_TYPE, X) in each of the four files (commit 16236bd). Behavior preserved: still no-op under NDEBUG, per-file DEBUG_TYPE retained.
+    relevance: "affected"
+    status: "addressed"
+
+  - id: "debugify-pass-added"
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: |-
+      New Debugify and CheckDebugify passes added to opt for testing debug info preservation
+    description: |-
+      The Debugify pass was added to opt to facilitate testing of debug info preservation. This pass attaches synthetic DILocations and DIVariables to the instructions in a Module. The CheckDebugify pass determines how much of the metadata is lost.
+    affectedApi: ["Debugify", "CheckDebugify", "DILocation", "DIVariable"]
+    versions: [6.0.0]
+    originalIds: [debugify-pass-added]
+    notes: |-
+      New opt passes; Giri does not use Debugify.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "dwarf-v5-preliminary"
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: |-
+      Preliminary/experimental support for DWARF v5 debugging information, including the new .debug_names accelerator table
+    description: |-
+      Preliminary/experimental support for DWARF v5 debugging information, including the new .debug_names accelerator table. DWARF emitted at -O0 should be fully DWARF v5 compliant. Type units and split DWARF are known not to be compliant, and higher optimization levels will still emit some information in v4 format.
+    affectedApi: ["DWARF v5", ".debug_names"]
+    versions: [7.0.0]
+    originalIds: [dwarf-v5-preliminary]
+    notes: |-
+      Giri reads DWARF via -g debug info (SourceLineMapping). Preliminary DWARF v5 support did not change the mappings on this toolchain: the 21/21 pass against 3.4-era goldens is the evidence.
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: "fast-math-flags-reassoc-afn"
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: |-
+      FMF updates: new 'reassoc' and 'afn' fast-math flags; 'fast' no longer implies all flags
+    description: |-
+      The fast-math-flags (FMF) have been updated. Previously, the 'fast' flag indicated that floating-point reassociation was allowed and all other flags were set too. The 'fast' flag still exists, but there is a new flag called 'reassoc' to indicate specifically that reassociation is allowed. A new bit called 'afn' was also added to selectively allow approximations for common mathlib functions like square-root. The new flags provide more flexibility to enable/disable specific floating-point optimizations. Making the optimizer respond appropriately to these flags is an ongoing effort.
+    affectedApi: ["FastMathFlags", "reassoc", "afn", "fast"]
+    versions: [6.0.0]
+    originalIds: [fast-math-flags-reassoc-afn]
+    notes: |-
+      FMF semantics change affects only IR with fast-math flags; Giri test programs and passes set none, and 21/21 pass against 3.4 goldens.
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: "float-cast-overflow-attribute"
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: |-
+      Improved floating-point cast folding; new strict-float-cast-overflow function attribute to opt out of overflow-folding behavior
+    description: |-
+      Optimization of floating-point casts is improved. This may cause surprising results for code that is relying on the undefined behavior of overflowing casts. The optimization can be disabled by specifying a function attribute: "strict-float-cast-overflow"="false". This attribute may be created by the clang option -fno-strict-float-cast-overflow. Code sanitizers can be used to detect affected patterns. The clang option for detecting this problem alone is -fsanitize=float-cast-overflow.
+    affectedApi:
+      - "strict-float-cast-overflow"
+      - "-fno-strict-float-cast-overflow"
+      - "-fsanitize=float-cast-overflow"
+    versions: [7.0.0]
+    originalIds: [float-cast-overflow-attribute]
+    notes: |-
+      New opt-out attribute for improved float-cast folding; Giri sets no fast-math/strict-cast flags and all 21 suite tests pass against the 3.4 goldens, so no codegen drift materialized.
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: "hexagon-isa-v4-deprecated"
+    category: "target-hexagon"
+    changeType: "deprecated"
+    severity: "high"
+    summary: |-
+      Support for Hexagon ISA V4 deprecated; will be removed in the next release
+    description: |-
+      The support for Hexagon ISA V4 is deprecated and will be removed in the next release.
+    affectedApi: ["Hexagon ISA V4"]
+    versions: [7.0.0]
+    originalIds: [hexagon-isa-v4-deprecated]
+    notes: |-
+      Giri does not target Hexagon.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "invariant-group-barrier-renamed"
+    category: "llvm-ir"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "invariant.group.barrier renamed to launder.invariant.group"
+    description: "invariant.group.barrier has been renamed to launder.invariant.group."
+    affectedApi: ["invariant.group.barrier", "launder.invariant.group"]
+    versions: [7.0.0]
+    originalIds: [invariant-group-barrier-renamed]
+    notes: |-
+      No invariant.group metadata in Giri or the test suite.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "invariant-group-only-empty-nodes"
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "invariant.group metadata can now refer only to empty metadata nodes"
+    description: "invariant.group metadata can now refer only to empty metadata nodes."
+    affectedApi: ["invariant.group"]
+    versions: [7.0.0]
+    originalIds: [invariant-group-only-empty-nodes]
+    notes: |-
+      No invariant.group metadata in Giri or the test suite.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "libraries-renamed-7-0-to-7"
+    category: "general"
+    changeType: "renamed"
+    severity: "high"
+    summary: |-
+      Libraries renamed from 7.0 to 7, impacting downstream libraries like lldb
+    description: |-
+      Libraries have been renamed from 7.0 to 7. This change also impacts downstream libraries like lldb.
+    affectedApi: ["libLLVM-7", "libLLVM-7.0"]
+    versions: [7.0.0]
+    originalIds: [libraries-renamed-7-0-to-7]
+    notes: |-
+      Giri links via find_package(LLVM CONFIG) + LLVMConfig.cmake, not a libLLVM-7.0 shared lib.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "lljit-added"
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: |-
+      New LLJIT JIT stack added using the concurrent ORC APIs; lli updated to use LLJIT
+    description: |-
+      An example JIT stack using the concurrent ORC APIs, called LLJIT, has been added (see include/llvm/ExecutionEngine/Orc/LLJIT.h). The lli tool has been updated to use LLJIT. MCJIT and ExecutionEngine continue to be supported, though ORC should be preferred for new projects.
+    affectedApi:
+      - "LLJIT"
+      - "include/llvm/ExecutionEngine/Orc/LLJIT.h"
+      - "lli"
+      - "MCJIT"
+      - "ExecutionEngine"
+    versions: [8.0.0]
+    originalIds: [lljit-added]
+    notes: |-
+      New LLJIT; not used.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "llvm-cov-lcov-export"
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: |-
+      llvm-cov can now export lcov trace files using the -format=lcov option of the export command
+    description: |-
+      The llvm-cov tool can now export lcov trace files using the -format=lcov option of the export command.
+    affectedApi: ["llvm-cov", "-format=lcov"]
+    versions: [8.0.0]
+    originalIds: [llvm-cov-lcov-export]
+    notes: |-
+      New llvm-cov feature; Giri does not use llvm-cov.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "llvm-exegesis-added"
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: |-
+      New tool llvm-exegesis added to measure instruction scheduling properties (latency/uops)
+    description: |-
+      A new tool named llvm-exegesis has been added. llvm-exegesis automatically measures instruction scheduling properties (latency/uops) and provides a principled way to edit scheduling models.
+    affectedApi: ["llvm-exegesis"]
+    versions: [7.0.0]
+    originalIds: [llvm-exegesis-added]
+    notes: |-
+      New tool; not used.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "llvm-mca-added"
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "New tool llvm-mca added for static performance analysis of machine code"
+    description: |-
+      A new tool named llvm-mca has been added. llvm-mca is a static performance analysis tool that uses information available in LLVM to statically predict the performance of machine code for a specific CPU.
+    affectedApi: ["llvm-mca"]
+    versions: [7.0.0]
+    originalIds: [llvm-mca-added]
+    notes: |-
+      New tool; not used.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "llvm-on-win32-macro-removed"
+    category: "general"
+    changeType: "removed"
+    severity: "medium"
+    summary: |-
+      LLVM_ON_WIN32 no longer set by config.h / llvm-config.h; use compiler-set _WIN32 instead
+    description: |-
+      LLVM_ON_WIN32 is no longer set by llvm/Config/config.h and llvm/Config/llvm-config.h. If you used this macro, use the compiler-set _WIN32 instead which is set exactly when LLVM_ON_WIN32 used to be set.
+    affectedApi: ["LLVM_ON_WIN32", "llvm/Config/config.h", "llvm/Config/llvm-config.h", "_WIN32"]
+    versions: [7.0.0]
+    originalIds: [llvm-on-win32-macro-removed]
+    notes: |-
+      Windows-only macro; port targets Linux.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "llvmbbvectorize-deprecated-then-removed"
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: |-
+      LLVMAddBBVectorizePass removed; it was a deprecated no-op since LLVM 5. Use LLVMAddSLPVectorizePass instead
+    description: |-
+      Removed LLVMAddBBVectorizePass. The implementation was removed and the C interface was made a deprecated no-op in LLVM 5. Use LLVMAddSLPVectorizePass instead to get the supported SLP vectorizer.
+    affectedApi: ["LLVMAddBBVectorizePass", "LLVMAddSLPVectorizePass"]
+    versions: [5.0.0, 7.0.0]
+    originalIds: [llvmbbvectorize-deprecated, c-api-llvmbbvectorizepass-removed]
+    notes: |-
+      Deprecated no-op since 5.0 (recorded in the 5.0.0 release notes); removal landed in 7.0
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "loopinstsimplify-removed"
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "LoopInstSimplify pass (-loop-instsimplify) removed"
+    description: "The LoopInstSimplify pass (-loop-instsimplify) has been removed."
+    affectedApi: ["LoopInstSimplify", "-loop-instsimplify"]
+    versions: [7.0.0]
+    originalIds: [loopinstsimplify-removed]
+    notes: |-
+      Giri pipelines never use -loop-instsimplify.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "memcpy-memmove-memset-align-attribute"
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: |-
+      @llvm.memcopy/@llvm.memmove/@llvm.memset signatures changed; alignment is now a parameter attribute instead of an argument
+    description: |-
+      The signatures for the builtins @llvm.memcpy, @llvm.memmove, and @llvm.memset have changed. Alignment is no longer an argument, and are instead conveyed as parameter attributes.
+    affectedApi: ["llvm.memcpy", "llvm.memmove", "llvm.memset", "align attribute"]
+    versions: [7.0.0]
+    originalIds: [memcpy-memmove-memset-align-attribute]
+    notes: |-
+      Giri only matches these intrinsic NAMES by prefix (TracingNoGiri.cpp:228,241; TraceFile.cpp:689,696) to classify load/store/memset traffic; it never constructs or inspects the intrinsics' operand layout. The alignment-parameter change is invisible to that logic, and the clean build + passing suite confirm it.
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: "min-compiler-version-bump-clang-gcc"
+    category: "general"
+    changeType: "default-change"
+    severity: "medium"
+    summary: |-
+      Building LLVM will soon require more recent toolchains (Clang 3.5, Apple Clang 6.0, GCC 5.1, Visual Studio 2017); new LLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN CMake soft-error opt-out
+    description: |-
+      As discussed on the mailing list, building LLVM will soon require more recent toolchains as follows: Clang 3.5, Apple Clang 6.0, GCC 5.1, Visual Studio 2017. A new CMake check when configuring LLVM provides a soft-error if your toolchain will become unsupported soon. You can opt out of the soft-error by setting the LLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN CMake variable to ON.
+    affectedApi:
+      - "Clang 3.5"
+      - "Apple Clang 6.0"
+      - "GCC 5.1"
+      - "Visual Studio 2017"
+      - "LLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN"
+    versions: [8.0.0]
+    originalIds: [min-compiler-version-bump-clang-gcc]
+    notes: |-
+      Directly informed the base-image choice: the port image is ubuntu:18.04 with gcc 7.5, satisfying the GCC >= 5.1 requirement (Dockerfile comment records the escalation from 14.04 gcc 4.8 for this reason; 16.04 had to be skipped as it is no longer served by old-releases.ubuntu.com). No opt-out variable needed.
+    relevance: "affected"
+    status: "addressed"
+
+  - id: "mips-micromips64r6-deprecated-then-removed"
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "removed"
+    severity: "high"
+    summary: "microMIPS64R6 backend deprecated in 5.0 and now completely removed"
+    description: |-
+      microMIPS64R6 support was been deprecated since 5.0, and has now been completely removed.
+    affectedApi: ["microMIPS64R6"]
+    versions: [5.0.0, 6.0.0]
+    originalIds: [mips-micromips64r6-deprecated, mips-micromips64r6-removed]
+    notes: |-
+      Deprecated since 5.0 (recorded in the 5.0.0 release notes); removal landed in 6.0
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "mips-mt-ase-full-support"
+    category: "target-mips"
+    changeType: "added"
+    severity: "low"
+    summary: "MIPS MT ASE is now fully supported"
+    description: "The MIPS MT ASE is now fully supported."
+    affectedApi: ["MT ASE"]
+    versions: [6.0.0]
+    originalIds: [mips-mt-ase-full-support]
+    notes: |-
+      Giri does not target MIPS.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "nios2-target-removed"
+    category: "target-nios2"
+    changeType: "removed"
+    severity: "medium"
+    summary: "The Nios2 target was removed from this release"
+    description: "The Nios2 target was removed from this release."
+    affectedApi: ["Nios2 target"]
+    versions: [8.0.0]
+    originalIds: [nios2-target-removed]
+    notes: |-
+      Giri does not target Nios2.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "opt-load-pass-plugin"
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: |-
+      opt now supports the -load-pass-plugin option for loading pass plugins for the new PassManager
+    description: |-
+      The opt tool now supports the -load-pass-plugin option for loading pass plugins for the new PassManager.
+    affectedApi: ["opt", "-load-pass-plugin", "new PassManager"]
+    versions: [7.0.0]
+    originalIds: [opt-load-pass-plugin]
+    notes: |-
+      Giri uses the legacy -load plugin path (Makefile.common, tools); the new -load-pass-plugin PM is not used.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "orc-legacy-prefix-deprecated"
+    category: "general"
+    changeType: "deprecated"
+    severity: "high"
+    summary: |-
+      Existing non-concurrent ORC layer classes deprecated and renamed with a 'Legacy' prefix; removal planned for LLVM 9
+    description: |-
+      The ORC (On Request Compilation) JIT APIs have been updated to support concurrent compilation. The existing (non-concurrent) ORC layer classes and related APIs are deprecated, have been renamed with a "Legacy" prefix (e.g. LegacyIRCompileLayer). The deprecated clasess will be removed in LLVM 9.
+    affectedApi: ["ORC", "LegacyIRCompileLayer"]
+    versions: [8.0.0]
+    originalIds: [orc-legacy-prefix-deprecated]
+    notes: |-
+      ORC/JIT APIs a static pass never links against; recorded because the notes dedicate a section to this change
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "smallvector-tiny-size-shrank"
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: |-
+      SmallVector<T, 0> shrank to sizeof(void*) + sizeof(unsigned) * 2; maximum capacity now restricted to UINT32_MAX
+    description: |-
+      SmallVector<T, 0> shrank from sizeof(void*) * 4 + sizeof(T) to sizeof(void*) + sizeof(unsigned) * 2, smaller than std::vector<T> on 64-bit platforms. The maximum capacity is now restricted to UINT32_MAX. Since SmallVector doesn't have the exception-safety pessimizations some implementations saddle std::vector with and is better at using realloc, it's now a better choice even on the heap (although when TinyPtrVector works, that's even smaller).
+    affectedApi: ["SmallVector", "TinyPtrVector"]
+    versions: [7.0.0]
+    originalIds: [smallvector-tiny-size-shrank]
+    notes: |-
+      Giri declares SmallVector<Value*, 0> (include/Utility/Utils.h:241) — the exact affected variant — but the change is size/capacity-only; the clean LLVM 8.0.0 build and 21/21 test pass confirm no behavioral impact.
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: "speculative-load-hardening-attribute"
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: |-
+      New speculative_load_hardening function attribute indicates Speculative Load Hardening must be enabled for the function body
+    description: |-
+      Function attribute speculative_load_hardening has been introduced to allow indicating that Speculative Load Hardening must be enabled for the function body.
+    affectedApi: ["speculative_load_hardening"]
+    versions: [8.0.0]
+    originalIds: [speculative-load-hardening-attribute]
+    notes: |-
+      New attribute; not emitted by the test suite.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "sys-execute-redirects-arrayref-optional"
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: |-
+      Redirects argument of sys::ExecuteAndWait / sys::ExecuteNoWait changed to ArrayRef of optional StringRef
+    description: |-
+      The Redirects argument of llvm::sys::ExecuteAndWait and llvm::sys::ExecuteNoWait was changed to an ArrayRef of optional StringRef's to make it safer and more convenient to use.
+    affectedApi: ["llvm::sys::ExecuteAndWait", "llvm::sys::ExecuteNoWait", "ArrayRef", "StringRef"]
+    versions: [6.0.0]
+    originalIds: [sys-execute-redirects-arrayref-optional]
+    notes: |-
+      Giri tools do not call sys::Execute/ExecuteAndWait; the substring match was only on the generic ArrayRef/StringRef names.
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: "tablegen-patfrag-patfrags"
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: |-
+      TableGen adds multi-alternative pattern fragments via PatFrags; PatFrag now derived from PatFrags, possibly requiring minor backend changes
+    description: |-
+      TableGen now supports multi-alternative pattern fragments via the PatFrags class. PatFrag is now derived from PatFrags, which may require minor changes to backends that directly access PatFrag members.
+    affectedApi: ["PatFrag", "PatFrags"]
+    versions: [7.0.0]
+    originalIds: [tablegen-patfrag-patfrags]
+    notes: |-
+      LLVM 7 tablegen requires CMake >= 3.4.3; the image base (bionic) ships 3.10.4 and the image additionally pins cmake 3.12.4 (Dockerfile) — mitigation carried over from the 5.0.2 image.
+    relevance: "unlikely"
+    status: "mitigated"
+
+  - id: "target-registry-backend-name"
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: |-
+      Backend name added to the Target Registry; out-of-tree targets must pass the def X : Target name to RegisterTarget
+    description: |-
+      The backend name was added to the Target Registry to allow run-time information to be fed back into TableGen. Out-of-tree targets will need to add the name used in the def X : Target definition to the call to RegisterTarget.
+    affectedApi: ["Target Registry", "RegisterTarget", "def X : Target"]
+    versions: [6.0.0]
+    originalIds: [target-registry-backend-name]
+    notes: |-
+      Giri loads backend-independent opt passes; no target registration involved.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "windows-mangling-question-mark-symbols"
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: |-
+      Symbols starting with ? are no longer mangled when using the Windows x or w IR mangling schemes
+    description: |-
+      Symbols starting with ? are no longer mangled by LLVM when using the Windows x or w IR mangling schemes.
+    affectedApi: ["Windows IR mangling", "x mangling", "w mangling"]
+    versions: [7.0.0]
+    originalIds: [windows-mangling-question-mark-symbols]
+    notes: |-
+      Windows mangling only; port targets Linux.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: "x86-avx512-gather-scatter-masked-intrinsics"
+    category: "target-x86"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: |-
+      New AVX512F gather/scatter intrinsics take an <X x i1> mask (llvm.avx512.mask.*); the old intrinsics will be removed in a future release
+    description: |-
+      New AVX512F gather and scatter intrinsics were added that take a <X x i1> mask instead of a scalar integer. This removes the need for a bitcast in IR. The new intrinsics are named like the old intrinsics with llvm.avx512. replaced with llvm.avx512.mask.. The old intrinsics will be removed in a future release.
+    affectedApi: ["llvm.avx512.mask.*", "llvm.avx512.*"]
+    versions: [8.0.0]
+    originalIds: [x86-avx512-gather-scatter-masked-intrinsics]
+    notes: |-
+      AVX512 intrinsics; not emitted by the test suite.
+    relevance: "irrelevant"
+    status: "pending"
+
+# ===================================================================
+# SUMMARY
+# ===================================================================
+# Total unique changes after deduplication: 35
+# Original entries across 3 source files: 35
+# Cross-version entries (merged from multiple versions): 2
+#   - mips-micromips64r6-deprecated-then-removed: 5.0.0 deprecation + 6.0.0 removal
+#   - llvmbbvectorize-deprecated-then-removed: 5.0.0 deprecation + 7.0.0 removal
+#
+# Per-category counts:
+#   c-api: 1
+#   general: 23
+#   llvm-ir: 5
+#   target-aarch64: 1
+#   target-hexagon: 1
+#   target-mips: 2
+#   target-nios2: 1
+#   target-x86: 1
+
+# Per-severity counts:
+#   high: 11
+#   medium: 11
+#   low: 13
+
+# --- Allowed values (from template schema) ---
+#
+# changeType:
+#   renamed         - symbol/class/type/tool was renamed
+#   removed         - symbol/class/type/tool was removed
+#   deprecated      - symbol/class/type/tool is deprecated
+#   added           - new symbol/class/type/tool added (may require adaptation)
+#   behavior-change - existing API now behaves differently
+#   moved           - code moved between libraries, headers, or namespaces
+#   default-change  - default behavior or flag value changed
+#
+# category:
+#   general         - top-level changes not specific to a subsystem
+#   llvm-ir         - changes to the LLVM IR
+#   c-api           - changes to the C API
+#   target-<name>   - changes specific to a target backend
+#
+# severity:
+#   high  - likely breaks compilation or runtime behavior of existing code
+#   medium - may require code changes or has subtle behavior implications
+#   low   - informational, new feature, or unlikely to require changes
+#
+# relevance:
+#   unknown    - not yet checked against Giri source (initial state)
+#   affected   - Giri uses this API; the port must address this change
+#   unlikely   - Giri does not appear to use this API; may still need review
+#   irrelevant - confirmed not used by Giri; safe to remove from the list
+#
+# status:
+#   pending   - not yet addressed in the port
+#   addressed - code has been updated to handle this change
+#   mitigated - work-around applied; not a full fix
+#   skipped   - intentionally left for a future pass

@@ -7,6 +7,9 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+// LLVM 8 removed the bare DEBUG(X) macro that LLVM 3.4's Debug.h provided;
+// DEBUG_TYPE is set above, so map it to the 8.0.0 DEBUG_WITH_TYPE.
+#define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
 

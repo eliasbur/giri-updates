@@ -153,9 +153,9 @@ int main(int argc, char **argv) {
         std::cerr << argv[0] << ": error opening " << OutputFile << "!\n";
         return 1;
       }
-      WriteBitcodeToFile(M.get(), OS);
+      WriteBitcodeToFile(*M, OS);
     } else {
-      WriteBitcodeToFile(M.get(), llvm::outs());
+      WriteBitcodeToFile(*M, llvm::outs());
     }
 
     return 0;
