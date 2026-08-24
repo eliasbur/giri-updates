@@ -1,6 +1,6 @@
 ---
 title: Port Giri to LLVM 8.0.0.
-status: open             # open | done (driver rewrites this on `finish`)
+status: done
 priority: high           # low | medium | high
 repo: giriupdates        # required; must match a GITHUB_<KEY>_TOKEN or GITLAB_<KEY>_TOKEN
 contexts: []             # e.g. dev, cockpit, gpu1
@@ -10,6 +10,8 @@ tags:
 timeEstimate: 0          # minutes
 dateCreated: 2026-08-24
 # dateModified / completedDate are added automatically by `driver.py finish`
+dateModified: 2026-08-24T18:15:16.360+02:00
+completedDate: 2026-08-24
 ---
 ## Goal
 A Giri source tree on `port/llvm-8.0.0` that builds cleanly against LLVM/Clang 8.0.0 inside its
@@ -278,6 +280,7 @@ change any of them, stop and write down why in the PR description instead of sil
   criterion.
 
 ## Handoff
+- PR: llvm-8-port #18 https://github.com/eliasbur/giri-updates/pull/18
 - branch `agent/open-code/llvm-8-port`
 - (MR/PR line is written by `driver.py finish`: `- {PR|MR}: <label> {#|!}<iid> <url>`)
 Refs: `AGENTS.md`, `porting/README.md`, `porting/AgentGuide.md`, `porting/HowItWorks.md`,
