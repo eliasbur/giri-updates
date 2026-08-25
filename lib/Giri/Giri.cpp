@@ -13,32 +13,30 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "giri"
 
 #include "Giri/Giri.h"
 #include "Utility/SourceLineMapping.h"
 #include "Utility/Utils.h"
 
 #include "llvm/ADT/Statistic.h"
-// LLVM 14 made the debug type a required STATISTIC argument (the 3.4/8.0.0
-// two-arg form is gone); DEBUG_TYPE is defined above, so map to the 14.0.0
-// three-arg form.
-#define STATISTIC(NAME, DESC) STATISTIC_WITH_TYPE(DEBUG_TYPE, NAME, DESC)
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-// LLVM 8 removed the bare DEBUG(X) macro that LLVM 3.4's Debug.h provided;
-// DEBUG_TYPE is set above, so map it to the 8.0.0 DEBUG_WITH_TYPE.
-#define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)
 #include "llvm/IR/InstIterator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/FileSystem.h"
 
 #include <iostream>
 #include <fstream>
+// DEBUG_TYPE is redefined after the includes: LLVM 14's dom-tree-builder header
+// (GenericDomTreeConstruction.h, pulled in by Statistic.h / Dominators.h) does
+// `#undef DEBUG_TYPE`, and the 14.0.0 STATISTIC macro references DEBUG_TYPE at the
+// call site. 14.0.0's Debug.h also dropped the bare DEBUG(X) macro, so restore it.
+#define DEBUG_TYPE "giri"
+#define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)
 
 using namespace llvm;
 using namespace giri;
@@ -181,7 +179,7 @@ void DynamicGiri::printBackwardsSlice(const Instruction *Criterion,
   std::error_code EC;
   raw_fd_ostream SliceFile(SliceFilename.c_str(),
                             EC,
-                            sys::fs::F_Append);
+                            sys::fs::OF_Append);
   if (EC) {
 errs() << "Error opening the slice output file: " << SliceFilename
             << " : " << EC.message() << "\n";

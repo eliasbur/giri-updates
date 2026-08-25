@@ -148,19 +148,16 @@ int main(int argc, char **argv) {
         return 1;
       }
       std::error_code EC;
-      raw_fd_ostream OS(OutputFile, EC, sys::fs::F_None);
+      raw_fd_ostream OS(OutputFile, EC, sys::fs::OF_None);
       if (EC) {
         std::cerr << argv[0] << ": error opening " << OutputFile << "!\n";
         return 1;
       }
-      // WriteBitcodeToFile returns an llvm::Error since LLVM 12; check it.
-      // handleAllErrors (not .toOptionalError()): this build is -fno-exceptions.
-      if (handleAllErrors(WriteBitcodeToFile(*M, OS),
-          [](Error E) { errs() << E.message() << "\n"; }))
-        return 1;
-    } else if (handleAllErrors(WriteBitcodeToFile(*M, llvm::outs()),
-               [](Error E) { errs() << E.message() << "\n"; })) {
-      return 1;
+      // In LLVM 14.0.0 WriteBitcodeToFile is void (it predates the Error
+      // return value; hard failures abort internally), so just call it.
+      WriteBitcodeToFile(*M, OS);
+    } else {
+      WriteBitcodeToFile(*M, llvm::outs());
     }
 
     return 0;

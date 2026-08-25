@@ -112,6 +112,31 @@ Five phases, in order. The legacy pass manager is still fully functional in LLVM
 
 ## Progress log
 
+- 2026-08-25 — **Full build green + test parity on 14.0.0 (legacy-PM).** All 8→14 API
+  fixes compile clean; `giri`, `dgutility`, `rtgiri`, `prtrace`, and `tracer` all build.
+  Reverted the bad `STATISTIC_WITH_TYPE` shim (commit `f0f0f9c`): 14.0.0 headers
+  `#undef DEBUG_TYPE`, so `DEBUG_TYPE` is now defined *after* the includes and the
+  bare `DEBUG(X)` macro is re-`#define`d via `DEBUG_WITH_TYPE` where used.
+  - API fixes: `FunctionCallee` (`getOrInsertFunction(...).getCallee()`) in
+    `include/Utility/Utils.h` + `lib/Giri/TracingNoGiri.cpp`; `CallBase::getCalledOperand()`
+    for removed `getCalledValue()` (`SourceLineMapping.cpp`, `TracingNoGiri.cpp`);
+    `sys::fs::F_*`→`OF_*` (`Giri.cpp`, `SourceLineMapping.cpp`, `Tracer.cpp`);
+    `TraceFile.cpp` `const CallBase* CS = cast<CallBase>(I)` + `CS->arg_size()`/
+    `getArgOperand(i)` for removed `CallSite`; `TracingNoGiri` converted from removed
+    `BasicBlockPass` to `FunctionPass` (per-BB behavior preserved via `runOnFunction`);
+    `#include <map>` in `LoadStoreNumbering.h`; `Twine` disambiguation in
+    `CountSrcLines.cpp`.
+  - **`tracer` link:** the prebuilt LLVM 14.0.0 CMake package does not populate
+    `LLVM_COMPONENT_LIBS`, so `llvm_map_components_to_libnames` is empty. `tools/Tracer/CMakeLists.txt`
+    now queries `llvm-config --libfiles all` (163 dependency-ordered static libs, linked by
+    absolute path) plus `--system-libs` (`-lrt -ldl -lpthread -lm`).
+  - **Test suite: 22 PASS / 0 FAIL** (UnitTests test1–test5, test8–test21 +
+    `matrix_multiply`/`pca`/`kmeans`); every `opt` invocation runs `-enable-new-pm=0`
+    (legacy PM). Log: `.llvm14log/make_full10.log`.
+  - **Invariants re-verified in-container:** Entry `sizeof`=32, `4096 % 32 == 0`
+    (page-divisible); `-g` emits `.debug_info`/`.debug_line`; numbering determinism
+    exercised by the passing parity suite.
+
 ## Handoff
 
 - branch `agent/open-code/llvm-14-legacypm`

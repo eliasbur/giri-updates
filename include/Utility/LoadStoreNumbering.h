@@ -23,6 +23,7 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/InstVisitor.h"
 
+#include <map>
 #include <unordered_map>
 
 using namespace llvm;

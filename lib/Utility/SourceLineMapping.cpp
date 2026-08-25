@@ -1,13 +1,8 @@
-#define DEBUG_TYPE "giriutil"
 
 #include "Utility/SourceLineMapping.h"
 #include "Utility/Utils.h"
 
 #include "llvm/ADT/Statistic.h"
-// LLVM 14 made the debug type a required STATISTIC argument (the 3.4/8.0.0
-// two-arg form is gone); DEBUG_TYPE is defined above, so map to the 14.0.0
-// three-arg form.
-#define STATISTIC(NAME, DESC) STATISTIC_WITH_TYPE(DEBUG_TYPE, NAME, DESC)
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
@@ -18,7 +13,6 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/IR/CallBase.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/IR/InstIterator.h"
@@ -41,6 +35,10 @@ MappingFileName("mapping-output",
                   cl::desc("The output filename of the source line mapping"),
                   cl::init("-"));
 
+// DEBUG_TYPE is defined after the includes: LLVM 14's dom-tree-builder header
+// (GenericDomTreeConstruction.h) does `#undef DEBUG_TYPE`, and the 14.0.0 STATISTIC
+// macro references DEBUG_TYPE at the call site.
+#define DEBUG_TYPE "giriutil"
 STATISTIC(NumFoundSrc, "Number of source information locations found");
 STATISTIC(NumNotFoundSrc, "Number of source information locations not found");
 STATISTIC(NumQueriedSrc, "Number of queried including ignored LLVM insts");
@@ -77,7 +75,7 @@ std::string SourceLineMappingPass::locateSrcInfo(Instruction *I) {
         return "";
     }
   } else if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
-    if (Value *CalledVal = II->getCalledValue()) {
+    if (Value *CalledVal = II->getCalledOperand()) {
       if (Function *CalledFunc = dyn_cast<Function>(CalledVal->stripPointerCasts())) {
         if (isTracerFunction(CalledFunc))
           return "";
@@ -115,7 +113,7 @@ void SourceLineMappingPass::mapOneFunction(Function *F, raw_ostream &Output) {
 
 bool SourceLineMappingPass::runOnModule(Module &M) {
   std::error_code EC;
-  raw_fd_ostream MappingFile(MappingFileName.c_str(), EC, sys::fs::F_None);
+  raw_fd_ostream MappingFile(MappingFileName.c_str(), EC, sys::fs::OF_None);
 
   if (!FunctionName.empty())
     mapOneFunction(M.getFunction(FunctionName), MappingFile);
