@@ -14,7 +14,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/IR/CallSite.h"
+#include "llvm/IR/CallBase.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/IR/InstIterator.h"

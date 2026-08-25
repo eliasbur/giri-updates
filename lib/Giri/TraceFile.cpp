@@ -18,7 +18,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/CallSite.h"
+#include "llvm/IR/CallBase.h"
 #include "llvm/Support/Debug.h"
 // LLVM 8 removed the bare DEBUG(X) macro that LLVM 3.4's Debug.h provided;
 // DEBUG_TYPE is set above, so map it to the 8.0.0 DEBUG_WITH_TYPE.
@@ -674,7 +674,7 @@ bool TraceFile::getSourcesForSpecialCall(DynValue &DV,
   if (isa<DbgInfoIntrinsic>(I))
     return true;
 
-  const CallSite CS(I);
+  const CallBase CS(I);
   Function *CalledFunc = CS.getCalledFunction();
   if (!CalledFunc)
     return false;

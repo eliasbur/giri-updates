@@ -27,7 +27,7 @@ lib:
 	$(MAKE) -s -C $(GIRI_DIR)
 
 $(NAME).slice : $(NAME).bc $(NAME).trace
-	@ opt -load $(GIRI_LIB_DIR)/libdgutility.so \
+	@ opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
 		-load $(GIRI_LIB_DIR)/libgiri.so \
 		-mergereturn -bbnum -lsnum \
 		-dgiri -trace-file=$(NAME).trace -slice-file=$(NAME).slice \
@@ -44,7 +44,7 @@ $(NAME).trace.s : $(NAME).trace.bc
 	llc -asm-verbose=false -O0 $< -o $@
 
 $(NAME).trace.bc : $(NAME).bc
-	@ opt -load $(GIRI_LIB_DIR)/libdgutility.so \
+	@ opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
 		-load $(GIRI_LIB_DIR)/libgiri.so \
 		-mergereturn -bbnum -lsnum \
 		-trace-giri -trace-file=$(NAME).trace \

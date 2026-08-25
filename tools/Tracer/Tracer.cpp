@@ -153,9 +153,14 @@ int main(int argc, char **argv) {
         std::cerr << argv[0] << ": error opening " << OutputFile << "!\n";
         return 1;
       }
-      WriteBitcodeToFile(*M, OS);
-    } else {
-      WriteBitcodeToFile(*M, llvm::outs());
+      // WriteBitcodeToFile returns an llvm::Error since LLVM 12; check it.
+      // handleAllErrors (not .toOptionalError()): this build is -fno-exceptions.
+      if (handleAllErrors(WriteBitcodeToFile(*M, OS),
+          [](Error E) { errs() << E.message() << "\n"; }))
+        return 1;
+    } else if (handleAllErrors(WriteBitcodeToFile(*M, llvm::outs()),
+               [](Error E) { errs() << E.message() << "\n"; })) {
+      return 1;
     }
 
     return 0;
