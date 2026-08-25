@@ -16,6 +16,10 @@
 #include "Giri/TraceFile.h"
 
 #include "llvm/ADT/Statistic.h"
+// LLVM 14 made the debug type a required STATISTIC argument (the 3.4/8.0.0
+// two-arg form is gone); DEBUG_TYPE is defined above, so map to the 14.0.0
+// three-arg form.
+#define STATISTIC(NAME, DESC) STATISTIC_WITH_TYPE(DEBUG_TYPE, NAME, DESC)
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/CallBase.h"
