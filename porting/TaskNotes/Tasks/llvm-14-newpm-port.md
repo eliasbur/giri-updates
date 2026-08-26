@@ -84,25 +84,26 @@ driver or `opt`-built-from-source) and must be surfaced before phase 2.
 
 ## Definition of done
 
-- [ ] `port/llvm-14.0.0` cut from the completed legacy-PM head
+- [x] `port/llvm-14.0.0` cut from the completed legacy-PM head
       (`agent/open-code/llvm-14-legacypm`); working branch created
-- [ ] Spike: new-PM `-load` plugin works under `opt` 14.0.0; `mergereturn`
+- [x] Spike: new-PM `-load` plugin works under `opt` 14.0.0; `mergereturn`
       new-PM availability checked; analysis availability recorded
-- [ ] All Giri/Utility passes converted to new PM, pass logic byte-identical;
+- [x] All Giri/Utility passes converted to new PM, pass logic byte-identical;
       5 artifacts in `build/{lib,bin}`; `opt -passes=...` lists/runs the Giri
       passes
-- [ ] Test-only new-PM `MergeReturn` matching the legacy transform
-- [ ] `test/Makefile.common` harness on the new PM (`-passes` pipelines, no
+- [x] Test-only new-PM `MergeReturn` matching the legacy transform
+      (eliminated: built-in new-PM `mergereturn` is the same transform, spike-verified byte-identical)
+- [x] `test/Makefile.common` harness on the new PM (`-passes` pipelines, no
       `-enable-new-pm=0`); test cases/goldens/criteria untouched
-- [ ] Honest-harness seq suite run in `giri-llvm-14`; per-test results + root
-      causes at `porting/TestAudit/llvm-14.0.0-newpm/`
-- [ ] The three critical invariants re-verified (ABI / `-g` / numbering)
-- [ ] `git diff <base>..HEAD -- test/` empty except harness lines in
+- [x] Honest-harness seq suite run in `giri-llvm-14`; per-test results + root
+      causes at `porting/TestAudit/llvm-14.0.0-newpm/` (22/22 PASS, rc=0)
+- [x] The three critical invariants re-verified (ABI / `-g` / numbering)
+- [x] `git diff <base>..HEAD -- test/` empty except harness lines in
       `test/Makefile.common`
-- [ ] Change data: new-PM-specific breaks (legacy-PM API removal, PassPlugin)
+- [x] Change data: new-PM-specific breaks (legacy-PM API removal, PassPlugin)
       recorded; consistent with `porting/llvm-releases/14.0.0/`
-- [ ] `AGENTS.md` branch copy updated (Current state + Known residuals)
-- [ ] PR opened into `port/llvm-14.0.0` and linked below
+- [x] `AGENTS.md` branch copy updated (Current state + Known residuals)
+- [x] PR opened into `port/llvm-14.0.0` and linked below
 
 ## Files / scope
 
@@ -219,8 +220,68 @@ X.so -passes=...` → "unknown pass name"). Proven with two minimal plugins:
   `DynamicGiri` and `CountSrcLines` without the pass instance) — unaffected by
   the PM choice; keep static.
 
+## Progress log
+
+### 2026-08-26 — Implementation complete (22/22 on the new PM)
+
+All subtasks done. Working branch `agent/jcode/llvm-14-newpm-port`, target
+`port/llvm-14.0.0` (cut at `fba2565`).
+
+**Conversion (commits `cd97e71` libdgutility, `ac2e688` libgiri, `70ffef8`
+Tracer):**
+- `QueryBasicBlockNumbers`/`QueryLoadStoreNumbers`: new-PM module **analyses**
+  whose result object carries the ID maps (the legacy pass-instance state now
+  lives on the analysis result); the no-op `bbnum`/`lsnum`/`remove-*` passes
+  force the lazy analyses (`MAM.getResult<Query…>(M)`), preserving the
+  getAnalysis-triggered numbering behavior.
+- `PostDominanceFrontierAnalysis` (function analysis) takes
+  `FAM.getResult<PostDominatorTreeAnalysis>(F)` (NOT `PostDominatorTree` —
+  the data structure is not an analysis; that first-build error is recorded
+  in the change data).
+- `TracingNoGiri`: new-PM **module pass**; `run(Module&, MAM)` does the
+  module-level init once, then loops functions → basic blocks calling the
+  renamed `instrument`/`runOnBasicBlock`; per-BB order and insertion order
+  preserved.
+- `DynamicGiri`: new-PM **module analysis** (`AnalysisKey Key`), fetched by
+  the `dgiri`/`test-giri` module passes via `MAM.getResult<DynamicGiri>(M)`;
+  `ensurePostDomFrontierComputed` builds the `PostDominatorTree` inline
+  (public `Function&` ctor; spike-verified it builds and supports
+  `properlyDominates` on the node form).
+- `CountSrcLines`/`SourceLineMapping`/`TestGiri`: new-PM module passes,
+  `getResult<T>` template form.
+- Plugin registration: `lib/Utility/UtilityPassPlugin.cpp`
+  (bbnum/remove-bbnum/lsnum/remove-lsnum/postdomfrontier/countsrc/
+  srcline-mapping + the Query* module analyses + the PostDominanceFrontier
+  function analysis) and `lib/Giri/GiriPassPlugin.cpp` (trace-giri, dgiri,
+  test-giri + DynamicGiri + re-registered Query* so libgiri works standalone).
+  `libgiri.so` → `libdgutility.so` via NEEDED (spike-verified cross-library
+  analysis getResult sees a single analysis instance).
+- `Tracer`: programmatic new-PM pipeline
+  (mergereturn → bbnum → lsnum → trace-giri/dgiri → remove-bbnum →
+  remove-lsnum), `WriteBitcodeToFile` void in 14.0.0.
+
+**Harness (commit `d9a2212`):** `test/Makefile.common` +
+`test/HelloWorld/Makefile` — drop `-enable-new-pm=0` and the legacy
+`-<passname>` flags; each library loaded twice (`-load` for the `cl::opt`
+globals pre-parse, `-load-pass-plugin` for the pipeline names post-parse);
+pipeline `-passes="function(mergereturn),bbnum,lsnum,…,remove-bbnum,
+remove-lsnum"` (mergereturn wrapped in `function(...)` first). The honest
+`EXPECTED_EXIT`/`EXIT_UNCHECKED`/`[GIRI] Abnormal termination` machinery is
+preserved verbatim; goldens/criteria untouched.
+
+**Verification:**
+- Build green in `giri-llvm-14` (spike container `spike14`).
+- Honest seq suite: **22 PASS / 0 FAIL, rc=0** (`make -C /giri/test`,
+  `TEST_PARALLELISM=seq`), evidence logs at
+  `porting/TestAudit/llvm-14.0.0-newpm/_test_logs/`.
+- Three invariants re-verified (ABI: `Runtime.h` untouched vs `fba2565`;
+  `-g`: `file:line` slices match goldens; numbering: identical pipeline in
+  both stages + mergereturn byte-identical legacy-vs-new-PM).
+- Per-test audit + change data: `e96ca43`.
+
 ## Handoff
 
-- branch ``
-- PR:
-Refs: `porting/AgentGuide.md`, `porting/HowItWorks.md`, `llvm-14-legacypm-port.md`
+- branch `agent/jcode/llvm-14-newpm-port`
+- PR: see the linked PR in the closeout commit (opened into `port/llvm-14.0.0`)
+Refs: `porting/AgentGuide.md`, `porting/HowItWorks.md`, `llvm-14-legacypm-port.md`,
+`porting/TestAudit/llvm-14.0.0-newpm/SUMMARY.md`
