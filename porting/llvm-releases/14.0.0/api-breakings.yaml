@@ -4102,6 +4102,146 @@ changes:
     relevance: "unlikely"
     status: "pending"
 
+  # The three entries below are new-PM-port-specific (branch port/llvm-14.0.0,
+  # agent/jcode/llvm-14-newpm-port). They are the forward-compat cost of
+  # executing Giri's passes through the new pass manager instead of the
+  # deprecated legacy one. originalIds: [] — none of them is a release-note
+  # item; each was established by an in-container spike against the prebuilt
+  # 14.0.0 headers/source before conversion (see the spike findings in
+  # porting/TaskNotes/Tasks/llvm-14-newpm-port.md).
+
+  - id: "newpm-passes-load-via-load-pass-plugin"
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "New-PM passes/analyses register through the PassPlugin mechanism (llvmGetPassPluginInfo + registerPassBuilderCallbacks), not RegisterPass"
+    description: |-
+        Under the new pass manager, `opt` discovers passes through `-load-pass-plugin`
+        (PassPlugin::Load looks up the llvmGetPassPluginInfo symbol). The legacy
+        `-load <so>` flag does NOT register new-PM passes (it only runs the
+        legacy RegisterPass static-initializer path). cl::opt globals defined by
+        a loaded plugin, by contrast, are still picked up by plain `-load` (which
+        dlopens before command-line parsing) — so a harness that needs both the
+        pipeline names AND the plugin's cl::opts loads each plugin twice:
+        `-load X.so` (cl::opts, pre-parse) + `-load-pass-plugin=X.so`
+        (pipeline names, post-parse). This port's test harness does exactly that.
+    affectedApi: ["llvmGetPassPluginInfo", "registerPassBuilderCallbacks", "registerPassPipelineParsingCallback", "PassPlugin::Load", "opt -load-pass-plugin", "opt -load"]
+    versions: [14.0.0]
+    originalIds: []
+    notes: |-
+        Port-critical (new-PM branch): every Giri/Utility pass was converted to a
+        PassInfoMixin Pass/Analysis and registered in llvmGetPassPluginInfo in
+        lib/Utility/UtilityPassPlugin.cpp (bbnum, remove-bbnum, lsnum,
+        remove-lsnum, postdomfrontier, countsrc, srcline-mapping + the Query*
+        and PostDominanceFrontier analyses) and lib/Giri/GiriPassPlugin.cpp
+        (trace-giri, dgiri, test-giri + DynamicGiri + re-registered Query*
+        analyses so libgiri works standalone). Spike: two independent plugins
+        loaded in one opt, cross-library analysis getResult via a NEEDED
+        dependency (libgiri.so -> libdgutility.so) verified; PassPluginLibraryInfo
+        has 4 fields in 14.0.0. Verified 22/22 on the new-PM harness.
+    relevance: "affected"
+    status: "addressed"
+
+  - id: "newpm-getresult-template-argument"
+    category: "general"
+    changeType: "changed"
+    severity: "medium"
+    summary: "AnalysisManager::getResult takes the analysis type as an explicit template argument (getResult<T>(Arg)); the legacy getAnalysis<T>()-style call with no template argument does not compile"
+    description: |-
+        In the new pass manager, MAM.getResult(AnalysisType, M) as used by legacy
+        getAnalysis(AnalysisType) call sites is ambiguous/invalid; the result
+        type must be spelled as a template argument: MAM.getResult<AnalysisType>(M).
+        The same applies to analyses fetched inside a pass's run() and to the
+        FunctionAnalysisManager proxy obtained from a ModuleAnalysisManager.
+        Note also that a pass's required analyses are declared with
+        AnalysisUsage / addRequired<Analysis>(M), and that the new-PM analysis
+        for the post-dominator tree is PostDominatorTreeAnalysis (Result =
+        PostDominatorTree), not PostDominatorTree itself (the data structure
+        is not an analysis).
+    affectedApi: ["AnalysisManager::getResult", "ModuleAnalysisManager", "FunctionAnalysisManager", "PostDominatorTreeAnalysis", "AnalysisUsage"]
+    versions: [14.0.0]
+    originalIds: []
+    notes: |-
+        Port-critical (new-PM branch): the call sites in include/Giri/Giri.h
+        (DynamicGiriPass::run, PostDominanceFrontierPass::run),
+        lib/Giri/{Giri.cpp,TracingNoGiri.cpp,TestPass.cpp},
+        lib/Utility/CountSrcLines.cpp and lib/Utility/SourceLineMapping.cpp all
+        use the getResult<T> template form; PostDominatorFrontier.cpp uses
+        FAM.getResult<PostDominatorTreeAnalysis>(F) (the first build attempt
+        with getResult<PostDominatorTree>(F) failed to compile — PostDominatorTree
+        is the data structure, not an analysis). Verified by a clean build and
+        the 22/22 new-PM suite.
+    relevance: "affected"
+    status: "addressed"
+
+  - id: "newpm-basicblockpass-behavior-replacement"
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "BasicBlockPass cannot be used from the new PM; TracingNoGiri's per-basic-block instrumentation must be preserved by a module pass that loops functions and basic blocks"
+    description: |-
+        BasicBlockPass/BBPassManager were deleted in 10.0.0 (see
+        basicblockpass-bbpassmanager-deleted). On the legacy-PM port this was
+        handled by converting TracingNoGiri to a legacy FunctionPass whose
+        runOnFunction loops over BasicBlocks calling runOnBasicBlock. On the
+        new-PM port the equivalent replacement is a new-PM ModulePass whose
+        run(Module&, MAM) does the module-level doInitialization work (prototype
+        insertion, data structures) once, then loops functions and, per
+        function, loops basic blocks calling the (renamed) instrument
+        per-BB logic. The per-BB order and the insertion order of the
+        instrumentation calls are preserved exactly; the per-BB analysis
+        lookups (TargetTransformInfo, QueryBBNumbers/QueryLSNumbers) are fetched
+        once per module/function instead of per BB, which is behavior-neutral
+        (the analyses are idempotent and cached).
+    affectedApi: ["BasicBlockPass", "TracingNoGiri", "ModulePass::run", "BasicBlock::iterator"]
+    versions: [14.0.0]
+    originalIds: []
+    notes: |-
+        Port-critical (new-PM branch): lib/Giri/TracingNoGiri.cpp is now a
+        new-PM module pass (include/Giri/Giri.h declares it as a
+        PassInfoMixin ModulePass). Verified 22/22: the instrumentation
+        round-trip (trace-giri -> traced binary -> dgiri slice) reproduces the
+        pristine 3.4 goldens under the new PM.
+    relevance: "affected"
+    status: "addressed"
+
+  - id: "newpm-handbuilt-mam-missing-builtin-analyses"
+    category: "general"
+    changeType: "behavior"
+    severity: "high"
+    summary: "A hand-built ModuleAnalysisManager (no PassBuilder) must explicitly register the built-in analyses opt's PassBuilder registers for free, or ModulePassManager::run / VerifierPass segfault in an assertion-free build"
+    description: |-
+        14.0.0's ModulePassManager::run immediately fetches
+        PassInstrumentationAnalysis from the analysis manager before running
+        any pass, and VerifierPass::run fetches VerifierAnalysis. Under opt,
+        PassBuilder::registerModuleAnalyses registers these for free; a tool
+        that builds its MAM by hand (the new-PM port of the standalone tracer
+        does this because it links the Giri libraries directly and adds its
+        passes programmatically) does not. AnalysisManager::getResult asserts
+        on a missing registration, but the prebuilt 14.0.0 toolchain is a
+        Release build with assertions compiled out (llvm-config
+        --assertion-mode == OFF), so the assert is gone and the unregistered
+        lookup is a null-deref/segfault deep inside getResultImpl.
+        Generalization: when a new-PM tool replaces PassBuilder with a
+        hand-built analysis manager, register exactly the built-in analyses
+        the pipeline consumes.
+    affectedApi: ["ModuleAnalysisManager::registerPass", "PassInstrumentationAnalysis", "VerifierAnalysis", "PassBuilder::registerModuleAnalyses", "ModulePassManager::run"]
+    versions: [14.0.0]
+    originalIds: []
+    notes: |-
+        New-PM-branch-only port-critical finding (legacy-PM port unaffected:
+        the legacy MAM has no such built-in fetch). Root-caused from two
+        segfaults (MAM.getResultImpl, then VerifierPass::run ->
+        getResultImpl); the same registration gap behind both. Fix in
+        tools/Tracer/Tracer.cpp: register PassInstrumentationAnalysis +
+        VerifierAnalysis on the hand-built MAM. Verified: the tracer
+        round-trip on test1 (instrument -> llc -> link -> run -> slice)
+        matches the pristine 3.4 golden ans-inst.txt (source lines
+        9/12/13/18). The 22/22 suite never exercised this path (it drives
+        every stage through opt).
+    relevance: "affected"
+    status: "addressed"
+
   - id: "multi-distribution-build-support"
     category: "building"
     changeType: "added"

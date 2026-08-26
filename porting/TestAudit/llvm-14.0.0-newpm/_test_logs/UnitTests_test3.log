@@ -1,0 +1,10 @@
+=== STAGE: BUILD ===
+[ 36%] Built target dgutility
+[ 68%] Built target giri
+[ 78%] Built target rtgiri
+[ 89%] Built target tracer
+[100%] Built target prtrace
+Statistics are disabled.  Build with asserts or with -DLLVM_FORCE_ENABLE_STATS
+fibonacci(15) is 610
+Statistics are disabled.  Build with asserts or with -DLLVM_FORCE_ENABLE_STATS
+=== STAGE: TEST ===

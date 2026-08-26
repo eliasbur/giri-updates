@@ -1,0 +1,42 @@
+=== STAGE: BUILD ===
+[ 36%] Built target dgutility
+[ 68%] Built target giri
+[ 78%] Built target rtgiri
+[ 89%] Built target tracer
+[100%] Built target prtrace
+Statistics are disabled.  Build with asserts or with -DLLVM_FORCE_ENABLE_STATS
+The supposed sum is: 32640
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+For some variable length functions like ap_rprintf in apache, call records missing. Stop here for now. Fix it later
+i8* %0
+Statistics are disabled.  Build with asserts or with -DLLVM_FORCE_ENABLE_STATS
+=== STAGE: TEST ===

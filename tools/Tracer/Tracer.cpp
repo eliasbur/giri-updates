@@ -12,6 +12,11 @@
 // bitcode file.  We do this because *some* platforms (cough *Cygwin* cough)
 // don't support LLVM's shared libraries.
 //
+// New pass manager port (LLVM 14.0.0): the pipeline is built programmatically
+// with the new ModulePassManager (it links libgiri/libdgutility directly, so
+// no -load / -load-pass-plugin plugin loading is needed; the analyses are
+// registered on the ModuleAnalysisManager in code).
+//
 //===----------------------------------------------------------------------===//
 
 #include "Giri/Giri.h"
@@ -23,11 +28,9 @@
 #include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/LegacyPassManager.h"
-#include "llvm/Pass.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -35,9 +38,6 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 
 #include <fstream>
 #include <iostream>
@@ -103,29 +103,50 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    // Build up all of the passes that we want to do to the module...
-    legacy::PassManager Passes;
+    // Build up the passes (new pass manager). The numbering/Giri analyses are
+    // registered on the module analysis manager; the passes below obtain them
+    // via MAM.getResult<...>. (Tracer links libgiri/libdgutility directly, so
+    // the pipeline is built in code rather than parsed from -passes.)
+    ModulePassManager MPM;
+    ModuleAnalysisManager MAM;
+
+    // The pipeline is built by hand (no PassBuilder), so the built-in
+    // analyses that opt's PassBuilder::registerModuleAnalyses registers for
+    // free must be registered here explicitly. 14.0.0's
+    // ModulePassManager::run fetches PassInstrumentation from the MAM before
+    // running any pass, and VerifierPass::run fetches VerifierAnalysis; with
+    // assertions compiled out (the prebuilt 14.0.0 toolchain is Release,
+    // assertion-mode OFF) a missing registration is a silent null-deref in
+    // AnalysisManager::getResult. Register exactly the analyses this
+    // pipeline consumes (no PassBuilder means no other pass can be added).
+    static PassInstrumentationCallbacks PIC;
+    MAM.registerPass([&] { return PassInstrumentationAnalysis(&PIC); });
+    MAM.registerPass([] { return VerifierAnalysis(); });
+    MAM.registerPass([] { return dg::QueryBBNumbersPass(); });
+    MAM.registerPass([] { return dg::QueryLSNumbersPass(); });
+    MAM.registerPass([] { return giri::DynamicGiri(); });
+
     M->setDataLayout(M->getDataLayout());
 
     // Number all basic blocks and instructions.
-    Passes.add(new BasicBlockNumberPass());
-    Passes.add(new LoadStoreNumberPass());
+    MPM.addPass(dg::BasicBlockNumberPass());
+    MPM.addPass(dg::LoadStoreNumberPass());
 
     if (DoTrace) {
-      Passes.add(new TracingNoGiri());
+      MPM.addPass(giri::TracingNoGiri());
     } else {
-      Passes.add(new DynamicGiri());
+      MPM.addPass(giri::DynamicGiriPass());
     }
 
     // Remove numbering metadata.
-    Passes.add(new RemoveBasicBlockNumbers());
-    Passes.add(new RemoveLoadStoreNumbers());
+    MPM.addPass(dg::RemoveBasicBlockNumbers());
+    MPM.addPass(dg::RemoveLoadStoreNumbers());
 
     // Verify the final result
-    Passes.add(createVerifierPass());
+    MPM.addPass(VerifierPass());
 
-    // Run our queue of passes all at once now, efficiently.
-    Passes.run(*M.get());
+    // Run the passes.
+    MPM.run(*M.get(), MAM);
 
     // Figure out where we are going to send the output...
     std::string OutputFile;

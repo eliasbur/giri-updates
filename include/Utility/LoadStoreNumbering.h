@@ -11,6 +11,12 @@
 // and store instructions that does not depend on their address in memory
 // (which is nondeterministic).
 //
+// New pass manager port (LLVM 14.0.0): mirrors BasicBlockNumbering.h —
+// LoadStoreNumberPass / RemoveLoadStoreNumbers are no-op new-PM module
+// passes; QueryLoadStoreNumbers is the analysis result (getID/getInstByID);
+// QueryLSNumbersPass is the new-PM module analysis that computes the
+// numbering (byte-identical to the legacy runOnModule).
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef DG_LOADSTORENUMBERING_H
@@ -20,7 +26,7 @@
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Pass.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/IR/InstVisitor.h"
 
 #include <map>
@@ -30,32 +36,10 @@ using namespace llvm;
 
 namespace dg {
 
-class LoadStoreNumberPass : public ModulePass {
+/// The stable load/store/call/select numbering: the ID maps plus the same
+/// getID/getInstByID accessors the legacy QueryLoadStoreNumbers exposed.
+class QueryLoadStoreNumbers {
 public:
-  static char ID;
-  LoadStoreNumberPass() : ModulePass(ID), count(0) {}
-
-  virtual bool runOnModule(Module &M);
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  };
-
-private:
-  unsigned count;
-};
-
-class QueryLoadStoreNumbers : public ModulePass {
-public:
-  static char ID;
-  QueryLoadStoreNumbers() : ModulePass(ID) {}
-
-  virtual bool runOnModule(Module & M);
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  };
-
   unsigned getID(const Instruction *I) const {
     std::map<Instruction*, unsigned>::const_iterator im = IDMap.find(const_cast<Instruction*>(I));
     if (im != IDMap.end())
@@ -70,21 +54,39 @@ public:
     return 0;
   }
 
-protected:
   std::map<Instruction*, unsigned> IDMap;
   std::map<unsigned, Instruction *> InstMap;
 };
 
-class RemoveLoadStoreNumbers : public ModulePass {
+/// New-PM module analysis that computes the stable load/store numbering.
+/// Logic is byte-identical to the legacy QueryLoadStoreNumbers::runOnModule.
+class QueryLSNumbersPass : public AnalysisInfoMixin<QueryLSNumbersPass> {
+  friend AnalysisInfoMixin<QueryLSNumbersPass>;
+
+  static AnalysisKey Key;
+
 public:
-  static char ID;
-  RemoveLoadStoreNumbers() : ModulePass(ID) {}
+  using Result = QueryLoadStoreNumbers;
 
-  virtual bool runOnModule(Module &M);
+  Result run(Module &M, ModuleAnalysisManager &MAM);
+};
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  };
+/// New-PM no-op module pass (legacy -lsnum). Forces the numbering analysis
+/// so the -dump-lsid debug output (and any later consumer) see the IDs.
+class LoadStoreNumberPass : public PassInfoMixin<LoadStoreNumberPass> {
+public:
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {
+    MAM.getResult<QueryLSNumbersPass>(M);
+    return PreservedAnalyses::all();
+  }
+};
+
+/// New-PM no-op module pass (legacy -remove-lsnum).
+class RemoveLoadStoreNumbers : public PassInfoMixin<RemoveLoadStoreNumbers> {
+public:
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {
+    return PreservedAnalyses::all();
+  }
 };
 
 } // END namespace dg

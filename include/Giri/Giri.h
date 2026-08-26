@@ -9,6 +9,20 @@
 //
 // This files defines passes that are used for dynamic slicing.
 //
+// New pass manager port (LLVM 14.0.0): every Giri pass is a new-PM pass.
+//  - TracingNoGiri: a *module pass* (it inserts module-level prototypes/ctor,
+//    so it must see the whole module once; it drives the per-function and
+//    per-basic-block instrumentation loops itself, preserving the legacy
+//    FunctionPass ordering).
+//  - DynamicGiri: a *module analysis* whose run() performs the backwards-slice
+//    computation (exactly the legacy runOnModule body); it is exposed to the
+//    -passes pipeline as the "dgiri" module pass (a thin wrapper). It becomes
+//    an analysis so that other passes (e.g. TestGiri) can obtain one shared
+//    instance via MAM.getResult<DynamicGiri>(M), mirroring the legacy
+//    getAnalysis<DynamicGiri>().
+//  - TestGiri: a *module pass* (the legacy -test-giri; not part of the
+//    automated suite, kept for parity).
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef GIRI_H
@@ -21,8 +35,8 @@
 
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/Function.h"
-#include "llvm/Pass.h"
 #include "llvm/IR/InstVisitor.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/IR/DataLayout.h"
 
 #include <deque>
@@ -34,40 +48,29 @@ using namespace llvm;
 
 namespace giri {
 
-/// This class defines an LLVM function pass that instruments a program to
-/// generate a trace of its execution usable for dynamic slicing.
-/// LLVM 9 removed the legacy BasicBlockPass, so this is now a FunctionPass
-/// that iterates its own basic blocks (preserving the original per-BB
-/// instrumentation behavior and order).
-class TracingNoGiri : public FunctionPass,
+/// This class defines a pass that instruments a program to generate a trace
+/// of its execution usable for dynamic slicing.
+///
+/// The legacy PM exposed this as a FunctionPass with a module-level
+/// doInitialization. Under the new PM it is a *module pass*: run() performs
+/// the module-level initialization once and then iterates the module's
+/// functions and basic blocks itself, preserving the legacy instrumentation
+/// order.
+class TracingNoGiri : public PassInfoMixin<TracingNoGiri>,
                       public InstVisitor<TracingNoGiri> {
 public:
-  static char ID;
-  TracingNoGiri() : FunctionPass(ID) {}
-
-  /// This method does module level changes needed for adding tracing
-  /// instrumentation for dynamic slicing. Specifically, we add the function
-  /// prototypes for the dynamic slicing functionality here.
-  virtual bool doInitialization(Module &M);
-  virtual bool doFinalization(Module &M) { return false; }
+  /// Entry point for this new-PM module pass.
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM);
 
   /// This method starts execution of the dynamic slice tracing instrumentation
-  /// pass. It will add code to a function that records the execution of basic
-  /// blocks.
-  virtual bool runOnFunction(Function &F);
+  /// for one function: it adds code to the function that records the
+  /// execution of its basic blocks. Drives the per-BB loop (the legacy
+  /// FunctionPass::runOnFunction body, renamed for the new PM).
+  void instrument(Function &F);
 
-  /// Instrument a single basic block. This drove the pass in LLVM <= 8, when
-  /// TracingNoGiri was a BasicBlockPass.
+  /// Instrument a single basic block. Drove the pass in LLVM <= 8 when
+  /// TracingNoGiri was a BasicBlockPass; the new-PM run() loop drives it.
   bool runOnBasicBlock(BasicBlock &BB);
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<QueryBasicBlockNumbers>();
-    AU.addPreserved<QueryBasicBlockNumbers>();
-
-    AU.addRequired<QueryLoadStoreNumbers>();
-    AU.addPreserved<QueryLoadStoreNumbers>();
-    AU.setPreservesCFG();
-  };
 
   /// Visit a load instruction. This method instruments the load instruction
   /// with a call to the tracing run-time that will record, in the dynamic
@@ -103,7 +106,7 @@ public:
   bool visitSpecialCall(CallInst &CI);
 
 private:
-  // Pointers to other passes
+  // Pointers to other passes / analyses
   const DataLayout *TD;
   const QueryBasicBlockNumbers *bbNumPass;
   const QueryLoadStoreNumbers  *lsNumPass;
@@ -128,7 +131,6 @@ private:
   Function *RecordUnlock;
 
   // Integer types
-  // Removed const modifier since method signatures have changed
   Type *Int8Type;
   Type *Int32Type;
   Type *Int64Type;
@@ -136,6 +138,11 @@ private:
   Type *VoidPtrType;
 
 private:
+  /// Module-level initialization: insert the record-function prototypes and
+  /// the global constructor. The new-PM equivalent of the legacy
+  /// doInitialization (called once per module from run()).
+  void initializeDataStructure(Module &M);
+
   /// Instrument the unlock function for load/store instructions
   /// This should insert a function call after the I;
   void instrumentLock(Instruction *I);
@@ -143,10 +150,6 @@ private:
   /// Instrument the unlock function for load/store instructions
   /// This should insert a function call after the I;
   void instrumentUnlock(Instruction *I);
-
-  /// Instrument the function to record it's thread id, if it is a function
-  /// started from pthread_create
-  void instrumentPthreadCreatedFunctions(Function *F);
 
   /// This method instruments a basic block so that it records its execution at
   /// run-time.
@@ -158,35 +161,25 @@ private:
 };
 
 /// This pass finds the backwards dynamic slice of LLVM values.
-class DynamicGiri : public ModulePass {
+///
+/// New-PM: implemented as a *module analysis* so that it can be obtained as a
+/// shared instance via MAM.getResult<DynamicGiri>(M) (mirroring the legacy
+/// getAnalysis<DynamicGiri>()), and so it can be exposed to the -passes
+/// pipeline as the "dgiri" module pass.
+class DynamicGiri : public AnalysisInfoMixin<DynamicGiri> {
+  friend AnalysisInfoMixin<DynamicGiri>;
+
+  static AnalysisKey Key;
+
 public:
-  static char ID;
-  DynamicGiri() : ModulePass(ID) {}
+  using Result = DynamicGiri;
 
   /// Using trace information, find the dynamic backwards slice of a specified
-  /// LLVM instruction.
-  /// \return false - The module was not modified.
-  virtual bool runOnModule(Module &M);
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredTransitive<QueryBasicBlockNumbers>();
-    AU.addRequiredTransitive<QueryLoadStoreNumbers>();
-
-    // PostDominatorTree and PostDominanceFrontier are computed inline per-function
-    // in ensurePostDomFrontierComputed since they are FunctionPasses
-    // and this is a ModulePass.
-
-    // This pass is an analysis pass, so it does not modify anything
-    AU.setPreservesAll();
-  };
+  /// LLVM instruction. (the legacy runOnModule body).
+  DynamicGiri run(Module &M, ModuleAnalysisManager &MAM);
 
   /// This method returns all of the values that are in the backwards slice of
   /// the specified instruction.
-  ///
-  /// \param I - the slicing criterion
-  /// \param Slice - the static slice container
-  /// \param DynSlice - the dynamic slice container
-  /// \param DataFlowGraph - the data flow graph
   void getBackwardsSlice(Instruction *I,
                          std::set<Value *> &Slice,
                          std::unordered_set<DynValue> &DynSlice,
@@ -194,11 +187,6 @@ public:
 
   /// This method prints all of the values that are in the backwards slice of
   /// the specified instruction.
-  ///
-  /// \param Criterion - the start point of the slicing
-  /// \param Slice - the static slice value set
-  /// \param DynSlice - the very dynamic slice
-  /// \param DataFlowGraph - the data flow graph
   void printBackwardsSlice(const Instruction *Criterion,
                            std::set<Value *> &Slice,
                            std::unordered_set<DynValue> &DynSlice,
@@ -209,17 +197,6 @@ private:
   typedef std::set<DynValue *> Processed_t;
 
   /// For the given value, find all of the values upon which it depends.
-  ///
-  /// When looking for control dependences, remember that a control-dependence
-  /// doesn't always force the execution of a basic block.  For example, a basic
-  /// block can post-dominate the entry basic block and be control-dependent on
-  /// itself; this means that it is unconditionally executed once with
-  /// subsequent executions depending on the result of the basic block's
-  /// terminating instruction.
-  ///
-  /// \param[in] Initial - the slicing criterion dynamic value
-  /// \param[out] DynSlices - the dynamic slice container
-  /// \param[out] DataFlowGraph - the data flow graph
   void findSlice(DynValue &Initial,
                  std::unordered_set<DynValue> &DynSlice,
                  std::set<DynValue *> &DataFlowGraph);
@@ -227,29 +204,11 @@ private:
   /// Find the basic blocks that can force execution of the specified basic
   /// block and return the identifiers used to represent those basic blocks
   /// within the dynamic trace.
-  ///
-  /// Note that this is slightly different from control-dependence.  A basic
-  /// block can be forced to execute by a basic block on which it is
-  /// control-dependent.  However, it can also be forced to execute simply
-  /// because its containing function is executed (i.e., it post-dominates the
-  /// entry block).
-  ///
-  /// \param[in] BB - The basic block for which the caller wants to know which
-  ///                 basic blocks can force its execution.
-  /// \param[out] bbNums - A set of basic block identifiers that can force
-  ///                      execution of the specified basic block. Note that
-  ///                      identifiers are *added* to the set.
-  /// \return true  - The specified basic block will be executed at least once
-  ///                 every time the function is called.
-  /// \return false - The specified basic block may not be executed when the
-  ///                 function is called (i.e., the specified basic block is
-  ///                 control-dependent on the entry block if the entry block
-  ///                 is in bbNums).
   bool findExecForcers(BasicBlock *BB, std::set<unsigned> &bbNums);
-  
+
   void ensurePostDomFrontierComputed(Function &F);
   llvm::DenseMap<Function*, PostDominanceFrontier*> FunctionPDFFrontiers;
-  llvm::DenseMap<Function*, PostDominatorTreeWrapperPass*> FunctionPDTWP;
+  llvm::DenseMap<Function*, PostDominatorTree*> FunctionPDTs;
 
   void initDataFlowFitler(void);
 
@@ -265,6 +224,34 @@ private:
   /// Passes used by this pass
   const QueryBasicBlockNumbers *bbNumPass;
   const QueryLoadStoreNumbers *lsNumPass;
+};
+
+/// Thin module pass that runs the DynamicGiri analysis (the "dgiri" pipeline
+/// name). The analysis performs all the work; this wrapper only triggers it.
+class DynamicGiriPass : public PassInfoMixin<DynamicGiriPass> {
+public:
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {
+    MAM.getResult<DynamicGiri>(M);
+    return PreservedAnalyses::all();
+  }
+};
+
+/// This pass is used to test the giri pass (the legacy -test-giri).
+class TestGiri : public PassInfoMixin<TestGiri> {
+public:
+  /// Entry point for this pass. Find the instruction specified by the user
+  /// and find the backwards slice of it.
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM);
+
+  StringRef getPassName() const {
+    return "Dynamic Backwards Slice Testing Pass";
+  }
+
+private:
+  // Dynamic backwards slice
+  std::set<Value *> mySliceOfLife;
+  std::unordered_set<DynValue> myDynSliceOfLife;
+  std::set<DynValue *> myDataFlowGraph;
 };
 
 } // END namespace giri

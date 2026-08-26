@@ -9,6 +9,10 @@
 //
 // This files defines passes that are used for dynamic slicing.
 //
+// New pass manager port (LLVM 14.0.0): CountSrcLines is now a new-PM module
+// pass. It takes the QueryBBNumbers/QueryLSNumbers analyses from the module
+// analysis manager (replacing the legacy getAnalysis<...>()).
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef DG_COUNTSRCLINES_H
@@ -18,7 +22,7 @@
 #include "Utility/BasicBlockNumbering.h"
 #include "Utility/LoadStoreNumbering.h"
 
-#include "llvm/Pass.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/IR/InstVisitor.h"
 
 #include <deque>
@@ -31,35 +35,15 @@ namespace dg {
 
 /// \class This pass counts the number of static Source lines/LLVM insts.
 /// executed in a trace.
-struct CountSrcLines : public ModulePass {
+class CountSrcLines : public PassInfoMixin<CountSrcLines> {
 public:
-  static char ID;
+  /// Entry point for this new-PM pass. Using trace information, find the
+  /// static number of source lines and LLVM instructions in a trace.
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM);
 
-  CountSrcLines() : ModulePass (ID) {
-    //llvm::initializeDynamicGiriPass(*PassRegistry::getPassRegistry());
-  }
-
-  /// Entry point for this LLVM pass.  Using trace information, find the static
-  /// number of source lines and LLVM instructions in a trace.
-  ///
-  /// \param M - The module to analyze.
-  /// @return false - The module was not modified.
-  virtual bool runOnModule(Module &M);
-
-  StringRef getPassName() const override {
+  StringRef getPassName() const {
     return "Count static #SourceLines/LLVM Insts in a trace";
   }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    // We will need the ID numbers of basic blocks
-    AU.addRequiredTransitive<QueryBasicBlockNumbers>();
-
-    // We will need the ID numbers of loads and stores
-    AU.addRequiredTransitive<QueryLoadStoreNumbers>();
-
-    // This pass is an analysis pass, so it does not modify anything
-    AU.setPreservesAll();
-  };
 
   void countLines(const std::string &bbrecord_file);
 

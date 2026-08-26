@@ -11,6 +11,13 @@
 // instructions contained within the dynamic backwards slice of a specified
 // instruction.
 //
+// New pass manager port (LLVM 14.0.0): DynamicGiri is now a new-PM *module
+// analysis* (see Giri.h). run() is the legacy runOnModule body; the post-
+// dominance trees / frontiers it used are computed inline (new
+// PostDominatorTree(F) + computeFrontiers) instead of via the removed
+// legacy PostDominatorTreeWrapperPass. "dgiri" is exposed to the -passes
+// pipeline as a thin module pass (see GiriPassPlugin.cpp).
+//
 //===----------------------------------------------------------------------===//
 
 
@@ -65,20 +72,20 @@ STATISTIC(NumDynValsSkipped, "Number of Dynamic Values Skipped");
 STATISTIC(NumLoadsTraced, "Number of Dynamic Loads Traced");
 STATISTIC(NumLoadsLost, "Number of Dynamic Loads Lost");
 
-char DynamicGiri::ID = 0;
-
-static RegisterPass<DynamicGiri> X("dgiri", "Dynamic Backwards Slice Analysis");
+// New-PM module analysis key (the legacy `char DynamicGiri::ID` is removed).
+AnalysisKey DynamicGiri::Key;
 
 void DynamicGiri::ensurePostDomFrontierComputed(Function &F) {
-  if (FunctionPDTWP.find(&F) != FunctionPDTWP.end())
+  if (FunctionPDTs.find(&F) != FunctionPDTs.end())
     return;
-  
-  PostDominatorTreeWrapperPass *PDTWP = new PostDominatorTreeWrapperPass();
-  PDTWP->runOnFunction(F);
-  FunctionPDTWP[&F] = PDTWP;
-  
+
+  // New-PM: build the post-dominator tree directly (the public Function& ctor
+  // computes it), replacing the legacy lazy PostDominatorTreeWrapperPass.
+  PostDominatorTree *PDT = new PostDominatorTree(F);
+  FunctionPDTs[&F] = PDT;
+
   PostDominanceFrontier *PDF = new PostDominanceFrontier();
-  PDF->computeFrontiers(PDTWP->getPostDomTree());
+  PDF->computeFrontiers(*PDT);
   FunctionPDFFrontiers[&F] = PDF;
 }
 
@@ -87,7 +94,7 @@ bool DynamicGiri::findExecForcers(BasicBlock *BB,
   Function *F = BB->getParent();
   ensurePostDomFrontierComputed(*F);
 
-  PostDominatorTree &PDT = FunctionPDTWP[F]->getPostDomTree();
+  PostDominatorTree &PDT = *FunctionPDTs[F];
   PostDominanceFrontier &PDF = *FunctionPDFFrontiers[F];
 
   if (ForceExecCache.find(BB) != ForceExecCache.end()) {
@@ -231,9 +238,15 @@ void DynamicGiri::getBackwardsSlice(Instruction *I,
   }
 }
 
-bool DynamicGiri::runOnModule(Module &M) {
-  bbNumPass = &getAnalysis<QueryBasicBlockNumbers>();
-  lsNumPass = &getAnalysis<QueryLoadStoreNumbers>();
+// New-PM module analysis entry point: the legacy runOnModule body. It performs
+// the whole backwards-slice computation for the module (per the -criterion-*
+// / default-main-return criterion) and returns *this so that MAM.getResult
+// yields this shared DynamicGiri instance.
+DynamicGiri DynamicGiri::run(Module &M, ModuleAnalysisManager &MAM) {
+  // New-PM: obtain the numbering analyses from the module analysis manager
+  // (the legacy getAnalysis<...>()); they are computed once and shared.
+  bbNumPass = &MAM.getResult<QueryBBNumbersPass>(M);
+  lsNumPass = &MAM.getResult<QueryLSNumbersPass>(M);
 
   Trace = new TraceFile(TraceFilename, bbNumPass, lsNumPass);
 
@@ -241,7 +254,6 @@ bool DynamicGiri::runOnModule(Module &M) {
     std::ifstream StartOfSlice(StartOfSliceLoc);
     if (!StartOfSlice.is_open()) {
       errs() << "Error opening criterion file: " << StartOfSliceLoc << "\n";
-      return false;
     }
     std::string StartFilename;
     unsigned StartLoc = 0;
@@ -284,7 +296,6 @@ bool DynamicGiri::runOnModule(Module &M) {
     std::ifstream StartOfSlice(StartOfSliceInst);
     if (!StartOfSlice.is_open()) {
       errs() << "Error opening criterion file: " << StartOfSliceInst << "\n";
-      return false;
     }
     std::string StartFunction;
     unsigned StartInst = 0;
@@ -321,7 +332,7 @@ bool DynamicGiri::runOnModule(Module &M) {
   } else {
     Function *Func = M.getFunction("main");
     if (!Func)
-      return false;
+      return *this;
 
     for (inst_iterator I = inst_begin(Func), E = inst_end(Func); I != E; ++I)
       if (isa<ReturnInst>(*I)) {
@@ -336,5 +347,5 @@ bool DynamicGiri::runOnModule(Module &M) {
       }
   }
 
-  return false;
+  return *this;
 }
