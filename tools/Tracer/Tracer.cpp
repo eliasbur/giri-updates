@@ -110,6 +110,18 @@ int main(int argc, char **argv) {
     ModulePassManager MPM;
     ModuleAnalysisManager MAM;
 
+    // The pipeline is built by hand (no PassBuilder), so the built-in
+    // analyses that opt's PassBuilder::registerModuleAnalyses registers for
+    // free must be registered here explicitly. 14.0.0's
+    // ModulePassManager::run fetches PassInstrumentation from the MAM before
+    // running any pass, and VerifierPass::run fetches VerifierAnalysis; with
+    // assertions compiled out (the prebuilt 14.0.0 toolchain is Release,
+    // assertion-mode OFF) a missing registration is a silent null-deref in
+    // AnalysisManager::getResult. Register exactly the analyses this
+    // pipeline consumes (no PassBuilder means no other pass can be added).
+    static PassInstrumentationCallbacks PIC;
+    MAM.registerPass([&] { return PassInstrumentationAnalysis(&PIC); });
+    MAM.registerPass([] { return VerifierAnalysis(); });
     MAM.registerPass([] { return dg::QueryBBNumbersPass(); });
     MAM.registerPass([] { return dg::QueryLSNumbersPass(); });
     MAM.registerPass([] { return giri::DynamicGiri(); });
