@@ -88,7 +88,7 @@ changes:
     severity: "medium"
     summary: "The internal llvm-build Python script and the associated LLVMBuild.txt files have been removed and replaced by a pure CMake approach, where each component stores extra properties in the created targets"
     description: |-
-      The internal llvm-build Python script and the associated LLVMBuild.txt files used to describe the LLVM component structure have been removed and replaced by a pure CMake approach, where each component stores extra properties in the created targets. These properties are processed once all components are defined to resolve library dependencies and to produce the header expected by llvm-config.
+      The internal llvm-build Python script and the associated LLVMBuild.txt files used to describe the LLVM component structure have been removed and replaced by a pure CMake approach, where each component stores extra properties in the created targets. These properties are processed once all components are defined to resolve library dependencies and produce the header expected by llvm-config.
     affectedApi:
       - "llvm-build"
       - "LLVMBuild.txt"
@@ -628,12 +628,11 @@ changes:
     severity: "low"
     summary: "Implemente traceback table for functions (encodes vector information, emits exception handling)"
     description: "Implemente traceback table for functions (encodes vector information, emits exception handling)."
-    notes: "Source text reads 'Implemente' (sic)."
     affectedApi:
       - "PowerPC"
       - "AIX"
       - "traceback table"
-    notes: ""
+    notes: "Source text reads 'Implemente' (sic)."
     relevance: "irrelevant"
     status: "pending"
 
@@ -644,12 +643,11 @@ changes:
     severity: "low"
     summary: "Implemente code generation for C++ dynamic initialization and finalization of non-local variables for use with the -bcdtors option of the AIX linker"
     description: "Implemente code generation for C++ dynamic initialization and finalization of non-local variables for use with the -bcdtors option of the AIX linker."
-    notes: "Source text reads 'Implemente' (sic); the bullet continues from the previous line in the source."
     affectedApi:
       - "PowerPC"
       - "AIX"
       - "-bcdtors"
-    notes: ""
+    notes: "Source text reads 'Implemente' (sic); the bullet continues from the previous line in the source."
     relevance: "irrelevant"
     status: "pending"
 
@@ -790,7 +788,8 @@ changes:
     changeType: "added"
     severity: "low"
     summary: "The assembler now has support for {disp32} and {disp8} pseudo prefixes for controlling displacement size for memory operands and jump displacements; the assembler also supports the .d32 and .d8 mnemonic suffixes to do the same"
-    description: "The assembler now has support for {disp32} and {disp8} pseudo prefixes for controlling displacement size for memory operands and jump displacements. The assembler also supports the .d32 and .d8 mnemonic suffixes to do the same."
+    description: |-
+      The assembler now has support for {disp32} and {disp8} pseudo prefixes for controlling displacement size for memory operands and jump displacements. The assembler also supports the .d32 and .d8 mnemonic suffixes to do the same.
     affectedApi:
       - "X86"
       - "{disp32}"
