@@ -1,6 +1,6 @@
 ---
 title: Port Giri to LLVM 14.0.0 (forward-compatible new pass manager variant).
-status: open
+status: done
 priority: high           # low | medium | high
 repo: giriupdates        # required; must match a GITHUB_<KEY>_TOKEN or GITLAB_<KEY>_TOKEN
 contexts: []
@@ -10,6 +10,8 @@ tags:
 timeEstimate: 0          # minutes
 dateCreated: 2026-08-26
 # dateModified / completedDate are added automatically by `driver.py finish`
+dateModified: 2026-08-26T17:08:15.263+02:00
+completedDate: 2026-08-26
 ---
 ## Goal
 
@@ -281,6 +283,6 @@ preserved verbatim; goldens/criteria untouched.
 ## Handoff
 
 - branch `agent/jcode/llvm-14-newpm-port`
-- PR: see the linked PR in the closeout commit (opened into `port/llvm-14.0.0`)
+- PR: giriupdates #20 https://github.com/eliasbur/giri-updates/pull/20
 Refs: `porting/AgentGuide.md`, `porting/HowItWorks.md`, `llvm-14-legacypm-port.md`,
 `porting/TestAudit/llvm-14.0.0-newpm/SUMMARY.md`
