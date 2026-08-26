@@ -199,6 +199,20 @@ verified separately after the initial 22/22:
   golden match is impossible without a genuinely written+read trace.
   (Note: the runtime's default trace filename is `bbrecord`; the harness and
   this check pass an explicit `-trace-file`.)
+- **Standalone `tracer` on five test shapes** (not just test1), each run
+  end-to-end with the harness's exact parameters (inputs, `EXPECTED_EXIT`,
+  `LDFLAGS`, criterion flags, and compiling in the test directory so the
+  `DebugLoc` filenames match the criterion files):
+  - test1 (default criterion = first return in `main`), test2 (exit 2),
+    test3 (exit 98, 986-line trace), test4 (`-criterion-loc`, `-lm`),
+    test21 (`-criterion-inst`): **5/5 PASS** — every slice's source lines
+    match the pristine 3.4 golden exactly.
+- **`prtrace` (the trace-format reader) on a real runtime trace**:
+  `prtrace` on the 14.0.0-`librtgiri` trace from test3 decodes all 22,707
+  records of the 986-line trace (Store/Load/Call/Return/BasicBlock records,
+  ending in the `End` terminator, exit 0). This is the direct check that the
+  `Entry` struct the 14.0.0 runtime writes is byte-compatible with the
+  reader (invariant 2, exercised through the tool, not just `sizeof`).
 
 ## Known residuals (this port)
 

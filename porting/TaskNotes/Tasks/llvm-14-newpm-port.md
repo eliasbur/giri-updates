@@ -315,6 +315,22 @@ with a *missing* trace file) aborts on the `TraceFile` ctor assertion
 a regression introduced by the new-PM port of the tool, not by the test
 conversion — the suite's 22/22 (which uses `opt`) was not affected by it.
 
+**Public-interface / integration-boundary validation (same day):** to move
+beyond the single test1 data point, the standalone `tracer` was run
+end-to-end on **five** test shapes with the harness's exact parameters
+(inputs, `EXPECTED_EXIT`, `LDFLAGS`, criterion flags, and compiling in the
+test directory so `DebugLoc` filenames match the criterion files):
+test1 (default criterion = first return in `main`), test2 (exit 2), test3
+(exit 98, 986-line trace), test4 (`-criterion-loc`, `-lm`), test21
+(`-criterion-inst`) — **5/5 PASS**, every slice matching the pristine 3.4
+golden. `prtrace` (the trace-format reader) was run on the real 14.0.0
+`librtgiri` trace from test3: all 22,707 records decode cleanly (Store/
+Load/Call/Return/BasicBlock + `End` terminator, exit 0) — the direct
+byte-compatibility check of invariant 2 (`Entry` ABI) through the tool, not
+just `sizeof`. (Earlier apparent failures during this pass were the
+verification harness's own omissions — wrong `EXPECTED_EXIT`, missing
+`-lm`, wrong CWD for `DebugLoc` — not product defects.)
+
 ## Handoff
 
 - branch `agent/jcode/llvm-14-newpm-port`
