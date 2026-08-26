@@ -199,20 +199,32 @@ verified separately after the initial 22/22:
   golden match is impossible without a genuinely written+read trace.
   (Note: the runtime's default trace filename is `bbrecord`; the harness and
   this check pass an explicit `-trace-file`.)
-- **Standalone `tracer` on five test shapes** (not just test1), each run
-  end-to-end with the harness's exact parameters (inputs, `EXPECTED_EXIT`,
-  `LDFLAGS`, criterion flags, and compiling in the test directory so the
-  `DebugLoc` filenames match the criterion files):
-  - test1 (default criterion = first return in `main`), test2 (exit 2),
-    test3 (exit 98, 986-line trace), test4 (`-criterion-loc`, `-lm`),
-    test21 (`-criterion-inst`): **5/5 PASS** — every slice's source lines
-    match the pristine 3.4 golden exactly.
-- **`prtrace` (the trace-format reader) on a real runtime trace**:
-  `prtrace` on the 14.0.0-`librtgiri` trace from test3 decodes all 22,707
-  records of the 986-line trace (Store/Load/Call/Return/BasicBlock records,
-  ending in the `End` terminator, exit 0). This is the direct check that the
-  `Entry` struct the 14.0.0 runtime writes is byte-compatible with the
-  reader (invariant 2, exercised through the tool, not just `sizeof`).
+- **Standalone `tracer` over the ENTIRE automated suite** (not just test1),
+  every test run end-to-end through the tool's public CLI with the
+  harness's exact parameters (inputs, `EXPECTED_EXIT`, `LDFLAGS`, criterion
+  flags, compiling in the test directory so the `DebugLoc` filenames match
+  the criterion files; the 3 app benchmarks in their seq variant):
+  **22/22 PASS** — every slice's source lines match the pristine 3.4 golden
+  exactly. This is the same acceptance set as the `opt`-driven suite,
+  executed through the standalone tool instead: the two pipelines agree on
+  all 22 tests (reproducing the suite's 22/22 through a different public
+  interface). Coverage: default criterion (first return in `main`),
+  `-criterion-loc` (test4, with `-lm`), `-criterion-inst` (test21 + all 3
+  benchmarks), distinct expected exits (12/2/98/5/54/103/52/28/2/31/13/0),
+  and a 36 MB trace (kmeans-seq). Captured per-test log + the (re-runnable)
+  driver script: `_tool_validation/` alongside this summary.
+- **`prtrace` (the trace-format reader) on real runtime traces**: run on
+  every one of the 22 traces above (largest: kmeans-seq, 36 MB) — all decode
+  cleanly (Store/Load/Call/Return/BasicBlock records, ending in the `End`
+  terminator, exit 0), e.g. the 986-line test3 trace yields 22,707 records.
+  This is the direct check that the `Entry` struct the 14.0.0 runtime writes
+  is byte-compatible with the reader (invariant 2, exercised through the
+  tool, not just `sizeof`).
+- **Converted `HelloWorld` harness** (the other test-directory Makefile
+  updated by this port, outside the automated suite): `make -C
+  test/HelloWorld all` runs the full new-PM pipeline (`opt -passes="…"`
+  instrument + slice stages) end-to-end and prints the slice's source lines
+  (8 10) — the hand-run path works with the converted harness.
 
 ## Known residuals (this port)
 

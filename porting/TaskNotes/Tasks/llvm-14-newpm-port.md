@@ -331,6 +331,19 @@ just `sizeof`. (Earlier apparent failures during this pass were the
 verification harness's own omissions — wrong `EXPECTED_EXIT`, missing
 `-lm`, wrong CWD for `DebugLoc` — not product defects.)
 
+**Whole-result public-interface validation (same day):** the 5-shape sample
+was widened to the *entire* automated suite, so the representative checks
+cover the whole result: the standalone `tracer` was run end-to-end on all
+**22** suite tests (19 UnitTests + the 3 app benchmarks in their seq
+variant), each with its exact harness parameters, and **all 22 slices match
+the pristine 3.4 goldens exactly** — the same acceptance set the `opt`-driven
+suite passes, now reproduced through the standalone tool (the two pipelines
+agree on every test). `prtrace` decoded all 22 real runtime traces cleanly
+(largest: kmeans-seq, 36 MB). The converted `test/HelloWorld` harness (the
+other test Makefile this port updated) also runs the full new-PM pipeline
+end-to-end (`make all` prints the slice's source lines 8 10). Per-test log
++ the re-runnable driver script: `porting/TestAudit/llvm-14.0.0-newpm/_tool_validation/`.
+
 ## Handoff
 
 - branch `agent/jcode/llvm-14-newpm-port`
