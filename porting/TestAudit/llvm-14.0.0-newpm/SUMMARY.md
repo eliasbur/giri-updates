@@ -192,6 +192,13 @@ verified separately after the initial 22/22:
   analyses this pipeline consumes.
 - After the fix: the test1 round-trip runs clean and the slice's source lines
   (`9 12 13 18`) match the pristine 3.4 golden `ans-inst.txt` exactly.
+  The match is proven to consume a real trace, not a false positive: the
+  trace file is non-empty (1216 bytes, 4 lines), and a negative control
+  (slicing with a *missing* trace file) aborts on the `TraceFile` ctor
+  assertion `(fd > 0) && "Cannot open file!"` (rc 134, 0-byte slice), so a
+  golden match is impossible without a genuinely written+read trace.
+  (Note: the runtime's default trace filename is `bbrecord`; the harness and
+  this check pass an explicit `-trace-file`.)
 
 ## Known residuals (this port)
 

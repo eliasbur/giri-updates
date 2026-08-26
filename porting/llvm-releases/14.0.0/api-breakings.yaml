@@ -4237,8 +4237,11 @@ changes:
         VerifierAnalysis on the hand-built MAM. Verified: the tracer
         round-trip on test1 (instrument -> llc -> link -> run -> slice)
         matches the pristine 3.4 golden ans-inst.txt (source lines
-        9/12/13/18). The 22/22 suite never exercised this path (it drives
-        every stage through opt).
+        9/12/13/18), with a non-empty trace file (1216 B, 4 lines) and a
+        negative control (a slice with a missing trace aborts on the
+        TraceFile (fd>0) assertion, so the match is not a false positive).
+        The 22/22 suite never exercised this path (it drives every stage
+        through opt).
     relevance: "affected"
     status: "addressed"
 

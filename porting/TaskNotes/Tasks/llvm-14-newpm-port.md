@@ -306,8 +306,13 @@ a hand-built MAM must register the built-in analyses `opt`'s
 `tools/Tracer/Tracer.cpp`: register `PassInstrumentationAnalysis` +
 `VerifierAnalysis` (the exact analyses this pipeline consumes). Verified:
 `tracer` round-trip on test1 runs clean and the slice's source lines
-(`9 12 13 18`) **match the 3.4 golden `ans-inst.txt` exactly**. This is a
-regression introduced by the new-PM port of the tool, not by the test
+(`9 12 13 18`) **match the 3.4 golden `ans-inst.txt` exactly** — and the
+match is proven to consume a real trace, not a false positive: the trace
+file is non-empty (1216 bytes, 4 lines) and a negative control (slicing
+with a *missing* trace file) aborts on the `TraceFile` ctor assertion
+`(fd > 0)` (rc 134, 0-byte slice). (The runtime's default trace filename is
+`bbrecord`; the explicit `-trace-file` naming matches the harness.) This is
+a regression introduced by the new-PM port of the tool, not by the test
 conversion — the suite's 22/22 (which uses `opt`) was not affected by it.
 
 ## Handoff
