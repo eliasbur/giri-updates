@@ -127,8 +127,7 @@ files (except the harness lines in `test/Makefile.common`), the toolchain
 
 ## Blocked by
 
-- ~~llvm-14-legacypm-port~~ (done, PR #19; the base branch
-  `agent/open-code/llvm-14-legacypm` exists at the legacy-PM head)
+- ~~llvm-14-legacypm-port (done, PR #19; the base branch agent/open-code/llvm-14-legacypm exists at the legacy-PM head)~~
 
 ## Progress log
 
