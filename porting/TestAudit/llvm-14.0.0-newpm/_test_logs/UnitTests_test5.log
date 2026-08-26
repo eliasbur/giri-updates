@@ -1,0 +1,17 @@
+=== STAGE: BUILD ===
+[ 36%] Built target dgutility
+[ 68%] Built target giri
+[ 78%] Built target rtgiri
+[ 89%] Built target tracer
+[100%] Built target prtrace
+Statistics are disabled.  Build with asserts or with -DLLVM_FORCE_ENABLE_STATS
+[0] Hello thread 139877832853248!
+[1] Hello thread 139877824460544!
+[2] Hello thread 139877816067840!
+[3] Hello thread 139877807675136!
+[4] Hello thread 139877799282432!
+[5] Hello thread 139877790889728!
+[6] Hello thread 139877782497024!
+[7] Hello thread 139877774104320!
+Statistics are disabled.  Build with asserts or with -DLLVM_FORCE_ENABLE_STATS
+=== STAGE: TEST ===
