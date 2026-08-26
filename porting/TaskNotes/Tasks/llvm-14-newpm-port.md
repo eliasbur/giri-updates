@@ -105,6 +105,14 @@ driver or `opt`-built-from-source) and must be surfaced before phase 2.
 - [x] Change data: new-PM-specific breaks (legacy-PM API removal, PassPlugin)
       recorded; consistent with `porting/llvm-releases/14.0.0/`
 - [x] `AGENTS.md` branch copy updated (Current state + Known residuals)
+- [x] `tracer` end-to-end round-trip (instrument → llc → link → run →
+      slice → diff vs golden) verified in `giri-llvm-14`: the suite drives
+      every pipeline stage through `opt`, so the standalone `tracer` tool
+      was verified separately. First run segfaulted in a hand-built MAM
+      missing the built-in analyses `opt`'s `PassBuilder` registers for
+      free (Release build, assertions off → silent null-deref); fixed by
+      registering `PassInstrumentationAnalysis` + `VerifierAnalysis`.
+      test1 slice matches the 3.4 golden exactly.
 - [x] PR opened into `port/llvm-14.0.0` and linked below
 
 ## Files / scope
@@ -279,6 +287,28 @@ preserved verbatim; goldens/criteria untouched.
   `-g`: `file:line` slices match goldens; numbering: identical pipeline in
   both stages + mergereturn byte-identical legacy-vs-new-PM).
 - Per-test audit + change data: `e96ca43`.
+
+### 2026-08-26 — Tracer regression found post-completion, fixed + verified
+
+A post-completion review ran the standalone `tracer` tool end-to-end
+(instrument → llc → link → run → slice → diff vs golden) — something the
+suite never does, because the suite drives every pipeline stage through
+`opt` (whose `PassBuilder` auto-registers the built-in analyses). First run
+**segfaulted** inside `MAM.getResultImpl` (14.0.0's `ModulePassManager::run`
+fetches `PassInstrumentationAnalysis` from the MAM *before* running any pass;
+under `opt`, `PassBuilder` registers it; the hand-built MAM did not — with
+assertions compiled out in the prebuilt Release toolchain the
+missing-registration assert is gone, so it is a silent null-deref, not a
+catchable assert). Second crash: `VerifierPass::run` fetches
+`VerifierAnalysis`, likewise unregistered. Root cause is the same for both:
+a hand-built MAM must register the built-in analyses `opt`'s
+`PassBuilder::registerModuleAnalyses` registers for free. Fix in
+`tools/Tracer/Tracer.cpp`: register `PassInstrumentationAnalysis` +
+`VerifierAnalysis` (the exact analyses this pipeline consumes). Verified:
+`tracer` round-trip on test1 runs clean and the slice's source lines
+(`9 12 13 18`) **match the 3.4 golden `ans-inst.txt` exactly**. This is a
+regression introduced by the new-PM port of the tool, not by the test
+conversion — the suite's 22/22 (which uses `opt`) was not affected by it.
 
 ## Handoff
 

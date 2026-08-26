@@ -78,9 +78,17 @@ toolchain, and Dockerfile are inherited unchanged):
   spike-verified **byte-identical** IR. The harness wraps it in an explicit
   `function(mergereturn)` sub-pipeline (it must be first to fix the top-level
   element type); every Giri pass is a module pass at the top level.
-- **`Tracer`.** Builds its instrumentation pipeline programmatically with the
-  new PM (`ModuleAnalysisManager` + `PassBuilder`); `WriteBitcodeToFile` is void
-  in 14.0.0.
+- **`Tracer`.** Builds its pipeline programmatically with the new PM
+  (`ModulePassManager` + a hand-built `ModuleAnalysisManager` — **no
+  `PassBuilder`**); `WriteBitcodeToFile` is void in 14.0.0. Because the MAM is
+  hand-built, `tracer` must register the built-in analyses that `opt`'s
+  `PassBuilder::registerModuleAnalyses` would otherwise register for free:
+  14.0.0's `ModulePassManager::run` fetches `PassInstrumentationAnalysis`
+  before running any pass and `VerifierPass::run` fetches `VerifierAnalysis`;
+  with the prebuilt toolchain built without assertions (Release), a missing
+  registration is a silent null-deref/segfault, so both are registered
+  explicitly. Verified end-to-end: instrument → llc → link → run → slice, with
+  the test1 slice matching the 3.4 golden.
 
 The three critical invariants are verified (this port):
 1. **Numbering determinism** — identical pass sequence in both pipeline stages

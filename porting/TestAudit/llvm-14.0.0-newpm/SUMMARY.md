@@ -173,6 +173,26 @@ runnable by hand; it is not in the automated suite.)
 | 14.0.0 (legacy PM) | 22 PASS / 0 FAIL (audit at `porting/TestAudit/llvm-14.0.0-legacypm/`) | none in the automated suite |
 | **14.0.0 (new PM)** | **22 PASS / 0 FAIL (this audit)** | none in the automated suite |
 
+### Standalone `tracer` tool (outside the suite)
+
+The automated suite drives every pipeline stage through `opt`, whose
+`PassBuilder` auto-registers the built-in analyses. The standalone `tracer`
+tool builds its pipeline and analysis manager **by hand**, so it must register
+the built-in analyses itself; this was **not** covered by the suite and was
+verified separately after the initial 22/22:
+
+- First end-to-end run (instrument → llc → link → run → slice) **segfaulted**:
+  14.0.0's `ModulePassManager::run` fetches `PassInstrumentationAnalysis` from
+  the MAM before running any pass, and `VerifierPass::run` fetches
+  `VerifierAnalysis`. In a hand-built MAM those are unregistered, and with
+  assertions compiled out (prebuilt Release toolchain) that is a silent
+  null-deref, not a catchable assert.
+- Fix (in `tools/Tracer/Tracer.cpp`): register
+  `PassInstrumentationAnalysis` + `VerifierAnalysis` on the MAM — the exact
+  analyses this pipeline consumes.
+- After the fix: the test1 round-trip runs clean and the slice's source lines
+  (`9 12 13 18`) match the pristine 3.4 golden `ans-inst.txt` exactly.
+
 ## Known residuals (this port)
 
 The new-PM port is functionally closed (22/22 on the honest seq suite). The

@@ -4205,6 +4205,43 @@ changes:
     relevance: "affected"
     status: "addressed"
 
+  - id: "newpm-handbuilt-mam-missing-builtin-analyses"
+    category: "general"
+    changeType: "behavior"
+    severity: "high"
+    summary: "A hand-built ModuleAnalysisManager (no PassBuilder) must explicitly register the built-in analyses opt's PassBuilder registers for free, or ModulePassManager::run / VerifierPass segfault in an assertion-free build"
+    description: |-
+        14.0.0's ModulePassManager::run immediately fetches
+        PassInstrumentationAnalysis from the analysis manager before running
+        any pass, and VerifierPass::run fetches VerifierAnalysis. Under opt,
+        PassBuilder::registerModuleAnalyses registers these for free; a tool
+        that builds its MAM by hand (the new-PM port of the standalone tracer
+        does this because it links the Giri libraries directly and adds its
+        passes programmatically) does not. AnalysisManager::getResult asserts
+        on a missing registration, but the prebuilt 14.0.0 toolchain is a
+        Release build with assertions compiled out (llvm-config
+        --assertion-mode == OFF), so the assert is gone and the unregistered
+        lookup is a null-deref/segfault deep inside getResultImpl.
+        Generalization: when a new-PM tool replaces PassBuilder with a
+        hand-built analysis manager, register exactly the built-in analyses
+        the pipeline consumes.
+    affectedApi: ["ModuleAnalysisManager::registerPass", "PassInstrumentationAnalysis", "VerifierAnalysis", "PassBuilder::registerModuleAnalyses", "ModulePassManager::run"]
+    versions: [14.0.0]
+    originalIds: []
+    notes: |-
+        New-PM-branch-only port-critical finding (legacy-PM port unaffected:
+        the legacy MAM has no such built-in fetch). Root-caused from two
+        segfaults (MAM.getResultImpl, then VerifierPass::run ->
+        getResultImpl); the same registration gap behind both. Fix in
+        tools/Tracer/Tracer.cpp: register PassInstrumentationAnalysis +
+        VerifierAnalysis on the hand-built MAM. Verified: the tracer
+        round-trip on test1 (instrument -> llc -> link -> run -> slice)
+        matches the pristine 3.4 golden ans-inst.txt (source lines
+        9/12/13/18). The 22/22 suite never exercised this path (it drives
+        every stage through opt).
+    relevance: "affected"
+    status: "addressed"
+
   - id: "multi-distribution-build-support"
     category: "building"
     changeType: "added"
