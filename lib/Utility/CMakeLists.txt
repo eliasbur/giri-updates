@@ -4,6 +4,7 @@ set(UTILITY_SRCS
   PostDominatorFrontier.cpp
   SourceLineMapping.cpp
   CountSrcLines.cpp
+  UtilityPassPlugin.cpp
 )
 
 add_library(dgutility SHARED ${UTILITY_SRCS})

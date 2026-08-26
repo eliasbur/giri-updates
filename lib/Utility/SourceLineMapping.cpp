@@ -11,7 +11,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -42,11 +41,6 @@ MappingFileName("mapping-output",
 STATISTIC(NumFoundSrc, "Number of source information locations found");
 STATISTIC(NumNotFoundSrc, "Number of source information locations not found");
 STATISTIC(NumQueriedSrc, "Number of queried including ignored LLVM insts");
-
-char SourceLineMappingPass::ID = 0;
-
-static RegisterPass<dg::SourceLineMappingPass>
-X("srcline-mapping", "Mapping LLVM inst to source line number");
 
 std::string SourceLineMappingPass::locateSrcInfo(Instruction *I) {
   ++NumQueriedSrc;
@@ -111,7 +105,8 @@ void SourceLineMappingPass::mapOneFunction(Function *F, raw_ostream &Output) {
   }
 }
 
-bool SourceLineMappingPass::runOnModule(Module &M) {
+PreservedAnalyses SourceLineMappingPass::run(Module &M,
+                                             ModuleAnalysisManager &MAM) {
   std::error_code EC;
   raw_fd_ostream MappingFile(MappingFileName.c_str(), EC, sys::fs::OF_None);
 
@@ -120,5 +115,5 @@ bool SourceLineMappingPass::runOnModule(Module &M) {
   else
     mapCompleteFile(M, MappingFile);
 
-  return false;
+  return PreservedAnalyses::all();
 }

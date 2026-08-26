@@ -57,11 +57,6 @@ cl::opt<string> TraceFilename("trace-file",
 //                        CountSrcLines Pass Implementations
 //===----------------------------------------------------------------------===//
 
-char CountSrcLines::ID = 0;
-
-static RegisterPass<dg::CountSrcLines>
-X("countsrc", "Count number of LLVM instructions and source lines of a trace");
-
 void CountSrcLines::countLines(const string &bbrecord_file) {
   unordered_set<unsigned> bb_set = readBB(bbrecord_file);
   set<string> srcLines;
@@ -108,14 +103,15 @@ unordered_set<unsigned> CountSrcLines::readBB(const string &bbrecord) {
   return bb_set;
 }
 
-bool CountSrcLines::runOnModule(Module &M) {
-  // Get references to other passes used by this pass.
-  bbNumPass = &getAnalysis<QueryBasicBlockNumbers>();
-  lsNumPass = &getAnalysis<QueryLoadStoreNumbers>();
+PreservedAnalyses CountSrcLines::run(Module &M, ModuleAnalysisManager &MAM) {
+  // Get references to the analyses used by this pass (the new-PM equivalent
+  // of the legacy getAnalysis<...>(); they are computed once and shared).
+  bbNumPass = &MAM.getResult<QueryBBNumbersPass>(M);
+  lsNumPass = &MAM.getResult<QueryLSNumbersPass>(M);
 
   // Open the trace file and read the basic block entries.
   countLines(TraceFilename);
 
-  // This is an analysis pass, so always return false.
-  return false;
+  // This is an analysis pass, so nothing is modified.
+  return PreservedAnalyses::all();
 }

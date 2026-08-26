@@ -9,6 +9,10 @@
 //
 // This file implements the post-dominance frontier construction algorithms.
 //
+// New pass manager port (LLVM 14.0.0): the frontier computation is unchanged;
+// it is computed from a PostDominatorTree (previously obtained from the
+// PostDominatorTreeWrapperPass).
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "giriutil"
@@ -23,10 +27,7 @@
 
 using namespace llvm;
 
-char PostDominanceFrontier::ID = 0;
-
-static RegisterPass<PostDominanceFrontier>
-      H("postdomfrontier", "Post-Dominance Frontier Construction", true, true);
+AnalysisKey PostDominanceFrontierAnalysis::Key;
 
 const PostDominanceFrontier::DomSetType&
 PostDominanceFrontier::calculate(const PostDominatorTree &DT,
@@ -57,6 +58,17 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
   return S;
 }
 
-FunctionPass* llvm::createPostDomFrontier() {
-  return new PostDominanceFrontier();
+// New-PM function analysis: take the built-in PostDominatorTree analysis and
+// compute the frontier from it (the legacy pass took it from
+// PostDominatorTreeWrapperPass::getPostDomTree()).
+PostDominanceFrontier
+PostDominanceFrontierAnalysis::run(Function &F, FunctionAnalysisManager &FAM) {
+  // PostDominatorTreeAnalysis is the new-PM analysis whose Result is a
+  // PostDominatorTree; PostDominatorTree itself is just the data structure.
+  const PostDominatorTree &PDT = FAM.getResult<PostDominatorTreeAnalysis>(F);
+
+  PostDominanceFrontier PDF;
+  if (PDT.getRootNode())
+    PDF.computeFrontiers(PDT);
+  return PDF;
 }
