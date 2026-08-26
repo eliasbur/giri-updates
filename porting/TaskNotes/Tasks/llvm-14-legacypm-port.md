@@ -1,6 +1,6 @@
 ---
 title: Port Giri to LLVM 14.0.0 (legacy pass manager variant).
-status: open
+status: done
 priority: high           # low | medium | high
 repo: giriupdates        # required; must match a GITHUB_<KEY>_TOKEN or GITLAB_<KEY>_TOKEN
 contexts: []             # e.g. dev, cockpit, gpu1
@@ -10,6 +10,8 @@ tags:
 timeEstimate: 0          # minutes
 dateCreated: 2026-08-25
 # dateModified / completedDate are added automatically by `driver.py finish`
+dateModified: 2026-08-26T08:38:39.429+02:00
+completedDate: 2026-08-26
 ---
 ## Goal
 
@@ -87,17 +89,17 @@ Five phases, in order. The legacy pass manager is still fully functional in LLVM
 
 ## Definition of done
 
-- [ ] `install_llvm.sh 14.0.0` case present (GitHub-Releases tarball); 3.1/3.4/5.0.2/8.0.0 cases byte-untouched
-- [ ] `giri-llvm-14` image (ubuntu:18.04) builds; `llvm-config --version` == 14.0.0
-- [ ] CMake pins `find_package(LLVM 14.0 REQUIRED CONFIG)`; pin enforcement proven (negative-version configure control)
-- [ ] Spike: legacy plugin loads under `opt -enable-new-pm=0`; `llc -asm-verbose` fate checked
-- [ ] 8→14 API fixes compile clean; 5 artifacts in `build/{lib,bin}`; `opt -enable-new-pm=0 -help` lists the 4 Giri passes
-- [ ] Honest-harness seq suite run; per-test results + root causes at `porting/TestAudit/llvm-14.0.0-legacypm/`
-- [ ] The three critical invariants re-verified (ABI / `-g` / numbering)
-- [ ] `git diff <base>..HEAD -- test/` empty except pre-approved harness lines in `test/Makefile.common`
-- [ ] Change data `porting/llvm-releases/14.0.0/` authored, triaged, schema- and union-consistent
-- [ ] `AGENTS.md` branch copy updated (Current state + Known residuals)
-- [ ] PR opened into `port/llvm-14.0.0-legacypm` and linked below
+- [x] `install_llvm.sh 14.0.0` case present (GitHub-Releases tarball); 3.1/3.4/5.0.2/8.0.0 cases byte-untouched
+- [x] `giri-llvm-14` image (ubuntu:18.04) builds; `llvm-config --version` == 14.0.0
+- [x] CMake pins `find_package(LLVM 14.0 REQUIRED CONFIG)`; pin enforcement proven (negative-version configure control)
+- [x] Spike: legacy plugin loads under `opt -enable-new-pm=0`; `llc -asm-verbose` fate checked
+- [x] 8→14 API fixes compile clean; 5 artifacts in `build/{lib,bin}`; `opt -enable-new-pm=0 -help` lists the 4 Giri passes
+- [x] Honest-harness seq suite run; per-test results + root causes at `porting/TestAudit/llvm-14.0.0-legacypm/`
+- [x] The three critical invariants re-verified (ABI / `-g` / numbering)
+- [x] `git diff <base>..HEAD -- test/` empty except pre-approved harness lines in `test/Makefile.common`
+- [x] Change data `porting/llvm-releases/14.0.0/` authored, triaged, schema- and union-consistent
+- [x] `AGENTS.md` branch copy updated (Current state + Known residuals)
+- [x] PR opened into `port/llvm-14.0.0-legacypm` and linked below
 
 ## Files / scope
 
@@ -136,9 +138,30 @@ Five phases, in order. The legacy pass manager is still fully functional in LLVM
   - **Invariants re-verified in-container:** Entry `sizeof`=32, `4096 % 32 == 0`
     (page-divisible); `-g` emits `.debug_info`/`.debug_line`; numbering determinism
     exercised by the passing parity suite.
+- 2026-08-26 `8bc76dd` — **Phase 3 closeout: change-data YAMLs + per-test audit +
+  AGENTS.md branch copy.** Authored and triaged (in place) the 6 per-version release-note
+  extractions under `porting/llvm-releases/14.0.0/` (9.0.0–14.0.0, 352 items; raw HTML
+  sources committed alongside, 8.0.0/5.0.0 precedent), and generated the consolidated
+  `api-breakings.yaml` on the 8.0.0 model: 350 entries = 346 deduped per-version union
+  (cross-version groups merged with `versions[]`/`originalIds` refs: powerpc POWER10
+  11+12, mips/avr/webassembly/amdgpu redacted markers 12+14, legacy-PM deprecation
+  13+14) + 4 header-level port-critical breaks that are **not citable from any release
+  note** (getOrInsertFunction→FunctionCallee 9.0.0, CallSite→CallBase 11.0.0,
+  sys::fs F_*→OF_* 13.0.0, DEBUG_TYPE `#undef` via `GenericDomTreeConstruction.h` newly
+  pulled in by `Dominators.h` in 14.0.0 — the STATISTIC macro references DEBUG_TYPE at
+  the call site; fixed by `DEBUG_TYPE` after the includes, commit `74b870f`). Every
+  version attribution pinned against the prebuilt 14.0.0 container headers + raw
+  `llvmorg-X` GitHub headers. Also: `porting/TestAudit/llvm-14.0.0-legacypm/`
+  (SUMMARY + 22 per-test reports) and the `AGENTS.md` branch copy (`## Current state` +
+  `## Known residuals`; corrected the FunctionCallee/F_None version attributions to the
+  header-verified 9.0.0/13.0.0). Validation: all 7 YAMLs parse, schema-clean,
+  union-consistent (all `originalIds` resolve; no per-version item unrepresented).
+  All 11 DoD items checked; PR #19 opened into `port/llvm-14.0.0-legacypm`. next: (none —
+  this task is done; the new-PM port continues in `llvm-14-newpm-port.md` on
+  `port/llvm-14.0.0`).
 
 ## Handoff
 
 - branch `agent/open-code/llvm-14-legacypm`
-- PR:
+- PR: giri-updates #19 https://github.com/eliasbur/giri-updates/pull/19
 Refs: `porting/AgentGuide.md`, `porting/HowItWorks.md`, `llvm-8-port.md`
