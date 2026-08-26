@@ -1,0 +1,1460 @@
+---
+version: "11.0.0"
+sourceUrl: "https://releases.llvm.org/11.0.0/docs/ReleaseNotes.html"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-25"
+
+# Scope: top-level "Non-comprehensive list", Changes to the LLVM IR, building LLVM,
+# JIT infrastructure, and every <Target> section, plus DAG infrastructure /
+# Debug Info / Gold Plugin / LLVM tools. Out of scope: External Projects.
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes") ---
+
+  - id: llgo-frontend-removed
+    category: "general"
+    changeType: "removed"
+    severity: "low"
+    summary: "The llgo frontend has been removed for now, but may be resurrected in the future"
+    description: "The llgo frontend has been removed for now, but may be resurrected in the future."
+    affectedApi:
+      - "llgo"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Deprecated and Removed Features/APIs (section in source) ---
+
+  - id: powerpc-bgq-qpx-removal-announced
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "deprecated"
+    severity: "low"
+    summary: "BG/Q support, including QPX, will be removed in the 12.0.0 release"
+    description: "BG/Q support, including QPX, will be removed in the 12.0.0 release."
+    affectedApi:
+      - "BG/Q"
+      - "QPX"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: callsite-attribute-vfabi-variant-added
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "The callsite attribute vector-function-abi-variant has been added to describe the mapping between scalar functions and vector functions (VFDatabase API); the loop vectorizer now relies on VFDatabase instead of TargetLibraryInfo"
+    description: |-
+      The callsite attribute vector-function-abi-variant has been added to describe the mapping between scalar functions and vector functions, to enable vectorization of call sites. The information provided by the attribute is interfaced via the API provided by the VFDatabase class. When scanning through the set of vector functions associated with a scalar call, the loop vectorizer now relies on VFDatabase, instead of TargetLibraryInfo.
+    affectedApi:
+      - "vector-function-abi-variant"
+      - "VFDatabase"
+    notes: |-
+      This is an IR *callsite attribute* feature, not the CallSite C++ class API;
+      no interaction with Giri (which manipulates CallBase directly).
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: dereferenceable-no-alignment-implication
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "dereferenceable attributes and metadata on pointers no longer imply anything about the alignment of the pointer in question; frontends may need to generate explicit align attributes/metadata to preserve optimizations"
+    description: |-
+      dereferenceable attributes and metadata on pointers no longer imply anything about the alignment of the pointer in question. Previously, some optimizations would make assumptions based on the type of the pointer. This behavior was undocumented. To preserve optimizations, frontends may need to be updated to generate appropriate align attributes and metadata.
+    affectedApi:
+      - "dereferenceable"
+      - "align attribute"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: dimodule-file-line-info
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "The DIModule metadata is extended to contain file and line number information (Fortran module debug info at IR level)"
+    description: "The DIModule metadata is extended to contain file and line number information. This information is used to represent Fortran modules debug info at IR level."
+    affectedApi:
+      - "DIModule"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: fixed-scalable-vector-types
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "medium"
+    summary: "LLVM IR now supports two distinct llvm::FixedVectorType and llvm::ScalableVectorType vector types, both derived from the base class llvm::VectorType; vector-lane counts migrate from unsigned to llvm::ElementCount and bit sizes from uint64_t to llvm::TypeSize"
+    description: |-
+      LLVM IR now supports two distinct llvm::FixedVectorType and llvm::ScalableVectorType vector types, both derived from the base class llvm::VectorType. A number of algorithms dealing with IR vector types have been updated to make sure they work for both scalable and fixed vector types. Where possible, the code has been made generic to cover both cases using the base class. Specifically, places that were using the type unsigned to count the number of lanes of a vector are now using llvm::ElementCount. In places where uint64_t was used to denote the size in bits of a IR type we have partially migrated the codebase to using llvm::TypeSize.
+    affectedApi:
+      - "FixedVectorType"
+      - "ScalableVectorType"
+      - "VectorType"
+      - "ElementCount"
+      - "TypeSize"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: branch-on-undef-poison-ub
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Branching on undef/poison is undefined behavior, needed for correctly analyzing value ranges based on branch conditions (consistent with MSan)"
+    description: "Branching on undef/poison is undefined behavior. It is needed for correctly analyzing value ranges based on branch conditions. This is consistent with MSan's behavior as well."
+    affectedApi:
+      - "undef"
+      - "poison"
+      - "branch"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: mem-functions-undef-zero-size
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "memset/memcpy/memmove can take undef/poison pointer(s) if the size to fill is zero"
+    description: "memset/memcpy/memmove can take undef/poison pointer(s) if the size to fill is zero."
+    affectedApi:
+      - "memset"
+      - "memcpy"
+      - "memmove"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: noundef-io-library-arguments
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "Passing undef/poison to a standard I/O library function call (printf/fputc/...) is undefined behavior; the new noundef attribute is attached to those functions' arguments (full list: llvm::inferLibFuncAttributes)"
+    description: |-
+      Passing undef/poison to a standard I/O library function call (printf/fputc/...) is undefined behavior. The new noundef attribute is attached to the functions' arguments. The full list is available at llvm::inferLibFuncAttributes.
+    affectedApi:
+      - "noundef"
+      - "inferLibFuncAttributes"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  # --- Changes to building LLVM ---
+
+  - id: python3-preferred
+    category: "building"
+    changeType: "default-change"
+    severity: "low"
+    summary: "The LLVM project has started the migration towards Python 3; the build system now prefers Python 3 whenever available, falling back to Python 2 for the time being"
+    description: |-
+      The LLVM project has started the migration towards Python 3, and the build system now prefers Python 3 whenever available.  If the Python 3 interpreter (or libraries) are not found, the build system will, for the time being, fall back to Python 2. It is recommended that downstream projects migrate to Python 3 as Python 2 has been end-of-life'd by the Python Software Foundation.
+    affectedApi:
+      - "build system"
+      - "Python 3"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the JIT infrastructure ---
+
+  - id: orc-lljit-initialize-deinitialize
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "LLJIT now supports execution of static inits/deinits via the LLJIT::initialize and LLJIT::deinitialize methods"
+    description: "LLJIT now supports execution of static inits / deinits via the LLJIT::initialize and LLJIT::deinitialize methods"
+    affectedApi:
+      - "LLJIT::initialize"
+      - "LLJIT::deinitialize"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: orc-static-library-definition-generator
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Static libraries can now be added to a JITDylib using the StaticLibraryDefinitionGenerator class"
+    description: "Static libraries can now be added to a JITDylib using the StaticLibraryDefinitionGenerator class"
+    affectedApi:
+      - "JITDylib"
+      - "StaticLibraryDefinitionGenerator"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: orc-v2-c-api
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "A C API has been added for OrcV2 (llvm-project/llvm/include/llvm-c/Orc.h)"
+    description: "A C API has been added for OrcV2 (llvm-project/llvm/include/llvm-c/Orc.h)"
+    affectedApi:
+      - "llvm-c/Orc.h"
+      - "OrcV2"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: orc-v2-example-projects
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Several OrcV2 example projects have been added to llvm-project/llvm/examples/OrcV2Examples"
+    description: "Several OrcV2 example projects have been added to llvm-project/llvm/examples/OrcV2Examples"
+    affectedApi:
+      - "OrcV2Examples"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: orc-various-bug-fixes-improvements
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Many bug fixes and API improvements (OrcV2)"
+    description: "Many bug fixes and API improvements"
+    affectedApi:
+      - "OrcV2"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the AArch64 Backend ---
+
+  - id: aarch64-windows-calling-convention-x18-backup
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Back up and restore x18 in functions with windows calling convention on non-windows OSes"
+    description: "Back up and restore x18 in functions with windows calling convention on non-windows OSes."
+    affectedApi:
+      - "AArch64"
+      - "x18"
+      - "Windows calling convention"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-coff-unsupported-relocation-errors
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Clearly error out on unsupported relocations when targeting COFF, instead of silently accepting them (without being able to do what was required)"
+    description: "Clearly error out on unsupported relocations when targeting COFF, instead of silently accepting them (without being able to do what was required)."
+    affectedApi:
+      - "AArch64"
+      - "COFF"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-sve-intrinsics-support
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Implemented codegen support for the SVE C-language intrinsics documented in Arm C Language Extensions (ACLE) for SVE (version 00bet5)"
+    description: "Implemented codegen support for the SVE C-language intrinsics documented in Arm C Language Extensions (ACLE) for SVE (version 00bet5). See the clang 11 release notes for details."
+    affectedApi:
+      - "AArch64"
+      - "SVE"
+      - "ACLE"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-armv86a-assembly-extensions
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for Armv8.6-A assembly for: Enhanced Counter Virtualization (ECV), Fine Grained Traps (FGT), Activity Monitors (AMU), Data gathering hint (DGH)"
+    description: "Added support for Armv8.6-A: Assembly support for the following extensions: Enhanced Counter Virtualization (ARMv8.6-ECV). Fine Grained Traps (ARMv8.6-FGT). Activity Monitors virtualization (ARMv8.6-AMU). Data gathering hint (ARMv8.0-DGH)."
+    affectedApi:
+      - "AArch64"
+      - "Armv8.6-A"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-armv86a-matmul-neon-sve
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Added assembly and intrinsics support for the Armv8.6-A Matrix Multiply extension for Neon and SVE vectors"
+    description: "Assembly and intrinsics support for the Armv8.6-A Matrix Multiply extension for Neon and SVE vectors."
+    affectedApi:
+      - "AArch64"
+      - "Armv8.6-A"
+      - "Matrix Multiply"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-armv82b-bfloat16
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for the ARMv8.2-BF16 BFloat16 extension: a new C-level storage-only __bf16 type, a BFloat IR type, a bf16 MVT, and assembly and intrinsics support for the BFloat16 extension"
+    description: "Added support for the ARMv8.2-BF16 BFloat16 extension. This includes a new C-level storage-only __bf16 type, a BFloat IR type, a bf16 MVT, and assembly and intrinsics support for the BFloat16 extension."
+    affectedApi:
+      - "AArch64"
+      - "BFloat16"
+      - "__bf16"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-cortex-a34-a77-a78-x1
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for Cortex-A34, Cortex-A77, Cortex-A78 and Cortex-X1 cores"
+    description: "Added support for Cortex-A34, Cortex-A77, Cortex-A78 and Cortex-X1 cores."
+    affectedApi:
+      - "AArch64"
+      - "Cortex-A77"
+      - "Cortex-A78"
+      - "Cortex-X1"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the ARM Backend ---
+
+  - id: arm-v81m-mve-intrinsics-complete
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Implemented C-language intrinsics for the full Arm v8.1-M MVE instruction set; <arm_mve.h> now supports the complete API defined in Arm C Language Extensions for M-profile"
+    description: "Implemented C-language intrinsics for the full Arm v8.1-M MVE instruction set. <arm_mve.h> now supports the complete API defined in Arm C Language Extensions for M-profile."
+    affectedApi:
+      - "ARM"
+      - "Armv8.1-M"
+      - "<arm_mve.h>"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-cde-extension-assembly
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for assembly for the optional Custom Datapath Extension (CDE)"
+    description: "Added support for assembly for the optional Custom Datapath Extension (CDE)."
+    affectedApi:
+      - "ARM"
+      - "CDE"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-cde-intrinsics
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Implemented intrinsics <arm_cde.h> for the CDE instruction set"
+    description: "Implemented intrinsics <arm_cde.h> for the CDE instruction set."
+    affectedApi:
+      - "ARM"
+      - "<arm_cde.h>"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-fomit-frame-pointer-default-linux
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "Clang now defaults to -fomit-frame-pointer when targeting non-Android Linux for arm and thumb when optimizations are enabled (previously the implicit default); users may specify -fno-omit-frame-pointer for the old behavior (improves compatibility with GCC)"
+    description: |-
+      Clang now defaults to -fomit-frame-pointer when targeting non-Android Linux for arm and thumb when optimizations are enabled. Users that were previously not specifying a value and relying on the implicit compiler default may wish to specify -fno-omit-frame-pointer to get the old behavior. This improves compatibility with GCC.
+    affectedApi:
+      - "-fomit-frame-pointer"
+      - "-fno-omit-frame-pointer"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-armv86a-matmul
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for Armv8.6-A: assembly and intrinsics support for the Armv8.6-A Matrix Multiply extension for Neon vectors"
+    description: "Added support for Armv8.6-A: Assembly and intrinsics support for the Armv8.6-A Matrix Multiply extension for Neon vectors."
+    affectedApi:
+      - "ARM"
+      - "Armv8.6-A"
+      - "Matrix Multiply"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-armv82aa32b-bfloat16
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for the ARMv8.2-AA32BF16 BFloat16 extension: a new C-level storage-only __bf16 type, a BFloat IR type, a bf16 MVT, and assembly and intrinsics support"
+    description: "Added support for the ARMv8.2-AA32BF16 BFloat16 extension. This includes a new C-level storage-only __bf16 type, a BFloat IR type, a bf16 MVT, and assembly and intrinsics support for the BFloat16 extension."
+    affectedApi:
+      - "ARM"
+      - "BFloat16"
+      - "__bf16"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-cmse
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for CMSE"
+    description: "Added support for CMSE."
+    affectedApi:
+      - "ARM"
+      - "CMSE"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-cortex-m55-a77-a78-x1
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for Cortex-M55, Cortex-A77, Cortex-A78 and Cortex-X1 cores"
+    description: "Added support for Cortex-M55, Cortex-A77, Cortex-A78 and Cortex-X1 cores."
+    affectedApi:
+      - "ARM"
+      - "Cortex-M55"
+      - "Cortex-A77"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-machine-outliner
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "The Machine Outliner is now supported for ARM and Thumb2, not turned on by default (enable with -moutline clang flag)"
+    description: "The Machine Outliner is now supported for ARM and Thumb2, it is not turned on by default and can be enabled with the -moutline clang flag."
+    affectedApi:
+      - "ARM"
+      - "Thumb2"
+      - "-moutline"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+
+  # --- Changes to the PowerPC Target ---
+
+  - id: powerpc-unroll-and-jam-two-level
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Optimization: improved Loop Unroll-and-Jam legality checks, allowing it to handle more than two level loop nests"
+    description: "Optimization: Improved Loop Unroll-and-Jam legality checks, allowing it to handle more than two level loop nests."
+    affectedApi:
+      - "PowerPC"
+      - "Loop Unroll-and-Jam"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-loop-unroll-more-loops
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved Loop Unroll to be able to unroll more loops"
+    description: "Improved Loop Unroll to be able to unroll more loops."
+    affectedApi:
+      - "PowerPC"
+      - "Loop Unroll"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-loop-fusion-trip-counts
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Implemented an option to allow loop fusion to work on loops with different constant trip counts"
+    description: "Implemented an option to allow loop fusion to work on loops with different constant trip counts."
+    affectedApi:
+      - "PowerPC"
+      - "loop fusion"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-power10-support
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Codegen: POWER10 support"
+    description: "Codegen: POWER10 support."
+    affectedApi:
+      - "PowerPC"
+      - "POWER10"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-pc-relative-addressing
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Added PC Relative addressing"
+    description: "Added PC Relative addressing."
+    affectedApi:
+      - "PowerPC"
+      - "PC Relative addressing"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-int128-vector-bool
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Added __int128 vector bool support"
+    description: "Added __int128 vector bool support."
+    affectedApi:
+      - "PowerPC"
+      - "__int128 vector bool"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-probe-stack-attribute
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Security enhancement via probe-stack attribute support to protect against stack clash"
+    description: "Security enhancement via probe-stack attribute support to protect against stack clash."
+    affectedApi:
+      - "PowerPC"
+      - "probe-stack"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-half-quad-precision-glibc
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Floating point support enhancements: improved half precision and quad precision support, including GLIBC constrained FP operation support for arithmetic/rounding/max/min"
+    description: "Floating point support enhancements: Improved half precision and quad precision support, including GLIBC constrained FP operation support for arithmetic/rounding/max/min."
+    affectedApi:
+      - "PowerPC"
+      - "half precision"
+      - "quad precision"
+      - "GLIBC"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-fast-math-flag-cleanup
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Cleaning up fast math flags checks in DAGCombine, Legalizer, and Lowering"
+    description: "Cleaning up fast math flags checks in DAGCombine, Legalizer, and Lowering."
+    affectedApi:
+      - "PowerPC"
+      - "fast math flags"
+      - "DAGCombine"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-vector-permute-le
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Performance improvements from instruction exploitation, especially for vector permute on LE"
+    description: "Performance improvements from instruction exploitation, especially for vector permute on LE."
+    affectedApi:
+      - "PowerPC"
+      - "vector permute"
+      - "LE"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-macro-fusion-power8
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Scheduling enhancements: Added MacroFusion for POWER8"
+    description: "Scheduling enhancements: Added MacroFusion for POWER8."
+    affectedApi:
+      - "PowerPC"
+      - "MacroFusion"
+      - "POWER8"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-post-ra-heuristics-power9
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Added post-ra heuristics for POWER9"
+    description: "Added post-ra heuristics for POWER9."
+    affectedApi:
+      - "PowerPC"
+      - "POWER9"
+      - "post-ra"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-loop-strength-reduce-priority
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Target dependent passes tuning: Updated LoopStrengthReduce to use instruction number as first priority"
+    description: "Target dependent passes tuning: Updated LoopStrengthReduce to use instruction number as first priority."
+    affectedApi:
+      - "PowerPC"
+      - "LoopStrengthReduce"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-machine-combiner-ilp
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Enhanced MachineCombiner to expose more ILP"
+    description: "Enhanced MachineCombiner to expose more ILP."
+    affectedApi:
+      - "PowerPC"
+      - "MachineCombiner"
+      - "ILP"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-machine-verification-passes
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Code quality and maintenance enhancements: Enabled more machine verification passes"
+    description: "Code quality and maintenance enhancements: Enabled more machine verification passes."
+    affectedApi:
+      - "PowerPC"
+      - "machine verification"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-extended-mnemonics
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Added ability to parse and emit additional extended mnemonics"
+    description: "Added ability to parse and emit additional extended mnemonics."
+    affectedApi:
+      - "PowerPC"
+      - "extended mnemonics"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-numerous-bug-fixes
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Numerous bug fixes"
+    description: "Numerous bug fixes."
+    affectedApi:
+      - "PowerPC"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-hello-world-stdio
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AIX Support Improvements: Enabled compile and link such that a simple <stdio.h> \"Hello World\" program works with standard headers"
+    description: "AIX Support Improvements: Enabled compile and link such that a simple <stdio.h> \"Hello World\" program works with standard headers."
+    affectedApi:
+      - "PowerPC"
+      - "AIX"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-c-calling-convention-non-vector
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for the C calling convention for non-vector code (AIX)"
+    description: "Added support for the C calling convention for non-vector code."
+    affectedApi:
+      - "PowerPC"
+      - "AIX"
+      - "C calling convention"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-stack-frame-layout
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Implemented correct stack frame layout for functions (AIX)"
+    description: "Implemented correct stack frame layout for functions."
+    affectedApi:
+      - "PowerPC"
+      - "AIX"
+      - "stack frame"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-objdump-relocations-symbol-description
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "In llvm-objdump, added support for relocations, improved selection of symbol labels, and added the --symbol-description option (AIX)"
+    description: "In llvm-objdump, added support for relocations, improved selection of symbol labels, and added the –symbol-description option."
+    affectedApi:
+      - "llvm-objdump"
+      - "--symbol-description"
+      - "AIX"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the RISC-V Target ---
+
+  # New features:
+
+  - id: riscv-unratified-extension-policy
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "After consultation through an RFC, the RISC-V backend now accepts patches for proposed instruction set extensions that have not yet been ratified; experimental extensions are not expected to have ongoing support"
+    description: "After consultation through an RFC, the RISC-V backend now accepts patches for proposed instruction set extensions that have not yet been ratified.  For these experimental extensions, there is no expectation of ongoing support - the compiler support will continue to change until the specification is finalised."
+    affectedApi:
+      - "RISC-V"
+      - "unratified extensions"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-bitmanip-v092-vector-v080
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "In line with this policy, MC layer and code generation support was added for version 0.92 of the proposed Bit Manipulation Extension and MC layer support for version 0.8 of the proposed RISC-V Vector instruction set extension"
+    description: "In line with this policy, MC layer and code generation support was added for version 0.92 of the proposed Bit Manipulation Extension and MC layer support was added for version 0.8 of the proposed RISC-V Vector instruction set extension. As these extensions are not yet ratified, compiler support will continue to change to match the specifications until they are finalised."
+    affectedApi:
+      - "RISC-V"
+      - "Bit Manipulation Extension"
+      - "Vector extension"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-elf-attribute-sections
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "ELF attribute sections are now created, encoding information such as the ISA string"
+    description: "ELF attribute sections are now created, encoding information such as the ISA string."
+    affectedApi:
+      - "RISC-V"
+      - "ELF attribute sections"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-callee-saved-libcalls
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for saving/restoring callee-saved registers via libcalls (a code size optimisation)"
+    description: "Support for saving/restoring callee-saved registers via libcalls (a code size optimisation)."
+    affectedApi:
+      - "RISC-V"
+      - "callee-saved registers"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-objdump-branch-targets
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "llvm-objdump will now print branch targets as part of disassembly"
+    description: "llvm-objdump will now print branch targets as part of disassembly."
+    affectedApi:
+      - "llvm-objdump"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # Improvements:
+
+  - id: riscv-pair-addi-immediate
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "If an immediate can be generated using a pair of addi instructions, that pair will be selected rather than materialising the immediate into a separate register with a lui and addi pair"
+    description: "If an immediate can be generated using a pair of addi instructions, that pair will be selected rather than materialising the immediate into a separate register with a lui and addi pair."
+    affectedApi:
+      - "RISC-V"
+      - "addi"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-constant-multiplication
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Multiplication by a constant was optimized"
+    description: "Multiplication by a constant was optimized."
+    affectedApi:
+      - "RISC-V"
+      - "constant multiplication"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-addi-load-store-offset
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "addi instructions are now folded into the offset of a load/store instruction even if the load/store itself has a non-zero offset, when it is safe to do so"
+    description: "addi instructions are now folded into the offset of a load/store instruction even if the load/store itself has a non-zero offset, when it is safe to do so."
+    affectedApi:
+      - "RISC-V"
+      - "addi"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-target-hooks-unused-memory
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Additional target hooks were implemented to minimise generation of unnecessary control flow instruction"
+    description: "Additional target hooks were implemented to minimise generation of unnecessary control flow instruction."
+    affectedApi:
+      - "RISC-V"
+      - "target hooks"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-peephole-constant-pools
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "The RISC-V backend's load/store peephole optimization pass now supports constant pools, improving code generation for floating point constants"
+    description: "The RISC-V backend's load/store peephole optimization pass now supports constant pools, improving code generation for floating point constants."
+    affectedApi:
+      - "RISC-V"
+      - "constant pools"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-dscratch-names
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "Debug scratch register names dscratch0 and dscratch1 are now recognised in addition to the legacy dscratch register name"
+    description: "Debug scratch register names dscratch0 and dscratch1 are now recognised in addition to the legacy dscratch register name."
+    affectedApi:
+      - "RISC-V"
+      - "dscratch"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-isnan-codegen
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Codegen for checking isnan was improved, removing a redundant and"
+    description: "Codegen for checking isnan was improved, removing a redundant and."
+    affectedApi:
+      - "RISC-V"
+      - "isnan"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-dret-mc-layer
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "The dret pseudo instruction is now supported"
+    description: "The dret pseudo instruction is now supported."
+    affectedApi:
+      - "RISC-V"
+      - "dret"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-option-pic-reloc
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: ".option pic and .option nopic are now supported in assembly and .reloc was extended to support arbitrary relocation types"
+    description: ".option pic and .option nopic are now supported in assembly and .reloc was extended to support arbitrary relocation types."
+    affectedApi:
+      - "RISC-V"
+      - ".option pic"
+      - ".reloc"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-scheduling-info-metadata
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Scheduling info metadata was improved"
+    description: "Scheduling info metadata was improved."
+    affectedApi:
+      - "RISC-V"
+      - "scheduling metadata"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-jump-pseudo
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "The jump pseudo instruction is now supported"
+    description: "The jump pseudo instruction is now supported."
+    affectedApi:
+      - "RISC-V"
+      - "jump"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # Bug fixes:
+
+  - id: riscv-indirect-branches-pic
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "A failure to insert indirect branches in position independent code was fixed"
+    description: "A failure to insert indirect branches in position independent code was fixed."
+    affectedApi:
+      - "RISC-V"
+      - "indirect branches"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-atomic-fixup-range
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "The calculated expanded size of atomic pseudo operations was fixed, avoiding \"fixup value out of range\" errors during branch relaxation for some inputs"
+    description: "The calculated expanded size of atomic pseudo operations was fixed, avoiding \"fixup value out of range\" errors during branch relaxation for some inputs."
+    affectedApi:
+      - "RISC-V"
+      - "atomic pseudo operations"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-mcountinhibit-csr
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "The mcountinhibit CSR is now recognised"
+    description: "The mcountinhibit CSR is now recognised."
+    affectedApi:
+      - "RISC-V"
+      - "mcountinhibit"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-float-int-libcall
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "The correct libcall is now emitted for converting a float/double to a 32-bit signed or unsigned integer on RV64 targets lacking the D or F extensions"
+    description: "The correct libcall is now emitted for converting a float/double to a 32-bit signed or unsigned integer on RV64 targets lacking the D or F extensions."
+    affectedApi:
+      - "RISC-V"
+      - "RV64"
+      - "libcall"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the SystemZ Target ---
+
+  - id: systemz-memsan-leaksan
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for the MemorySanitizer and the LeakSanitizer"
+    description: "Added support for the MemorySanitizer and the LeakSanitizer."
+    affectedApi:
+      - "SystemZ"
+      - "MemorySanitizer"
+      - "LeakSanitizer"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: systemz-stack-clash-protection
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for the -fstack-clash-protection command line option"
+    description: "Added support for the -fstack-clash-protection command line option."
+    affectedApi:
+      - "SystemZ"
+      - "-fstack-clash-protection"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: systemz-integer-register-numbers
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Enhanced the assembler parser to allow using %r0 even in an address register context, and to allow specifying registers using plain integer numbers instead of register names everywhere"
+    description: "Enhanced the assembler parser to allow using %r0 even in an address register context, and to allow specifying registers using plain integer numbers instead of register names everywhere."
+    affectedApi:
+      - "SystemZ"
+      - "assembler"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: systemz-cpp-class-float-member-abi-fix
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed wrong code generation violating the platform ABI when passing a C++ class (not struct) type having only a single member of floating-point type"
+    description: "Fixed wrong code generation violating the platform ABI when passing a C++ class (not struct) type having only a single member of floating-point type."
+    affectedApi:
+      - "SystemZ"
+      - "platform ABI"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: systemz-vec-len-r-intrinsics-fix
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed wrong code generation when using the vec_store_len_r or vec_load_len_r intrinsics with an immediate length argument of 16 or larger"
+    description: "Fixed wrong code generation when using the vec_store_len_r or vec_load_len_r intrinsics with an immediate length argument of 16 or larger."
+    affectedApi:
+      - "SystemZ"
+      - "vec_store_len_r"
+      - "vec_load_len_r"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: systemz-vector-codegen-enhancements
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Miscellaneous codegen enhancements, in particular to improve vector code"
+    description: "Miscellaneous codegen enhancements, in particular to improve vector code."
+    affectedApi:
+      - "SystemZ"
+      - "vector code"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the X86 Target ---
+
+  - id: x86-probe-stack-inline-asm
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Functions with the probe-stack attribute set to \"inline-asm\" are now protected against stack clash without the need of a third-party probing function and with limited impact on performance"
+    description: "Functions with the probe-stack attribute set to \"inline-asm\" are now protected against stack clash without the need of a third-party probing function and with limited impact on performance."
+    affectedApi:
+      - "X86"
+      - "probe-stack"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-old-knl-abi-removed
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "removed"
+    severity: "medium"
+    summary: "The -x86-enable-old-knl-abi command line switch has been removed; v32i16/v64i8 vectors are always passed in ZMM registers when avx512f is enabled and avx512bw is disabled"
+    description: "The -x86-enable-old-knl-abi command line switch has been removed. v32i16/v64i8 vectors are always passed in ZMM register when avx512f is enabled and avx512bw is disabled."
+    affectedApi:
+      - "-x86-enable-old-knl-abi"
+      - "avx512f"
+      - "avx512bw"
+      - "ZMM"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-wider-vectors-zmm-passing
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Vectors larger than 512 bits with i16 or i8 elements will be passed in multiple ZMM registers when avx512f is enabled (previously this required avx512bw); vXi16/vXi8 vectors are now consistently treated the same as vXi32/vXi64/vXf64/vXf32 vectors of the same total width"
+    description: "Vectors larger than 512 bits with i16 or i8 elements will be passed in multiple ZMM registers when avx512f is enabled. Previously this required avx512bw otherwise they would split into multiple YMM registers. This means vXi16/vXi8 vectors are consistently treated the same as vXi32/vXi64/vXf64/vXf32 vectors of the same total width."
+    affectedApi:
+      - "X86"
+      - "ZMM"
+      - "avx512f"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: x86-intel-amx-instructions
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Support was added for Intel AMX instructions"
+    description: "Support was added for Intel AMX instructions."
+    affectedApi:
+      - "X86"
+      - "Intel AMX"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-tsxldtrk-instructions
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Support was added for TSXLDTRK instructions"
+    description: "Support was added for TSXLDTRK instructions."
+    affectedApi:
+      - "X86"
+      - "TSXLDTRK"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-load-value-injection-mitigation-pass
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "A pass was added for mitigating the Load Value Injection vulnerability"
+    description: "A pass was added for mitigating the Load Value Injection vulnerability."
+    affectedApi:
+      - "X86"
+      - "Load Value Injection"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-speculative-execution-suppression-pass
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "The Speculative Execution Side Effect Suppression pass was added which can be used as a last resort mitigation for speculative execution related CPU vulnerabilities"
+    description: "The Speculative Execution Side Effect Suppression pass was added which can be used to as a last resort mitigation for speculative execution related CPU vulnerabilities."
+    affectedApi:
+      - "X86"
+      - "Speculative Execution Side Effect Suppression"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-boolean-vector-reduction-movmskb-ptest
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved recognition of boolean vector reductions with better MOVMSKB/PTEST handling"
+    description: "Improved recognition of boolean vector reductions with better MOVMSKB/PTEST handling"
+    affectedApi:
+      - "X86"
+      - "MOVMSKB"
+      - "PTEST"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-rotation-pattern-funnel-shift
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Extended recognition of rotation patterns to handle funnel shift as well, allowing removal of the existing x86-specific SHLD/SHRD combine"
+    description: "Exteded recognition of rotation patterns to handle funnel shift as well, allowing us to remove the existing x86-specific SHLD/SHRD combine."
+    affectedApi:
+      - "X86"
+      - "SHLD"
+      - "SHRD"
+    notes: "Source text reads 'Exteded' (sic)."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the AMDGPU Target ---
+
+  - id: amdgpu-denormal-handling-default-on
+    category: "target-amdgpu"
+    targetName: "amdgpu"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "The backend default denormal handling mode has been switched to on for all targets for all compute function types; frontends wishing to retain the old behavior should explicitly request f32 denormal flushing"
+    description: "The backend default denormal handling mode has been switched to on for all targets for all compute function types. Frontends wishing to retain the old behavior should explicitly request f32 denormal flushing."
+    affectedApi:
+      - "AMDGPU"
+      - "denormal handling"
+      - "f32 denormal flushing"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the AVR Target ---
+
+  - id: avr-official-backend
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "default-change"
+    severity: "low"
+    summary: "Moved from an experimental backend to an official backend; AVR support is now included by default in all LLVM builds and releases and is available under the \"avr-unknown-unknown\" target triple"
+    description: "Moved from an experimental backend to an official backend. AVR support is now included by default in all LLVM builds and releases and is available under the \"avr-unknown-unknown\" target triple."
+    affectedApi:
+      - "AVR"
+      - "avr-unknown-unknown"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the WebAssembly Target ---
+
+  - id: webassembly-reactor-exec-model
+    category: "target-webassembly"
+    targetName: "webassembly"
+    changeType: "added"
+    severity: "low"
+    summary: "Programs which don't have a \"main\" function (\"reactors\") are now properly supported, with a new -mexec-model=reactor flag; programs which previously used -Wl,--no-entry should switch to this flag so static initialization is properly performed"
+    description: "Programs which don't have a \"main\" function, called \"reactors\" are now properly supported, with a new -mexec-model=reactor flag. Programs which previously used -Wl,--no-entry to avoid having a main function should switch to this new flag, so that static initialization is properly performed."
+    affectedApi:
+      - "WebAssembly"
+      - "-mexec-model=reactor"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: webassembly-protected-visibility-warning
+    category: "target-webassembly"
+    targetName: "webassembly"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "__attribute__((visibility(\"protected\"))) now evokes a warning, as WebAssembly does not support \"protected\" visibility"
+    description: "__attribute__((visibility(\"protected\"))) now evokes a warning, as WebAssembly does not support \"protected\" visibility."
+    affectedApi:
+      - "WebAssembly"
+      - "__attribute__((visibility(\"protected\")))"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Windows Target ---
+
+  - id: windows-coff-weak-external-symbols
+    category: "target-windows"
+    targetName: "windows"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Produce COFF weak external symbols for IR level weak symbols without a comdat (e.g. for __attribute__((weak)) in C)"
+    description: "Produce COFF weak external symbols for IR level weak symbols without a comdat (e.g. for __attribute__((weak)) in C)"
+    affectedApi:
+      - "Windows"
+      - "COFF weak symbols"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the DAG infrastructure ---
+
+  - id: seldag-freeze-instruction
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "A SelDag-level freeze instruction has landed (lowered as a copy operation to MachineIR; either IMPLICIT_DEF should be fixed or the equivalent FREEZE operation added to MachineIR)"
+    description: "A SelDag-level freeze instruction has landed. It is simply lowered as a copy operation to MachineIR, but to make it fully correct either IMPLICIT_DEF should be fixed or the equivalent FREEZE operation should be added to MachineIR."
+    affectedApi:
+      - "SelDAG freeze"
+      - "IMPLICIT_DEF"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Debug Info ---
+
+  - id: debuginfo-entry-values-default
+    category: "general"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "LLVM now supports the debug entry values (DW_OP_entry_value) production for the x86, ARM, and AArch64 targets by default; other targets can use it via the experimental -debug-entry-values option"
+    description: |-
+      LLVM now supports the debug entry values (DW_OP_entry_value) production for the x86, ARM, and AArch64 targets by default. Other targets can use the utility by using the experimental option ("-debug-entry-values"). This is a debug info feature that allows debuggers to recover the value of optimized-out parameters by going up a stack frame and interpreting the values passed to the callee. The feature improves the debugging user experience when debugging optimized code.
+    affectedApi:
+      - "DW_OP_entry_value"
+      - "-debug-entry-values"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  # --- Changes to the Gold Plugin ---
+
+  - id: gold-plugin-whole-program-visibility
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "The --plugin-opt=whole-program-visibility option is added to specify that classes have hidden LTO visibility in LTO and ThinLTO links of source files compiled with -fwhole-program-vtables (LTOVisibility, D71913)"
+    description: "The --plugin-opt=whole-program-visibility option is added to specify that classes have hidden LTO visibility in LTO and ThinLTO links of source files compiled with -fwhole-program-vtables. See LTOVisibility for details. (D71913)"
+    affectedApi:
+      - "--plugin-opt=whole-program-visibility"
+      - "Gold plugin"
+      - "LTO"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the LLVM tools ---
+
+  - id: dwarfdump-show-section-sizes
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Added an option (--show-section-sizes) to llvm-dwarfdump to show the sizes of all debug sections within a file"
+    description: "Added an option (--show-section-sizes) to llvm-dwarfdump to show the sizes of all debug sections within a file."
+    affectedApi:
+      - "llvm-dwarfdump"
+      - "--show-section-sizes"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvm-nm-special-syms
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "llvm-nm now implements the flag --special-syms and will filter out special symbols (i.e. mapping symbols on ARM and AArch64) by default, matching the GNU nm behavior"
+    description: "llvm-nm now implements the flag --special-syms and will filter out special symbols, i.e. mapping symbols on ARM and AArch64, by default. This matches the GNU nm behavior."
+    affectedApi:
+      - "llvm-nm"
+      - "--special-syms"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvm-rc-improvements
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "llvm-rc now tolerates -1 as menu item ID, supports the language id option and allows string table values to be split into multiple string literals"
+    description: "llvm-rc now tolerates -1 as menu item ID, supports the language id option and allows string table values to be split into multiple string literals"
+    affectedApi:
+      - "llvm-rc"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvm-lib-import-library-objects
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "llvm-lib supports adding import library objects in addition to regular object files"
+    description: "llvm-lib supports adding import library objects in addition to regular object files"
+    affectedApi:
+      - "llvm-lib"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
