@@ -13,6 +13,14 @@ CXX = clang++
 GIRI_LIB_DIR = $(GIRI_DIR)/lib
 GIRI_BIN_DIR = $(GIRI_DIR)/bin
 
+# New pass manager harness (LLVM 14.0.0): each Giri library is loaded twice —
+# -load registers the cl::opt globals (-trace-file, -slice-file, ...) before
+# opt parses the command line, -load-pass-plugin registers the -passes
+# pipeline names after. mergereturn (a function pass) is wrapped in a
+# function(...) sub-pipeline; the Giri passes are module passes at top level.
+GIRI_LOAD = -load $(GIRI_LIB_DIR)/libdgutility.so -load $(GIRI_LIB_DIR)/libgiri.so
+GIRI_LOAD_PLUGINS = -load-pass-plugin=$(GIRI_LIB_DIR)/libdgutility.so -load-pass-plugin=$(GIRI_LIB_DIR)/libgiri.so
+
 .PHONY: all lib
 
 all: lib $(NAME).slice
@@ -27,11 +35,9 @@ lib:
 	$(MAKE) -s -C $(GIRI_DIR)
 
 $(NAME).slice : $(NAME).bc $(NAME).trace
-	@ opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
-		-load $(GIRI_LIB_DIR)/libgiri.so \
-		-mergereturn -bbnum -lsnum \
-		-dgiri -trace-file=$(NAME).trace -slice-file=$(NAME).slice \
-		-remove-bbnum -remove-lsnum \
+	@ opt $(GIRI_LOAD) $(GIRI_LOAD_PLUGINS) \
+		-passes="function(mergereturn),bbnum,lsnum,dgiri,remove-bbnum,remove-lsnum" \
+		-trace-file=$(NAME).trace -slice-file=$(NAME).slice \
 		-stats $(DEBUGFLAGS) $< -o /dev/null
 
 $(NAME).trace: $(NAME).trace.exe
@@ -44,11 +50,9 @@ $(NAME).trace.s : $(NAME).trace.bc
 	llc -asm-verbose=false -O0 $< -o $@
 
 $(NAME).trace.bc : $(NAME).bc
-	@ opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
-		-load $(GIRI_LIB_DIR)/libgiri.so \
-		-mergereturn -bbnum -lsnum \
-		-trace-giri -trace-file=$(NAME).trace \
-		-remove-bbnum -remove-lsnum \
+	@ opt $(GIRI_LOAD) $(GIRI_LOAD_PLUGINS) \
+		-passes="function(mergereturn),bbnum,lsnum,trace-giri,remove-bbnum,remove-lsnum" \
+		-trace-file=$(NAME).trace \
 		-stats $(DEBUGFLAGS) $< -o $@
 
 %.bc : %.c

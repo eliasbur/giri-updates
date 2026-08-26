@@ -24,6 +24,18 @@ CFLAGS += -g -O0 -c -emit-llvm
 GIRI_LIB_DIR = $(GIRI_DIR)/lib
 GIRI_BIN_DIR = $(GIRI_DIR)/bin
 
+# New pass manager harness (LLVM 14.0.0). Each Giri library is loaded twice:
+#   -load registers the cl::opt globals (-trace-file, -slice-file, -criterion-*,
+#       -dump-bbid, -mapping-*, ...) BEFORE opt parses the command line;
+#   -load-pass-plugin registers the -passes pipeline names AFTER parsing.
+# The pipeline shape is unchanged from the legacy PM: the function pass
+# mergereturn is wrapped in an explicit function(...) sub-pipeline (it must be
+# first, fixing the top-level element type), and every Giri pass is a module
+# pass at the top level. -enable-new-pm=0 and the legacy -<passname> flags are
+# gone; the cl::opt flags (-trace-file, -slice-file, criterion-*) are kept.
+GIRI_LOAD = -load $(GIRI_LIB_DIR)/libdgutility.so -load $(GIRI_LIB_DIR)/libgiri.so
+GIRI_LOAD_PLUGINS = -load-pass-plugin=$(GIRI_LIB_DIR)/libdgutility.so -load-pass-plugin=$(GIRI_LIB_DIR)/libgiri.so
+
 # Keep trace artifacts around for post-mortem when a stage fails
 .PRECIOUS: $(NAME).trace
 
@@ -40,11 +52,9 @@ lib:
 		uniq > $@
 
 $(NAME).slice : $(NAME).all.bc $(NAME).trace
-	opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
-		-load $(GIRI_LIB_DIR)/libgiri.so \
-		-mergereturn -bbnum -lsnum \
-		-dgiri -trace-file=$(NAME).trace -slice-file=$(NAME).slice $(CRITERION)\
-		-remove-bbnum -remove-lsnum \
+	opt $(GIRI_LOAD) $(GIRI_LOAD_PLUGINS) \
+		-passes="function(mergereturn),bbnum,lsnum,dgiri,remove-bbnum,remove-lsnum" \
+		-trace-file=$(NAME).trace -slice-file=$(NAME).slice $(CRITERION)\
 		-stats $(DEBUGFLAGS) $< -o /dev/null
 
 $(NAME).trace: $(NAME).trace.exe
@@ -80,11 +90,9 @@ $(NAME).trace.s : $(NAME).trace.bc
 	llc -asm-verbose=false -O0 $< -o $@
 
 $(NAME).trace.bc : $(NAME).all.bc
-	opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
-		-load $(GIRI_LIB_DIR)/libgiri.so \
-		-mergereturn -bbnum -lsnum \
-		-trace-giri -trace-file=$(NAME).trace \
-		-remove-bbnum -remove-lsnum \
+	opt $(GIRI_LOAD) $(GIRI_LOAD_PLUGINS) \
+		-passes="function(mergereturn),bbnum,lsnum,trace-giri,remove-bbnum,remove-lsnum" \
+		-trace-file=$(NAME).trace \
 		-stats $(DEBUGFLAGS) $< -o $@
 
 $(NAME).all.bc: $(IR_FILES)
@@ -95,25 +103,22 @@ $(IR_FILES) : %.bc : %.c
 .PHONY: mapping bbid bbid
 
 mapping: $(NAME).all.bc
-	opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
-		-load $(GIRI_LIB_DIR)/libgiri.so \
-		-mergereturn \
-		-srcline-mapping $(MAPPING) \
+	opt $(GIRI_LOAD) $(GIRI_LOAD_PLUGINS) \
+		-passes="function(mergereturn),srcline-mapping" \
+		$(MAPPING) \
 		-stats $(DEBUGFLAGS) $< -o /dev/null
 
 bbid: $(NAME).all.bc
-	opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
-		-mergereturn \
-		-bbnum -dump-bbid=true \
-		-remove-bbnum \
+	opt $(GIRI_LOAD) $(GIRI_LOAD_PLUGINS) \
+		-passes="function(mergereturn),bbnum,remove-bbnum" \
+		-dump-bbid=true \
 		-stats $(DEBUGFLAGS) $< -o /dev/null 2>&1 |\
 		view -
 
 lsid: $(NAME).all.bc
-	opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
-		-mergereturn \
-		-lsnum -dump-lsid=true \
-		-remove-lsnum \
+	opt $(GIRI_LOAD) $(GIRI_LOAD_PLUGINS) \
+		-passes="function(mergereturn),lsnum,remove-lsnum" \
+		-dump-lsid=true \
 		-stats $(DEBUGFLAGS) $< -o /dev/null 2>&1 |\
 		view -
 
