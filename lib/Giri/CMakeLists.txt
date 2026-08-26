@@ -3,6 +3,7 @@ set(GIRI_SRCS
   TracingNoGiri.cpp
   TraceFile.cpp
   TestPass.cpp
+  GiriPassPlugin.cpp
 )
 
 add_library(giri SHARED ${GIRI_SRCS})

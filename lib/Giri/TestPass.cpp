@@ -1,4 +1,4 @@
-//===- Giri.cpp - Find dynamic backwards slice analysis pass -------------- --//
+//===- TestPass.cpp - Test the giri pass -----------------------------------===//
 //
 //                          Giri: Dynamic Slicing in LLVM
 //
@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements an analysis pass that allows clients to find the
-// instructions contained within the dynamic backwards slice of a specified
-// instruction.
+// This pass is used to test the giri pass.
+//
+// New pass manager port (LLVM 14.0.0): TestGiri is a new-PM module pass (the
+// legacy -test-giri). It obtains the shared DynamicGiri module analysis via
+// MAM.getResult<DynamicGiri>(M) (the legacy getAnalysis<DynamicGiri>()).
+// Registered under the "test-giri" pipeline name in GiriPassPlugin.cpp.
 //
 //===----------------------------------------------------------------------===//
-
-#define DEBUG_TYPE "giri-test"
 
 #include "Giri/Giri.h"
 
@@ -30,77 +31,31 @@ Funcname ("funcname", cl::desc("Function Name"), cl::init("main"));
 
 namespace giri {
 
-/// This pass is used to test the giri pass.
-struct TestGiri : public ModulePass {
-protected:
-  // Dynamic backwards slice
-  std::set<Value *> mySliceOfLife;
-  std::unordered_set<DynValue> myDynSliceOfLife;
-  std::set<DynValue *> myDataFlowGraph;
+/// Entry point for this pass. Find the instruction specified by the user
+/// and find the backwards slice of it.
+PreservedAnalyses TestGiri::run(Module &M, ModuleAnalysisManager &MAM) {
+  // Get a reference to the function specified by the user.
+  Function *F = M.getFunction(Funcname);
+  if (!F) return PreservedAnalyses::all();
 
-public:
-  static char ID;
-  TestGiri () : ModulePass (ID) { }
-
-  /// Entry point for this pass. Find the instruction specified by the user
-  /// and find the backwards slice of it.
-  virtual bool runOnModule (Module & M) {
-    // Get a reference to the function specified by the user.
-    Function * F = M.getFunction (Funcname);
-    if (!F) return false;
-
-    // Find the instruction referenced by the user and get its backwards slice.
-    unsigned index = 0;
-    DynamicGiri & Giri = getAnalysis<DynamicGiri>();
-    for (Function::iterator BB = F->begin(); BB != F->end(); ++BB) {
-      for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
-        if (index++ == InstIndex) {
-          std::cerr << "Trace for: ";
-          I->print(llvm::errs ());
-          std::cerr << std::endl;
-          Giri.getBackwardsSlice (&*I, mySliceOfLife, myDynSliceOfLife, myDataFlowGraph);
-          break;
-        }
+  // Find the instruction referenced by the user and get its backwards slice.
+  unsigned index = 0;
+  DynamicGiri &Giri = MAM.getResult<DynamicGiri>(M);
+  for (Function::iterator BB = F->begin(); BB != F->end(); ++BB) {
+    for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
+      if (index++ == InstIndex) {
+        std::cerr << "Trace for: ";
+        I->print(llvm::errs());
+        std::cerr << std::endl;
+        Giri.getBackwardsSlice(&*I, mySliceOfLife, myDynSliceOfLife,
+                               myDataFlowGraph);
+        break;
       }
     }
-
-    // We never modify the module.
-    return false;
   }
 
-  StringRef getPassName() const override {
-    return "Dynamic Backwards Slice Testing Pass";
-  }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    // We will need the ID numbers of basic blocks
-    AU.addRequired<DynamicGiri>();
-
-    // This pass is an analysis pass, so it does not modify anything
-    AU.setPreservesAll();
-  };
-
-  virtual void releaseMemory () {
-    mySliceOfLife.clear();
-  }
-
-  virtual void print (llvm::raw_ostream & O, const Module * M) const {
-    std::set<Value *>::iterator V;
-    for (V = mySliceOfLife.begin(); V != mySliceOfLife.end(); ++V) {
-      (*V)->print(O);
-      O << "\n";
-    }
-
-    return;
-  }
-
-}; // End TestGiri
-
+  // We never modify the module.
+  return PreservedAnalyses::all();
 }
 
-// ID Variable to identify the pass
-char giri::TestGiri::ID = 0;
-
-// Pass registration
-static RegisterPass<giri::TestGiri>
-X ("test-giri", "Dynamic Backwards Slice Testing Pass");
+} // END namespace giri

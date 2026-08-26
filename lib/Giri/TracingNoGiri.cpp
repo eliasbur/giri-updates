@@ -52,10 +52,8 @@ STATISTIC(NumStoreStrings, "Number of store instructions processed");
 STATISTIC(NumCalls, "Number of call instructions processed");
 STATISTIC(NumExtFuns, "Number of special external calls processed, e.g. memcpy");
 
-char TracingNoGiri::ID = 0;
-
-static RegisterPass<TracingNoGiri>
-X("trace-giri", "Instrument code to trace basic block execution");
+// New-PM: TracingNoGiri is registered as the "trace-giri" pipeline pass in
+// GiriPassPlugin.cpp (the legacy RegisterPass is removed).
 
 static inline Function *getOrInsertF(Module &M,
                                        StringRef Name,
@@ -71,7 +69,25 @@ static bool hasPHI(const BasicBlock & BB) {
   return false;
 }
 
-bool TracingNoGiri::doInitialization(Module & M) {
+// New-PM module pass entry point: perform the module-level initialization once
+// (the legacy doInitialization), then drive the per-function and per-basic-block
+// instrumentation loops (the legacy FunctionPass::runOnFunction /
+// BasicBlockPass::runOnBasicBlock order, preserved so the instrumentation order
+// is unchanged).
+PreservedAnalyses TracingNoGiri::run(Module &M, ModuleAnalysisManager &MAM) {
+  TD        = &M.getDataLayout();
+  bbNumPass = &MAM.getResult<QueryBBNumbersPass>(M);
+  lsNumPass = &MAM.getResult<QueryLSNumbersPass>(M);
+
+  initializeDataStructure(M);
+
+  for (Module::iterator F = M.begin(); F != M.end(); ++F)
+    instrument(*F);
+
+  return PreservedAnalyses::all();
+}
+
+void TracingNoGiri::initializeDataStructure(Module & M) {
   Int8Type  = IntegerType::getInt8Ty(M.getContext());
   Int32Type = IntegerType::getInt32Ty(M.getContext());
   Int64Type = IntegerType::getInt64Ty(M.getContext());
@@ -94,7 +110,6 @@ Init = getOrInsertF(M, "recordInit", VoidType, {VoidPtrType});
   RecordExtCallRet = getOrInsertF(M, "recordExtCallRet", VoidType, {Int32Type, VoidPtrType});
   RecordSelect = getOrInsertF(M, "recordSelect", VoidType, {Int32Type, Int8Type});
   createCtor(M);
-  return true;
 }
 
 void TracingNoGiri::createCtor(Module &M) {
@@ -410,18 +425,15 @@ void TracingNoGiri::visitCallInst(CallInst &CI) {
 }
 
 // LLVM 9 removed the legacy BasicBlockPass, which previously called
-// runOnBasicBlock once per basic block. Drive that loop ourselves.
-bool TracingNoGiri::runOnFunction(Function &F) {
+// runOnBasicBlock once per basic block. The new-PM run() drives this loop.
+void TracingNoGiri::instrument(Function &F) {
   for (Function::iterator I = F.begin(); I != F.end(); ++I)
     runOnBasicBlock(*I);
-  return true;
 }
 
 bool TracingNoGiri::runOnBasicBlock(BasicBlock &BB) {
-  TD        = &BB.getParent()->getParent()->getDataLayout();
-  bbNumPass = &getAnalysis<QueryBasicBlockNumbers>();
-  lsNumPass = &getAnalysis<QueryLoadStoreNumbers>();
-
+  // TD/bbNumPass/lsNumPass are set once in run() (the new-PM equivalent of the
+  // legacy per-BB getAnalysis<...>(); the numbering analyses are module-level).
   instrumentBasicBlock(BB);
 
   std::vector<Instruction *> Worklist;
