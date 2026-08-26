@@ -8,25 +8,33 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 
 ## Current state
 
-`port/llvm-14.0.0-legacypm` (working branch `agent/open-code/llvm-14-legacypm`) is the
-**legacy pass manager** port to LLVM 14.0.0, cut from the completed `port/llvm-8.0.0`
-head (`224bdfb`). It carries the honest harness (per-test `EXPECTED_EXIT`/`EXIT_UNCHECKED`
-in `test/Makefile.common` + `[GIRI] Abnormal termination` crash detection). Every `opt`
-invocation runs `-enable-new-pm=0` (legacy PM) — the execution path for this branch, kept
-while the legacy PM still exists in 14.0.0 (deprecated in 14, "removed after LLVM 14";
-the forward-compatible new-PM port is a separate target branch `port/llvm-14.0.0`).
+`port/llvm-14.0.0` (working branch `agent/jcode/llvm-14-newpm-port`) is the
+**new pass manager** port to LLVM 14.0.0, cut from the completed
+`port/llvm-14.0.0-legacypm` head (`fba2565`, legacy-PM head `224bdfb`). It
+re-executes the entire Giri pipeline on the **new pass manager** — the
+forward-compatible path that survives LLVM 15+, where the legacy PM is gone
+(deprecated in 14, "removed after LLVM 14"). No `-enable-new-pm=0` anywhere;
+every `opt` invocation runs a `-passes="…"` pipeline and each Giri library is
+loaded twice — `-load` (registers the plugin's `cl::opt` globals *before*
+`opt` parses the command line: `-trace-file`, `-slice-file`, `-criterion-*`,
+`-dump-bbid`, `-mapping-*`) plus `-load-pass-plugin` (registers the `-passes`
+pipeline names *after* parsing).
 
-The automated suite (`make -C /giri/test`, `TEST_PARALLELISM=seq`) reports **22 PASS /
-0 FAIL** on the 14.0.0 legacy-PM port: 19 UnitTests (test1–5, test8–21) plus the three
-app benchmarks in their seq variant, all against the pristine 3.4 goldens
-(`git diff 224bdfb..HEAD -- test/` is empty except the pre-approved `-enable-new-pm=0`
-harness lines in `test/Makefile.common` and `test/HelloWorld/Makefile`). Full history and
-root causes: `porting/TestAudit/llvm-14.0.0-legacypm/SUMMARY.md` → "Suite results across
-the port".
+The automated suite (`make -C /giri/test`, `TEST_PARALLELISM=seq`) reports
+**22 PASS / 0 FAIL** (rc=0) on the 14.0.0 new-PM port: 19 UnitTests
+(test1–5, test8–21) plus the three app benchmarks in their seq variant, all
+against the pristine 3.4 goldens. `git diff fba2565..HEAD -- test/` is empty
+except the pre-approved new-PM harness lines in `test/Makefile.common` and
+`test/HelloWorld/Makefile` (the `-enable-new-pm=0` + legacy `-<passname>`
+flags replaced by `-load` + `-load-pass-plugin` + `-passes="…"`); no golden or
+criterion file changed. Full history and root causes:
+`porting/TestAudit/llvm-14.0.0-newpm/SUMMARY.md` → "Suite results across the
+port".
 
-The 14.0.0 image is `giri-llvm-14` (base **ubuntu:18.04**, prebuilt x86_64 LLVM/Clang
-**14.0.0** GitHub-Releases tarball, `llvm-config --version` == 14.0.0). Build/test (inside
-a `giri-llvm-14` container; see `porting/AgentGuide.md`):
+The 14.0.0 image is `giri-llvm-14` (base **ubuntu:18.04**, prebuilt x86_64
+LLVM/Clang **14.0.0** GitHub-Releases tarball, `llvm-config --version` ==
+14.0.0). Build/test (inside a `giri-llvm-14` container; see
+`porting/AgentGuide.md`):
 
 ```bash
 docker build -t giri-llvm-14 .          # from the repo root
@@ -34,45 +42,72 @@ docker run -it --rm giri-llvm-14 bash
 source /giri/utils/build.sh             # cmake + make + make -C test
 ```
 
-Source changes for 8→14 (commits `306d34f`, `74b870f`):
-- `FunctionCallee` (9.0.0): `Module::getOrInsertFunction` returns `FunctionCallee`, so
-  the two sites use `cast<Function>(M.getOrInsertFunction(...).getCallee())`
-  (`include/Utility/Utils.h`, `lib/Giri/TracingNoGiri.cpp`).
-- `CallSite` removal: `lib/Giri/TraceFile.cpp` now casts to `const CallBase *`
-  (`CallBase` lives in `llvm/IR/InstrTypes.h`) and uses `CS->arg_size()` /
-  `getArgOperand(i)`; `CallBase::getCalledOperand()` replaces the removed
-  `getCalledValue()` (`lib/Utility/SourceLineMapping.cpp`, `lib/Giri/TracingNoGiri.cpp`).
-- `TracingNoGiri` converted from the removed legacy `BasicBlockPass` (10.0.0) to
-  `FunctionPass`; the per-basic-block behavior is preserved by a `runOnFunction` loop that
-  calls `runOnBasicBlock` for each BB (`include/Giri/Giri.h`, `lib/Giri/TracingNoGiri.cpp`).
-- `sys::fs::F_None`/`F_Append` → `OF_None`/`OF_Append` (13.0.0): `Giri.cpp`,
-  `SourceLineMapping.cpp`, `tools/Tracer/Tracer.cpp`.
-- `DEBUG_TYPE` is defined **after** the includes (14.0.0 headers such as
-  `GenericDomTreeConstruction.h` `#undef DEBUG_TYPE`); the bare `DEBUG(X)` macro is
-  re-`#define`d via `DEBUG_WITH_TYPE(DEBUG_TYPE, X)` in the two files that use it
-  (`Giri.cpp`, `TraceFile.cpp`). (The earlier `STATISTIC_WITH_TYPE` shim, commit `f0f0f9c`,
-  was reverted by this.)
-- `tools/Tracer/CMakeLists.txt`: the prebuilt LLVM 14.0.0 CMake package does not populate
-  the `LLVM_COMPONENT_LIBS` property (`llvm_map_components_to_libnames` expands empty) and
-  does not add the LLVM lib dir to the search path, so `tracer` links the
-  dependency-ordered static libs by absolute path via `llvm-config --libfiles all` plus
-  `--system-libs` (`-lrt -ldl -lpthread -lm`).
+What this port changes on top of the legacy-PM port (the 8→14 C++ API fixes,
+toolchain, and Dockerfile are inherited unchanged):
+
+- **Pass conversion.** All Giri/Utility passes/analyses converted from
+  legacy-PM classes (`PassInfoMixin` + `getAnalysisUsage` / `RegisterPass`) to
+  new-PM `llvm::Pass` / `llvm::Analysis` classes with `run(...)`; pass logic is
+  byte-identical (only the plumbing changed). `TracingNoGiri` (the former
+  `BasicBlockPass`, deleted in 10.0.0) is now a new-PM **module pass**:
+  `run(Module&, MAM)` does the module-level init once, then loops functions and,
+  per function, basic blocks, driving the renamed `instrument`/
+  `runOnBasicBlock` per-BB logic (per-BB order and insertion order preserved).
+  `DynamicGiri` is a new-PM **module analysis** (`AnalysisKey Key`), fetched by
+  the `dgiri`/`test-giri` module passes via `MAM.getResult<DynamicGiri>(M)`; its
+  `ensurePostDomFrontierComputed` builds the `PostDominatorTree` inline (public
+  `Function&` ctor) then runs `PostDominanceFrontier::computeFrontiers`.
+  `QueryBasicBlockNumbers`/`QueryLoadStoreNumbers` are new-PM **module
+  analyses** whose result object carries the ID maps; the no-op `bbnum`/
+  `lsnum`/`remove-*` passes force those lazy analyses
+  (`MAM.getResult<Query…>(M)`), preserving the legacy `getAnalysis`-triggered
+  numbering behavior. `PostDominanceFrontierAnalysis` (function analysis) takes
+  `FAM.getResult<PostDominatorTreeAnalysis>(F)` — `PostDominatorTreeAnalysis`
+  (the analysis, `Result = PostDominatorTree`), not the `PostDominatorTree`
+  data structure.
+- **Plugin registration.** `lib/Utility/UtilityPassPlugin.cpp` (bbnum,
+  remove-bbnum, lsnum, remove-lsnum, postdomfrontier, countsrc,
+  srcline-mapping + the Query* module analyses + the PostDominanceFrontier
+  function analysis) and `lib/Giri/GiriPassPlugin.cpp` (trace-giri, dgiri,
+  test-giri + DynamicGiri + re-registered Query* so libgiri works standalone)
+  both export `llvmGetPassPluginInfo`. `libgiri.so` → `libdgutility.so` via
+  NEEDED; a spike verified cross-library analysis `getResult` sees a single
+  analysis instance.
+- **`mergereturn` parity.** No test-only `MergeReturn` was needed: in 14.0.0 the
+  legacy and new-PM `mergereturn` are the same transform (`UnifyFunctionExitNodes`),
+  spike-verified **byte-identical** IR. The harness wraps it in an explicit
+  `function(mergereturn)` sub-pipeline (it must be first to fix the top-level
+  element type); every Giri pass is a module pass at the top level.
+- **`Tracer`.** Builds its instrumentation pipeline programmatically with the
+  new PM (`ModuleAnalysisManager` + `PassBuilder`); `WriteBitcodeToFile` is void
+  in 14.0.0.
 
 The three critical invariants are verified (this port):
 1. **Numbering determinism** — identical pass sequence in both pipeline stages
-   (`-mergereturn -bbnum -lsnum … -remove-bbnum -remove-lsnum`, `test/Makefile.common`
-   lines 42–48 and 82–88); behaviorally proven by the 22/22 PASS against the 3.4 goldens.
-2. **`Entry` struct ABI** — `include/Giri/Runtime.h` untouched by this port; re-checked
+   (`-passes="function(mergereturn),bbnum,lsnum,…,remove-bbnum,remove-lsnum"`,
+   `test/Makefile.common`), so the same `bbnum`/`lsnum` IDs are assigned in both
+   runs; behaviorally proven by the 22/22 PASS against the 3.4 goldens.
+   `mergereturn` parity (byte-identical IR, legacy vs new-PM) spike-verified
+   separately.
+2. **`Entry` struct ABI** — `include/Giri/Runtime.h` untouched by this port
+   (`git diff fba2565..HEAD -- include/Giri/Runtime.h` is empty); re-checked
    in-container: `sizeof(Entry)` = 32 on x86_64 LP64, `4096 % 32 == 0`.
 3. **Debug info** — `-g` mandatory in the test compile; `clang -g` on 14.0.0 emits
-   `.debug_info`/`.debug_line`; `SourceLineMapping` yields the 3.4-era `file:line` slices
-   across all 22 passing tests.
+   `.debug_info`/`.debug_line`; `SourceLineMapping` yields the 3.4-era `file:line`
+   slices across all 22 passing tests.
 
 **The suite measures the seq variants.** `Dockerfile` sets `TEST_PARALLELISM=seq`, so a
 suite result says nothing about a pthread variant unless run by hand. The pthread variants
 were **not** re-measured for 14.0.0 (the automated suite is the parity gate for this
 branch); their 8.0.0 findings stand as the last measurements
 (`porting/TestAudit/llvm-8.0.0/`).
+
+> The **legacy-pass-manager** port lives on the sibling branch
+> `port/llvm-14.0.0-legacypm` (working branch `agent/open-code/llvm-14-legacypm`,
+> PR #19) and also reports 22/22 there; its `AGENTS.md` copy documents the
+> 8→14 API fixes in detail. That branch keeps `-enable-new-pm=0` because the
+> legacy PM still exists in 14.0.0; this branch is the forward-compatible
+> variant.
 
 ## Known residuals
 
@@ -82,12 +117,12 @@ port) are [regression]. There are no [regression] rows.
 
 | What | Status | Why acceptable / Evidence |
 |------|--------|---------------------------|
-| Legacy pass manager deprecated in 14.0.0 | Final state for **this** branch (legacy PM) | Release notes: "using the legacy pass manager … is deprecated and will be removed after LLVM 14." This branch intentionally keeps the legacy PM (`-enable-new-pm=0` everywhere). The forward-compatible new-PM port is a separate branch `port/llvm-14.0.0` (includes test-only passes/analyses for full test parity) |
-| Pthread variants not re-measured on 14.0.0 | [inherited] gap (suite scope) | `Dockerfile` pins `TEST_PARALLELISM=seq`; last pthread measurements are the 8.0.0 audit's (`matrix_multiply-pthread` FAIL-EXPECTED at the shipped `:138`, `kmeans-pthread` FAIL-HARNESS on the 256-CPU host). Out of the automated suite, same as 5.0.2/8.0.0 |
-| test6 (sigusr1), test7 (sigint), test22 (fp) | [inherited] gap | Have golden files but not in `auto-tests.txt`; signals tests need interactive terminal setup, test22 needs `-lm`. Same as 5.0.2/8.0.0 |
-| HelloWorld, histogram, linear_regression, word_count | [inherited] gap | No golden file on any LLVM version; not wired into the suite (HelloWorld's Makefile only gained the `-enable-new-pm=0` flag) |
-| `ensurePostDomFrontierComputed` — memory leak | Acceptable | `DynamicGiri::ensurePostDomFrontierComputed` (`Giri.cpp`) `new`s the `PostDominatorTreeWrapperPass` and `PostDominanceFrontier` and frees neither; bounded by `opt` process lifetime, no observable cost. Inherited from 5.0.2/8.0.0 |
-| `signal(SIGKILL, …)` — no-op | Harmless | `runtime/Giri/Tracing.cpp`. SIGKILL cannot be caught per POSIX; the `signal()` call returns `SIG_ERR`. Inherited from 5.0.2/8.0.0 |
+| `opt` needs `-load` + `-load-pass-plugin` for each plugin | New-PM-specific, inherent | 14.0.0's new-PM driver discovers passes only via `-load-pass-plugin`; the plugin's `cl::opt` globals still need the plain `-load` (pre-parse dlopen). The harness loads each library twice and documents this. Inherent to 14.0.0 plugin loading, not a bug. |
+| Pthread variants not re-measured on 14.0.0 | [inherited] gap (suite scope) | `Dockerfile` pins `TEST_PARALLELISM=seq`; last pthread measurements are the 8.0.0 audit's. Out of the automated suite, same as 5.0.2/8.0.0/legacy-PM |
+| test6 (sigusr1), test7 (sigint), test22 (fp) | [inherited] gap | Have golden files but not in `auto-tests.txt`; signals tests need interactive terminal setup, test22 needs `-lm`. Same as 5.0.2/8.0.0/legacy-PM |
+| HelloWorld, histogram, linear_regression, word_count | [inherited] gap | No golden file on any LLVM version; not wired into the suite (HelloWorld's Makefile was updated to the new-PM harness so it runs by hand) |
+| `ensurePostDomFrontierComputed` — bounded per-function allocation | Replaced / [inherited] benign | The legacy lazy-wrapper hack (`new PostDominatorTreeWrapperPass`, freed by neither) is replaced: `DynamicGiri` builds the `PostDominatorTree` inline (public `Function&` ctor, spike-verified) then runs `PostDominanceFrontier::computeFrontier`; the per-function tree/frontier is still not freed — same `opt`-process-lifetime bound as the legacy port, no observable cost |
+| `signal(SIGKILL, …)` — no-op | [inherited] harmless | `runtime/Giri/Tracing.cpp`. SIGKILL cannot be caught per POSIX. Inherited from 5.0.2/8.0.0/legacy-PM |
 
 ## Containers — two kinds
 
