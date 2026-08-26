@@ -1,0 +1,1194 @@
+---
+version: "10.0.0"
+sourceUrl: "https://releases.llvm.org/10.0.0/docs/ReleaseNotes.html"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-25"
+
+# Scope: top-level "Non-comprehensive list", Changes to the LLVM IR, building LLVM,
+# and every <Target> section. Out of scope (informational / not used by a static
+# legacy-PM pass): LLDB, External Projects.
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes") ---
+
+  - id: isd-fp-round-inreg-opcode-removed
+    category: "general"
+    changeType: "removed"
+    severity: "medium"
+    summary: "The ISD::FP_ROUND_INREG opcode and related code was removed from SelectionDAG"
+    description: "The ISD::FP_ROUND_INREG opcode and related code was removed from SelectionDAG."
+    affectedApi:
+      - "ISD::FP_ROUND_INREG"
+      - "SelectionDAG"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: memoryssa-loop-dependency-enabled
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "MemorySSA enabled as a loop dependency (r370957/D58311); MemorySSA analysis is preserved and used by a series of loop passes, most significantly LICM"
+    description: |-
+      Enabled MemorySSA as a loop dependency. Since r370957 (D58311 [MemorySSA & LoopPassManager] Enable MemorySSA as loop dependency. Update tests.), the MemorySSA analysis is being preserved and used by a series of loop passes. The most significant use is in LICM, where the instruction hoisting and sinking relies on aliasing information provided by MemorySSA vs previously creating an AliasSetTracker. The LICM step of promoting variables to scalars still relies on the creation of an AliasSetTracker, but its use is reduced to only be enabled for loops with a small number of overall memory instructions.
+    affectedApi:
+      - "MemorySSA"
+      - "LICM"
+      - "AliasSetTracker"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: basicblockpass-bbpassmanager-deleted
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "The BasicBlockPass, BBPassManager and all their uses were deleted"
+    description: "The BasicBlockPass, BBPassManager and all their uses were deleted in this revision."
+    affectedApi:
+      - "BasicBlockPass"
+      - "BBPassManager"
+      - "legacy::PassManager"
+    notes: |-
+      BREAKS Giri: TracingNoGiri was the one BasicBlockPass in the tree (registered via
+      initialize(BBPassManager)), so it no longer compiles against LLVM 10+.
+    relevance: "affected"
+    status: "addressed"
+
+  - id: cmake-llvm-dylib-options-windows-removed
+    category: "building"
+    changeType: "removed"
+    severity: "low"
+    summary: "The LLVM_BUILD_LLVM_DYLIB and LLVM_LINK_LLVM_DYLIB CMake options are no longer available on Windows"
+    description: "The LLVM_BUILD_LLVM_DYLIB and LLVM_LINK_LLVM_DYLIB CMake options are no longer available on Windows."
+    affectedApi:
+      - "LLVM_BUILD_LLVM_DYLIB"
+      - "LLVM_LINK_LLVM_DYLIB"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: gep-inbounds-null-poison-ub-rule
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "getelementptr inbounds cannot change the null status of a pointer; violating that is UB and InstCombine (r369789) now relies on it for icmp eq/ne (gep inbounds P, Idx..), null transforms; -fsanitize=pointer-overflow catches source violations"
+    description: |-
+      As per LLVM Language Reference Manual, getelementptr inbounds can not change the null status of a pointer, meaning it can not produce non-null pointer given null base pointer, and likewise given non-null base pointer it can not produce null pointer; if it does, the result is a poison value. Since r369789 (D66608 [InstCombine] icmp eq/ne (gep inbounds P, Idx..), null -> icmp eq/ne P, null) LLVM uses that for transformations. If the original source violates these requirements this may result in code being miscompiled. If you are using Clang front-end, Undefined Behaviour Sanitizer -fsanitize=pointer-overflow check will now catch such cases.
+    affectedApi:
+      - "getelementptr inbounds"
+      - "InstCombine"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: windows-cfguard-indirect-call-checks
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Windows Control Flow Guard: -cfguard now emits CFG checks on indirect function calls; previous behavior available via -cfguard-nochecks"
+    description: "Windows Control Flow Guard: the -cfguard option now emits CFG checks on indirect function calls. The previous behavior is still available with the -cfguard-nochecks option. Note that this feature should always be used with optimizations enabled."
+    affectedApi:
+      - "-cfguard"
+      - "-cfguard-nochecks"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: commandline-option-callbacks-added
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Callbacks have been added to CommandLine Options, usable to validate or selectively enable other options"
+    description: "Callbacks have been added to CommandLine Options. These can be used to validate or selectively enable other options."
+    affectedApi:
+      - "cl::opt"
+      - "cl::list"
+      - "CommandLine"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: frame-pointer-attributes-replaced
+    category: "general"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "The no-frame-pointer-elim and no-frame-pointer-elim-non-leaf function attributes have been replaced by the 3-valued frame-pointer attribute (none | non-leaf | all)"
+    description: "The function attributes no-frame-pointer-elim and no-frame-pointer-elim-non-leaf have been replaced by frame-pointer, which has 3 values: none, non-leaf, and all. The values mean what functions should retain frame pointers."
+    affectedApi:
+      - "no-frame-pointer-elim"
+      - "no-frame-pointer-elim-non-leaf"
+      - "frame-pointer"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: attributor-interprocedural-analysis-advanced
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "The Attributor framework's inter-procedural analysis/optimization capabilities were substantially advanced (19 attributes inferred); still disabled by default (-mllvm attributor-disable=false)"
+    description: |-
+      The inter-procedural analysis and optimization capabilities in the Attributor framework and pass have been substantially advanced (initial commit D59918, LLVM-Dev talk). In this release, 19 different attributes are inferred, including 12 LLVM IR attributes and 7 "abstract" attributes, such as liveness. The Attributor is still under heavy development and disabled by default; to enable an early run pass -mllvm attributor-disable=false to an invocation of clang.
+    affectedApi:
+      - "Attributor"
+      - "attributor-disable"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: matrix-math-intrinsics-lowering-pass
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "New matrix math intrinsics added together with the LowerMatrixIntrinsics pass (off by default; enable via -mllvm enable-matrix)"
+    description: "New matrix math intrinsics have been added to LLVM (see LLVM Language Reference Manual), together with the LowerMatrixIntrinsics pass. The pass lowers matrix intrinsics to a set of efficient vector instructions. The lowering pass is off by default and can be enabled by passing -mllvm enable-matrix to an invocation of clang."
+    affectedApi:
+      - "LowerMatrixIntrinsics"
+      - "matrix math intrinsics"
+      - "enable-matrix"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: unnamed-function-arguments-printed
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Unnamed function arguments now get printed with their automatically generated name (e.g. \"i32 %0\") in definitions; front-ends may need to update IR-printing tests"
+    description: |-
+      Unnamed function arguments now get printed with their automatically generated name (e.g. "i32 %0") in definitions. This may require front-ends to update their tests; if so there is a script utils/add_argument_names.py that correctly converted 80-90% of Clang tests. Some manual work will almost certainly still be needed.
+    affectedApi:
+      - "LLVM IR text output"
+      - "Function arguments"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: freeze-instruction-added
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "A new freeze instruction is added to stop IR-level propagation of undef and poison values; support is preliminary (SelDag/MIR equivalent still needed)"
+    description: "A new freeze instruction is added. The freeze instruction is used to stop IR-level propagation of undef and poison values. Currently its support is preliminary; a freeze-equivalent operation for SelDag/MIR needs to be added."
+    affectedApi:
+      - "freeze"
+      - "undef"
+      - "poison"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  # --- Changes to the AArch64 Backend ---
+
+  - id: aarch64-cortex-a65-neoverse-support
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for Cortex-A65, Cortex-A65AE, Neoverse E1 and Neoverse N1 cores"
+    description: "Added support for Cortex-A65, Cortex-A65AE, Neoverse E1 and Neoverse N1 cores."
+    affectedApi:
+      - "AArch64"
+      - "Cortex-A65"
+      - "Neoverse"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-windows-on-arm-chromium
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "With further bug fixes clang-cl can now target Windows-on-ARM well, demonstrated by building complex pieces of software such as Chromium and the Electron framework"
+    description: "With a few more bugs fixed in the LLVM 10 release, clang-cl can now target Windows-on-ARM well, demonstrated by building complex pieces of software such as Chromium and the Electron framework."
+    affectedApi:
+      - "clang-cl"
+      - "Windows-on-ARM"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-patchable-function-entry
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for -fpatchable-function-entry was added"
+    description: "Support for -fpatchable-function-entry was added."
+    affectedApi:
+      - "-fpatchable-function-entry"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the ARM Backend ---
+
+  - id: arm-armv81m-low-overhead-loops
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Optimized ARMv8.1-M code generation, including generating Low Overhead Loops"
+    description: "Optimized ARMv8.1-M code generation, including generating Low Overhead Loops."
+    affectedApi:
+      - "ARM"
+      - "Armv8.1-M"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-armv81m-mve-auto-vectorization
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Added auto-vectorization for the ARMv8.1-M MVE vector extension"
+    description: "Added auto-vectorization for the ARMv8.1-M MVE vector extension."
+    affectedApi:
+      - "ARM"
+      - "MVE"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-inline-asm-constraints
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Support was added for inline asm constraints s,j,x,N,O"
+    description: "Support was added for inline asm constraints s,j,x,N,O."
+    affectedApi:
+      - "inline asm"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the MIPS Target ---
+
+  - id: mips-octeon-improved-support
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved support for octeon and added support for octeon+ MIPS-family CPU"
+    description: "Improved support for octeon and added support for octeon+ MIPS-family CPU."
+    affectedApi:
+      - "MIPS"
+      - "octeon"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: mips-minmax-atomics
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "min, max, umin, umax atomics now supported on MIPS targets"
+    description: "min, max, umin, umax atomics now supported on MIPS targets."
+    affectedApi:
+      - "MIPS"
+      - "atomics"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: mips-pcrel-ehframe-relocations
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "PC-relative relocations are now generated for .eh_frame sections when possible, allowing linking MIPS binaries without -Wl,-z,noexecstack"
+    description: "Now PC-relative relocations are generated for .eh_frame sections when possible. That allows to link MIPS binaries without having to pass the -Wl,-z,noexecstack option."
+    affectedApi:
+      - "MIPS"
+      - ".eh_frame"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: mips-branch-fixup-evaluation
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fix evaluating J-format branch (j, jal, ...) targets when the instruction is not within the first 256 MB region"
+    description: "Fix evaluating J-format branch (j, jal, ...) targets when the instruction is not within the first 256 MB region."
+    affectedApi:
+      - "MIPS"
+      - "J-format branches"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: mips-jal-etc-immediate-expansion
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed jal, sc, scs, ll, lld, la, lw, sw instructions expanding: they now accept a wider range of expression types as arguments, correctly handle load/store for XGOT targets, and use fewer registers and instructions"
+    description: "Fixed jal, sc, scs, ll, lld, la, lw, sw instructions expanding. They now accept a wider range of expression types as arguments, correctly handle load/store for XGOT targets, and use fewer registers and instructions."
+    affectedApi:
+      - "MIPS"
+      - "instruction expansion"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: mips-exegesis-support
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Initial MIPS support has been added to llvm-exegesis"
+    description: "Initial MIPS support has been added to llvm-exegesis."
+    affectedApi:
+      - "llvm-exegesis"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: mips-mcount-relocations
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Generates _mcount calls using proper MIPS ABI"
+    description: "Generates _mcount calls using proper MIPS ABI."
+    affectedApi:
+      - "MIPS"
+      - "_mcount"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: mips-globalisel-improvements
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved GlobalISel instruction selection framework support (still experimental for MIPS targets)"
+    description: "Improved support of GlobalISel instruction selection framework. This feature is still in experimental state for MIPS targets though."
+    affectedApi:
+      - "MIPS"
+      - "GlobalISel"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the PowerPC Target ---
+
+  - id: powerpc-vectorizer-cost-model-improvements
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Optimization: improved register pressure estimates in the loop vectorizer based on type; improved the PowerPC cost model for the vectorizer"
+    description: "Optimization: Improved register pressure estimates in the loop vectorizer based on type. Improved the PowerPC cost model for the vectorizer."
+    affectedApi:
+      - "PowerPC"
+      - "vectorizer cost model"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-mass-math-vectorization
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Enabled vectorization of math routines for PowerPC using MASS (Mathematical Acceleration SubSystem) library"
+    description: "Enabled vectorization of math routines for PowerPC using MASS (Mathematical Acceleration SubSystem) library."
+    affectedApi:
+      - "PowerPC"
+      - "MASS"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-compiler-rt-conversions
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "compiler-rt: added/improved conversion functions between IBM long double and 128-bit integers"
+    description: "compiler-rt: Added/improved conversion functions between IBM long double and 128-bit integers."
+    affectedApi:
+      - "PowerPC"
+      - "compiler-rt"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-loop-memory-access-optimization
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Codegen: optimized memory access instructions in loops (pertaining to update-form instructions and address computation)"
+    description: "Codegen: Optimized memory access instructions in loops (pertaining to update-form instructions and address computation)."
+    affectedApi:
+      - "PowerPC"
+      - "memory access"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-loop-hoisting-options
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Added options to disable hoisting instructions into hotter blocks based on statically or profile-based block hotness estimates"
+    description: "Added options to disable hoisting instructions into hotter blocks based on statically or profile-based block hotness estimates."
+    affectedApi:
+      - "PowerPC"
+      - "hoisting"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-codegen-improvements
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Code generation improvements (particularly with floating point and vector code as well as handling condition registers)"
+    description: "Code generation improvements (particularly with floating point and vector code as well as handling condition registers)."
+    affectedApi:
+      - "PowerPC"
+      - "codegen"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-infrastructure-improvements
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Various infrastructural improvements, code refactoring, and bug fixes"
+    description: "Various infrastructural improvements, code refactoring, and bug fixes."
+    affectedApi:
+      - "PowerPC"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-multi-comparison-reuse
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Optimized handling of control flow based on multiple comparison of same values"
+    description: "Optimized handling of control flow based on multiple comparison of same values."
+    affectedApi:
+      - "PowerPC"
+      - "control flow"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-readobj-xcoff-support
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Tools: llvm-readobj supports displaying file header, section headers, symbol table and relocation entries for XCOFF object files; llvm-objdump supports disassembling physical sections for XCOFF object files"
+    description: "Tools: llvm-readobj supports displaying file header, section headers, symbol table and relocation entries for XCOFF object files. llvm-objdump supports disassembling physical sections for XCOFF object files."
+    affectedApi:
+      - "llvm-readobj"
+      - "llvm-objdump"
+      - "XCOFF"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the SystemZ Target ---
+
+  - id: systemz-z15-aliases
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for the -march=z15 and -mtune=z15 command line options (as aliases to the existing -march=arch13 and -mtune=arch13 options)"
+    description: "Added support for the -march=z15 and -mtune=z15 command line options (as aliases to the existing -march=arch13 and -mtune=arch13 options)."
+    affectedApi:
+      - "SystemZ"
+      - "-march=z15"
+      - "-mtune=z15"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: systemz-native-arch
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for the -march=native command line option"
+    description: "Added support for the -march=native command line option."
+    affectedApi:
+      - "SystemZ"
+      - "-march=native"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: systemz-mfentry-mnop-mcount-mrecord-mcount
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for the -mfentry, -mnop-mcount, and -mrecord-mcount command line options"
+    description: "Added support for the -mfentry, -mnop-mcount, and -mrecord-mcount command line options."
+    affectedApi:
+      - "SystemZ"
+      - "-mfentry"
+      - "-mnop-mcount"
+      - "-mrecord-mcount"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: systemz-ghc-calling-convention
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "added"
+    severity: "low"
+    summary: "Added support for the GHC calling convention"
+    description: "Added support for the GHC calling convention."
+    affectedApi:
+      - "SystemZ"
+      - "GHC calling convention"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: systemz-codegen-enhancements
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Miscellaneous codegen enhancements, in particular to enable better reuse of condition code values and improved use of conditional move instructions"
+    description: "Miscellaneous codegen enhancements, in particular to enable better reuse of condition code values and improved use of conditional move instructions."
+    affectedApi:
+      - "SystemZ"
+      - "codegen"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the X86 Target ---
+
+  - id: x86-sub-128bit-vector-register-layout
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Less-than-128-bit vector types (v2i32, v4i16, v2i16, v8i8, v4i8, v2i8) are now stored in the lower bits of an xmm register with the upper bits undefined; previously the elements were spread apart with undefined bits in between"
+    description: "Less-than-128-bit vector types, v2i32, v4i16, v2i16, v8i8, v4i8, and v2i8, are now stored in the lower bits of an xmm register and the upper bits are undefined. Previously the elements were spread apart with undefined bits in between them."
+    affectedApi:
+      - "X86"
+      - "sub-128-bit vector types"
+      - "xmm"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: x86-v32i8-v64i8-zmm-passing
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "v32i8 and v64i8 vectors with AVX512F enabled but AVX512BW disabled will now be passed in ZMM registers for calls and returns (previously two YMM registers); old behavior via -x86-enable-old-knl-abi"
+    description: "v32i8 and v64i8 vectors with AVX512F enabled, but AVX512BW disabled will now be passed in ZMM registers for calls and returns. Previously they were passed in two YMM registers. Old behavior can be enabled by passing -x86-enable-old-knl-abi."
+    affectedApi:
+      - "X86"
+      - "AVX512F"
+      - "AVX512BW"
+      - "ZMM"
+      - "-x86-enable-old-knl-abi"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-prefer-vector-width-256-default
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "-mprefer-vector-width=256 is now the default behavior on skylake-avx512 and later Intel CPUs (to limit 512-bit register use, which can cause CPU frequency decreases); re-enable with -mprefer-vector-width=512 or -mattr=-prefer-256-bit"
+    description: "-mprefer-vector-width=256 is now the default behavior skylake-avx512 and later Intel CPUs. This tries to limit the use of 512-bit registers which can cause a decrease in CPU frequency on these CPUs. This can be re-enabled by passing -mprefer-vector-width=512 to clang or passing -mattr=-prefer-256-bit to llc."
+    affectedApi:
+      - "-mprefer-vector-width"
+      - "skylake-avx512"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: x86-mpx-feature-deprecated
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "deprecated"
+    severity: "low"
+    summary: "Deprecated the mpx feature flag for the Intel MPX instructions (there were no intrinsics for this feature); only affects getHostCPUFeatures results on CPUs implementing MPX"
+    description: "Deprecated the mpx feature flag for the Intel MPX instructions. There were no intrinsics for this feature. This change only this effects the results returned by getHostCPUFeatures on CPUs that implement the MPX instructions."
+    affectedApi:
+      - "X86"
+      - "mpx"
+      - "getHostCPUFeatures"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-vzeroupper-feature-flag
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "The feature flag fast-partial-ymm-or-zmm-write (which previously disabled vzeroupper insertion) has been removed and replaced by a vzeroupper feature flag with the opposite polarity"
+    description: "The feature flag fast-partial-ymm-or-zmm-write which previously disabled vzeroupper insertion has been removed. It has been replaced by a vzeroupper feature flag which has the opposite polarity. So -vzeroupper has the same effect as +fast-partial-ymm-or-zmm-write."
+    affectedApi:
+      - "X86"
+      - "fast-partial-ymm-or-zmm-write"
+      - "vzeroupper"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the WebAssembly Target ---
+
+  - id: webassembly-used-no-longer-implies-exported
+    category: "target-webassembly"
+    targetName: "webassembly"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "__attribute__((used)) no longer implies that a symbol is exported, for consistency with other targets"
+    description: "__attribute__((used)) no longer implies that a symbol is exported, for consistency with other targets."
+    affectedApi:
+      - "WebAssembly"
+      - "__attribute__((used))"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: webassembly-multivalue-signatures
+    category: "target-webassembly"
+    targetName: "webassembly"
+    changeType: "added"
+    severity: "low"
+    summary: "Multivalue function signatures are now supported in WebAssembly object files"
+    description: "Multivalue function signatures are now supported in WebAssembly object files"
+    affectedApi:
+      - "WebAssembly"
+      - "multivalue function signatures"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: webassembly-atomic-fence-instruction
+    category: "target-webassembly"
+    targetName: "webassembly"
+    changeType: "added"
+    severity: "low"
+    summary: "The new atomic.fence instruction is now supported"
+    description: "The new atomic.fence instruction is now supported"
+    affectedApi:
+      - "WebAssembly"
+      - "atomic.fence"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: webassembly-tls
+    category: "target-webassembly"
+    targetName: "webassembly"
+    changeType: "added"
+    severity: "low"
+    summary: "Thread-Local Storage (TLS) is now supported"
+    description: "Thread-Local Storage (TLS) is now supported."
+    affectedApi:
+      - "WebAssembly"
+      - "TLS"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: webassembly-simd-expanded
+    category: "target-webassembly"
+    targetName: "webassembly"
+    changeType: "added"
+    severity: "low"
+    summary: "SIMD support is significantly expanded"
+    description: "SIMD support is significantly expanded."
+    affectedApi:
+      - "WebAssembly"
+      - "SIMD"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Windows Target ---
+
+  - id: windows-debug-frame-relocations
+    category: "target-windows"
+    targetName: "windows"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed section relative relocations in .debug_frame in DWARF debug info"
+    description: "Fixed section relative relocations in .debug_frame in DWARF debug info"
+    affectedApi:
+      - "Windows"
+      - ".debug_frame"
+      - "DWARF"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the RISC-V Target ---
+
+  # New Features:
+
+  - id: riscv-machine-outliner-supported
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "The Machine Outliner is now supported, but not enabled by default"
+    description: "The Machine Outliner is now supported, but not enabled by default."
+    affectedApi:
+      - "RISC-V"
+      - "Machine Outliner"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-shrink-wrapping
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "Shrink-wrapping is now supported"
+    description: "Shrink-wrapping is now supported."
+    affectedApi:
+      - "RISC-V"
+      - "shrink-wrapping"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-machine-scheduler-rocket
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "The Machine Scheduler has been enabled and scheduler descriptions for the Rocket micro-architecture have been added, covering both 32- and 64-bit Rocket cores"
+    description: "The Machine Scheduler has been enabled and scheduler descriptions for the Rocket micro-architecture have been added, covering both 32- and 64-bit Rocket cores."
+    affectedApi:
+      - "RISC-V"
+      - "Machine Scheduler"
+      - "Rocket"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-lto-groundwork-target-abi
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "medium"
+    summary: "Groundwork for enabling LTO in a future release: a new target-abi module metadata item represents the chosen RISC-V psABI variant; frontends should add this module flag to prevent ABI lowering problems"
+    description: "This release lays the groundwork for enabling LTO in a future LLVM release. In particular, LLVM now uses a new target-abi module metadata item to represent the chosen RISC-V psABI variant. Frontends should add this module flag to prevent ABI lowering problems when LTO is enabled in a future LLVM release."
+    affectedApi:
+      - "RISC-V"
+      - "target-abi module metadata"
+      - "LTO"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-rvc-hint-assembler
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "Support has been added for assembling RVC HINT instructions"
+    description: "Support has been added for assembling RVC HINT instructions."
+    affectedApi:
+      - "RISC-V"
+      - "RVC HINT"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-half-precision-code-lowering
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "Code lowering for half-precision floats has been added"
+    description: "Code lowering for half-precision floats has been added."
+    affectedApi:
+      - "RISC-V"
+      - "half-precision floats"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-fscsr-frcsr-obsolete-aliases
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "The fscsr and frcsr (fssr, frsr) obsolete aliases have been added to the assembler for use with legacy code"
+    description: "The fscsr and frcsr (fssr, frsr) obsolete aliases have been added to the assembler for use with legacy code."
+    affectedApi:
+      - "RISC-V"
+      - "fscsr"
+      - "frcsr"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-stack-realignment-variable-sized
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "The stack can now be realigned even when there are variable-sized objects in the same frame"
+    description: "The stack can now be realigned even when there are variable-sized objects in the same frame."
+    affectedApi:
+      - "RISC-V"
+      - "stack realignment"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-fastcc
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "fastcc is now supported: a more efficient, unstandardised, calling convention for calls to private leaf functions in the same IR module"
+    description: "fastcc is now supported. This is a more efficient, unstandardised, calling convention for calls to private leaf functions in the same IR module."
+    affectedApi:
+      - "RISC-V"
+      - "fastcc"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-objdump-m-no-aliases-numeric
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "llvm-objdump now supports -M no-aliases and -M numeric for altering the dumped assembly, matching GNU objdump behavior"
+    description: "llvm-objdump now supports -M no-aliases and -M numeric for altering the dumped assembly. These match the behaviour of GNU objdump, respectively, disabling the output of instruction aliases and printing the numeric register names rather than the ABI register names."
+    affectedApi:
+      - "llvm-objdump"
+      - "-M no-aliases"
+      - "-M numeric"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # Improvements:
+
+  - id: riscv-trap-debugtrap-lowering
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Trap and Debugtrap now lower to RISC-V-specific trap instructions"
+    description: "Trap and Debugtrap now lower to RISC-V-specific trap instructions."
+    affectedApi:
+      - "RISC-V"
+      - "Trap"
+      - "Debugtrap"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-inline-asm-register-names
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "LLVM IR Inline assembly now supports using ABI register names and using floating point registers in constraints"
+    description: "LLVM IR Inline assembly now supports using ABI register names and using floating point registers in constraints."
+    affectedApi:
+      - "RISC-V"
+      - "inline assembly"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-stack-pointer-immediates
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Stack Pointer adjustments have been changed to better match RISC-V's immediates"
+    description: "Stack Pointer adjustments have been changed to better match RISC-V's immediates."
+    affectedApi:
+      - "RISC-V"
+      - "stack pointer"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-ra-callee-saved
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "ra (x1) can now be used as a callee-saved register"
+    description: "ra (x1) can now be used as a callee-saved register."
+    affectedApi:
+      - "RISC-V"
+      - "ra"
+      - "x1"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-spelling-corrections
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "The assembler now suggests spelling corrections for unknown assembly mnemonics"
+    description: "The assembler now suggests spelling corrections for unknown assembly mnemonics."
+    affectedApi:
+      - "RISC-V"
+      - "assembler"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-stack-offsets-32bit
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Stack offsets of greater than 32-bits are now accepted on RV64"
+    description: "Stack offsets of greater than 32-bits are now accepted on RV64."
+    affectedApi:
+      - "RISC-V"
+      - "RV64"
+      - "stack offsets"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-variadic-tail-call
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Variadic functions can now be tail-call optimised, as long as they do not use stack memory for passing arguments"
+    description: "Variadic functions can now be tail-call optimised, as long as they do not use stack memory for passing arguments."
+    affectedApi:
+      - "RISC-V"
+      - "tail-call"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-32bit-arithmetic-sign-extensions
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Code generation has been changed for 32-bit arithmetic operations on RV64 to reduce sign-extensions"
+    description: "Code generation has been changed for 32-bit arithmetic operations on RV64 to reduce sign-extensions."
+    affectedApi:
+      - "RISC-V"
+      - "RV64"
+      - "sign-extension"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # Bug Fixes:
+
+  - id: riscv-interrupt-handler-register-preservation
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed register preservation after calls in interrupt handlers: now only callee-saved registers are live over a function call in an interrupt handler (like calls in regular functions)"
+    description: "There was an issue with register preservation after calls in interrupt handlers, where some registers were marked as preserved even though they were not being preserved by the call. This has been corrected, and now only callee-saved registers are live over a function call in an interrupt handler (just like calls in regular functions)."
+    affectedApi:
+      - "RISC-V"
+      - "interrupt handlers"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-atomic-gpr-memory-operands
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Atomic instructions now only accept GPRs (plus an offset) in memory operands"
+    description: "Atomic instructions now only accept GPRs (plus an offset) in memory operands."
+    affectedApi:
+      - "RISC-V"
+      - "atomic instructions"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-relocation-evaluation-fixes
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed some issues with evaluation of relocations and fixups"
+    description: "Fixed some issues with evaluation of relocations and fixups."
+    affectedApi:
+      - "RISC-V"
+      - "relocations"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-assembler-error-message-improvements
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "The error messages around missing RISC-V extensions and around unsupported relocations in the assembler have been improved"
+    description: "The error messages around missing RISC-V extensions in the assembler have been improved. The error messages around unsupported relocations have been improved."
+    affectedApi:
+      - "RISC-V"
+      - "assembler"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-non-pic-local-exec-tls
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Non-PIC code no longer forces Local Exec TLS"
+    description: "Non-PIC code no longer forces Local Exec TLS."
+    affectedApi:
+      - "RISC-V"
+      - "TLS"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-atomic-codegen-changes
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "There have been some small changes to the code generation for atomic operations"
+    description: "There have been some small changes to the code generation for atomic operations."
+    affectedApi:
+      - "RISC-V"
+      - "atomic operations"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-cfi-directives-fix
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "RISC-V no longer emits incorrect CFI directives in function prologues and epilogues"
+    description: "RISC-V no longer emits incorrect CFI directives in function prologues and epilogues."
+    affectedApi:
+      - "RISC-V"
+      - "CFI directives"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-rv64-complex-libcall-return
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "RV64 no longer clears the upper bits when returning complex types from libcalls using the LP64 psABI"
+    description: "RV64 no longer clears the upper bits when returning complex types from libcalls using the LP64 psABI."
+    affectedApi:
+      - "RISC-V"
+      - "RV64"
+      - "LP64 psABI"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # Compiler-RT:
+
+  - id: riscv-compiler-rt-supported
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "RISC-V (both 64-bit and 32-bit) is now supported by compiler-rt, allowing crtbegin and crtend to be built"
+    description: "RISC-V (both 64-bit and 32-bit) is now supported by compiler-rt, allowing crtbegin and crtend to be built."
+    affectedApi:
+      - "RISC-V"
+      - "compiler-rt"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-sanitizers-64bit-linux
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "The Sanitizers now support 64-bit RISC-V on Linux"
+    description: "The Sanitizers now support 64-bit RISC-V on Linux."
+    affectedApi:
+      - "RISC-V"
+      - "Sanitizers"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the C API ---
+
+  - id: c-api-dibuildercreatetype-def-align-in-bits
+    category: "c-api"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "C DebugInfo API: LLVMDIBuilderCreateTypedef is updated to include an extra argument AlignInBits, to facilitate/propagate Alignment information present in a typedef to Debug information in LLVM IR"
+    description: "C DebugInfo API: LLVMDIBuilderCreateTypedef is updated to include an extra argument AlignInBits, to facilitate / propagate specified Alignment information present in a typedef to Debug information in LLVM IR."
+    affectedApi:
+      - "LLVMDIBuilderCreateTypedef"
+      - "AlignInBits"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Go bindings ---
+
+  - id: go-bindings-dibuildercreatetype-def-align-in-bits
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Go DebugInfo API: CreateTypedef is updated to include an extra argument AlignInBits"
+    description: "Go DebugInfo API: CreateTypedef is updated to include an extra argument AlignInBits, to facilitate / propagate specified Alignment information present in a typedef to Debug information in LLVM IR."
+    affectedApi:
+      - "Go bindings"
+      - "CreateTypedef"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"

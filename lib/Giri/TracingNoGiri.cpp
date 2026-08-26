@@ -15,7 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "giri"
 
 #include "Giri/Giri.h"
 #include "Utility/Utils.h"
@@ -25,7 +24,6 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/CommandLine.h"
@@ -40,6 +38,10 @@ using namespace llvm;
 
 extern llvm::cl::opt<std::string> TraceFilename;
 
+// DEBUG_TYPE is defined after the includes: LLVM 14's dom-tree-builder header
+// (GenericDomTreeConstruction.h) does `#undef DEBUG_TYPE`, and the 14.0.0 STATISTIC
+// macro references DEBUG_TYPE at the call site.
+#define DEBUG_TYPE "giri"
 STATISTIC(NumBBs, "Number of basic blocks");
 STATISTIC(NumPHIBBs, "Number of basic blocks with phi nodes");
 STATISTIC(NumLoads, "Number of load instructions processed");
@@ -60,7 +62,7 @@ static inline Function *getOrInsertF(Module &M,
                                        Type *RetTy,
                                        ArrayRef<Type *> Args = None) {
   FunctionType *FTy = FunctionType::get(RetTy, Args, false);
-  return cast<Function>(M.getOrInsertFunction(Name, FTy));
+  return cast<Function>(M.getOrInsertFunction(Name, FTy).getCallee());
 }
 
 static bool hasPHI(const BasicBlock & BB) {
@@ -383,12 +385,12 @@ void TracingNoGiri::visitCallInst(CallInst &CI) {
      return;
   }
 
-  if (isa<InlineAsm>(CI.getCalledValue()->stripPointerCasts()))
+  if (isa<InlineAsm>(CI.getCalledOperand()->stripPointerCasts()))
     return;
 
   instrumentLock(&CI);
   Value *CallID = ConstantInt::get(Int32Type, lsNumPass->getID(&CI));
-  Value *FP = castTo(CI.getCalledValue(), VoidPtrType, "", &CI);
+  Value *FP = castTo(CI.getCalledOperand(), VoidPtrType, "", &CI);
   std::vector<Value *> args = make_vector<Value *>(CallID, FP, 0);
   Instruction *RC;
   if (CalledFunc->isDeclaration())
@@ -405,6 +407,14 @@ void TracingNoGiri::visitCallInst(CallInst &CI) {
   ++NumCalls;
 
   visitSpecialCall(CI);
+}
+
+// LLVM 9 removed the legacy BasicBlockPass, which previously called
+// runOnBasicBlock once per basic block. Drive that loop ourselves.
+bool TracingNoGiri::runOnFunction(Function &F) {
+  for (Function::iterator I = F.begin(); I != F.end(); ++I)
+    runOnBasicBlock(*I);
+  return true;
 }
 
 bool TracingNoGiri::runOnBasicBlock(BasicBlock &BB) {

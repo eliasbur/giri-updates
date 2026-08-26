@@ -5,3 +5,20 @@
 *.env
 .devcontainer/jcode/
 *.local
+
+# In-source CMake artifacts: `source utils/build.sh` does cmake in-source
+# (no CMAKE_BINARY_DIR), generating these at the tree root. If an agent
+# ever runs it outside the container, they must not leak into the image —
+# a baked-in CMakeCache.txt would pin the image's cmake configure to a
+# foreign LLVM_DIR and break the build. (The tracked test/ Makefiles are
+# real files and stay in the image.)
+/CMakeCache.txt
+/CMakeFiles/
+/cmake_install.cmake
+/Makefile
+/lib/Giri/Makefile
+/lib/Utility/Makefile
+/runtime/Giri/Makefile
+/tools/PrintTrace/Makefile
+/tools/Tracer/Makefile
+/build/

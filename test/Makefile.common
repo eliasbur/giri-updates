@@ -40,7 +40,7 @@ lib:
 		uniq > $@
 
 $(NAME).slice : $(NAME).all.bc $(NAME).trace
-	opt -load $(GIRI_LIB_DIR)/libdgutility.so \
+	opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
 		-load $(GIRI_LIB_DIR)/libgiri.so \
 		-mergereturn -bbnum -lsnum \
 		-dgiri -trace-file=$(NAME).trace -slice-file=$(NAME).slice $(CRITERION)\
@@ -80,7 +80,7 @@ $(NAME).trace.s : $(NAME).trace.bc
 	llc -asm-verbose=false -O0 $< -o $@
 
 $(NAME).trace.bc : $(NAME).all.bc
-	opt -load $(GIRI_LIB_DIR)/libdgutility.so \
+	opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
 		-load $(GIRI_LIB_DIR)/libgiri.so \
 		-mergereturn -bbnum -lsnum \
 		-trace-giri -trace-file=$(NAME).trace \
@@ -95,14 +95,14 @@ $(IR_FILES) : %.bc : %.c
 .PHONY: mapping bbid bbid
 
 mapping: $(NAME).all.bc
-	opt -load $(GIRI_LIB_DIR)/libdgutility.so \
+	opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
 		-load $(GIRI_LIB_DIR)/libgiri.so \
 		-mergereturn \
 		-srcline-mapping $(MAPPING) \
 		-stats $(DEBUGFLAGS) $< -o /dev/null
 
 bbid: $(NAME).all.bc
-	opt -load $(GIRI_LIB_DIR)/libdgutility.so \
+	opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
 		-mergereturn \
 		-bbnum -dump-bbid=true \
 		-remove-bbnum \
@@ -110,7 +110,7 @@ bbid: $(NAME).all.bc
 		view -
 
 lsid: $(NAME).all.bc
-	opt -load $(GIRI_LIB_DIR)/libdgutility.so \
+	opt -enable-new-pm=0 -load $(GIRI_LIB_DIR)/libdgutility.so \
 		-mergereturn \
 		-lsnum -dump-lsid=true \
 		-remove-lsnum \

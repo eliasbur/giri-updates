@@ -145,7 +145,7 @@ static inline CallInst *getCallInst(const Type *RetTy,
   ArrayRef<Type*> Params(formalArgs);
   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
   Module *M = before->getParent()->getParent()->getParent();
-  Function *F = cast<Function>(M->getOrInsertFunction(FName, FType));
+  Function *F = cast<Function>(M->getOrInsertFunction(FName, FType).getCallee());
   SmallVector<Value*, 8> ActualArgs(args.begin(), args.end());
   return CallInst::Create(F, ActualArgs, Twine(Name), before);
 }
@@ -237,7 +237,7 @@ static inline CallInst *getCallInst(Type* RetTy,
   ArrayRef<Type *> Params;
   FunctionType *FType = FunctionType::get(RetTy, Params, false);
   Module *M = InsertAtEnd->getParent()->getParent();
-  Function *F = cast<Function>(M->getOrInsertFunction(FName, FType));
+  Function *F = cast<Function>(M->getOrInsertFunction(FName, FType).getCallee());
   SmallVector<Value*, 0> ActualArgs;
   return CallInst::Create(F, ActualArgs, Twine(Name), InsertAtEnd);
 }

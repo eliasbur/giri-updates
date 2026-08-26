@@ -1,9 +1,13 @@
-# ubuntu:18.04 base: the LLVM 8.0.0 release notes require GCC >= 5.1, and
-# ubuntu:14.04's gcc 4.8 is below that (18.04 ships gcc 7.5). Note: this run
-# started as 16.04 but ubuntu:16.04 (xenial) is no longer served by
-# old-releases.ubuntu.com, so we escalated to 18.04 per the plan's fallback —
-# bionic is still on the normal archive.ubuntu.com (verified 200) and needs no
-# repo redirection.
+# ubuntu:18.04 base (unchanged from the 8.0.0 image): the 14.0.0 prebuilt
+# tarball is built for ubuntu-18.04, and 18.04's gcc 7.5 covers the C++14
+# standard that LLVM 14 builds with (per `llvm-config --cxxflags`).
+#
+# Toolchain provenance (new in the 14.0.0 port): LLVM stopped shipping
+# prebuilt binaries on releases.llvm.org after 9.0.0; from 10.0.0 onward the
+# prebuilts live on the GitHub Releases of llvm/llvm-project (tag
+# llvmorg-14.0.0). install_llvm.sh downloads the ubuntu-18.04 x86_64 tarball
+# from there. If the tarball route ever breaks, the documented fallback is a
+# 14.0.0 source build (monorepo tarball on the same GitHub release).
 FROM ubuntu:18.04
 
 ENV LLVM_HOME=/usr/local/llvm
@@ -24,6 +28,6 @@ RUN wget -q https://cmake.org/files/v3.12/cmake-3.12.4-Linux-x86_64.tar.gz && \
 
 ADD . giri
 
-RUN giri/utils/install_llvm.sh 8.0.0
+RUN giri/utils/install_llvm.sh 14.0.0
 
 # Build step is done interactively via `source /giri/utils/build.sh`

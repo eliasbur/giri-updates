@@ -57,4 +57,19 @@ case $VERSION in
 		rm -f clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
 		mv clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04 $LLVM_HOME
 		;;
+	"14.0.0")
+		# Use prebuilt release tarball — no build from source needed.
+		# NOTE: from LLVM 10.0.0 onward, prebuilt binaries no longer live on
+		# releases.llvm.org (that site keeps only sources/docs from 10.0.0
+		# on) — they moved to the GitHub Releases of llvm/llvm-project (tag
+		# llvmorg-14.0.0). The ubuntu-18.04 x86_64 tarball matches the
+		# Dockerfile base (giri-llvm-14 is ubuntu:18.04; gcc 7.5 covers the
+		# C++14 standard 14.0.0 builds with). Fallback if the tarball route
+		# ever breaks: build 14.0.0 from source (llvm-project monorepo
+		# tarball, also on the same GitHub release).
+		wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-14.0.0/clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+		tar xf clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+		rm -f clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+		mv clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04 $LLVM_HOME
+		;;
 esac

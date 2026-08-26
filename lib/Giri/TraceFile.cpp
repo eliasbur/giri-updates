@@ -11,18 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "giri"
 
 #include "Giri/TraceFile.h"
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/CallSite.h"
 #include "llvm/Support/Debug.h"
-// LLVM 8 removed the bare DEBUG(X) macro that LLVM 3.4's Debug.h provided;
-// DEBUG_TYPE is set above, so map it to the 8.0.0 DEBUG_WITH_TYPE.
-#define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -34,6 +29,12 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+// DEBUG_TYPE is redefined after the includes: LLVM 14's dom-tree-builder header
+// (GenericDomTreeConstruction.h, pulled in by Statistic.h / Dominators.h) does
+// `#undef DEBUG_TYPE`, and the 14.0.0 STATISTIC macro references DEBUG_TYPE at the
+// call site. 14.0.0's Debug.h also dropped the bare DEBUG(X) macro, so restore it.
+#define DEBUG_TYPE "giri"
+#define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)
 
 using namespace giri;
 using namespace llvm;
@@ -674,8 +675,8 @@ bool TraceFile::getSourcesForSpecialCall(DynValue &DV,
   if (isa<DbgInfoIntrinsic>(I))
     return true;
 
-  const CallSite CS(I);
-  Function *CalledFunc = CS.getCalledFunction();
+  const CallBase *CS = cast<CallBase>(I);
+  Function *CalledFunc = CS->getCalledFunction();
   if (!CalledFunc)
     return false;
 
@@ -687,9 +688,9 @@ bool TraceFile::getSourcesForSpecialCall(DynValue &DV,
 
   const StringRef name = CalledFunc->getName();
   if (name.startswith("llvm.memset.") || name == "calloc") {
-    for (unsigned index = 0; index < CS.arg_size(); ++index)
-      if (!isa<Constant>(CS.getArgument(index))) {
-        DynValue NDV = DynValue(CS.getArgument(index), trace_index);
+    for (unsigned index = 0; index < CS->arg_size(); ++index)
+      if (!isa<Constant>(CS->getArgOperand(index))) {
+        DynValue NDV = DynValue(CS->getArgOperand(index), trace_index);
         addToWorklist(NDV, Sources, DV);
       }
     return true;
@@ -697,17 +698,17 @@ bool TraceFile::getSourcesForSpecialCall(DynValue &DV,
              name.startswith("llvm.memmove.") ||
              name == "strcpy" ||
              name == "strlen") {
-    for (unsigned index = 0; index < CS.arg_size(); ++index)
-      if (!isa<Constant>(CS.getArgument(index))) {
-        DynValue NDV = DynValue(CS.getArgument(index), trace_index);
+    for (unsigned index = 0; index < CS->arg_size(); ++index)
+      if (!isa<Constant>(CS->getArgOperand(index))) {
+        DynValue NDV = DynValue(CS->getArgOperand(index), trace_index);
         addToWorklist(NDV, Sources, DV);
       }
     getSourcesForLoad(DV, Sources);
     return true;
   } else if (name == "strcat") {
-    for (unsigned index = 0; index < CS.arg_size(); ++index)
-      if (!isa<Constant>(CS.getArgument(index))) {
-        DynValue NDV = DynValue(CS.getArgument(index), trace_index);
+    for (unsigned index = 0; index < CS->arg_size(); ++index)
+      if (!isa<Constant>(CS->getArgOperand(index))) {
+        DynValue NDV = DynValue(CS->getArgOperand(index), trace_index);
         addToWorklist(NDV, Sources, DV);
       }
     getSourcesForLoad(DV, Sources, 2);
@@ -717,19 +718,19 @@ bool TraceFile::getSourcesForSpecialCall(DynValue &DV,
   } else if (name == "sscanf") {
   } else if (name == "sprintf") {
     unsigned numCharArrays = 0;
-    for (unsigned index = 0; index < CS.arg_size(); ++index)
-      if (!isa<Constant>(CS.getArgument(index))) {
-        DynValue NDV = DynValue(CS.getArgument(index), trace_index);
+    for (unsigned index = 0; index < CS->arg_size(); ++index)
+      if (!isa<Constant>(CS->getArgOperand(index))) {
+        DynValue NDV = DynValue(CS->getArgOperand(index), trace_index);
         addToWorklist(NDV, Sources, DV);
-        if (CS.getArgument(index)->getType() == VoidPtrType && index >= 2)
+        if (CS->getArgOperand(index)->getType() == VoidPtrType && index >= 2)
           ++numCharArrays;
       }
     getSourcesForLoad(DV, Sources, numCharArrays);
     return true;
   } else if (name == "fgets") {
-    for (unsigned index = 0; index < CS.arg_size(); ++index)
-      if (!isa<Constant>(CS.getArgument(index))) {
-        DynValue NDV = DynValue(CS.getArgument(index), trace_index);
+    for (unsigned index = 0; index < CS->arg_size(); ++index)
+      if (!isa<Constant>(CS->getArgOperand(index))) {
+        DynValue NDV = DynValue(CS->getArgOperand(index), trace_index);
         addToWorklist(NDV, Sources, DV);
       }
     return true;

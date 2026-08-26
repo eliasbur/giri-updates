@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "giriutil"
 
 #include "Utility/CountSrcLines.h"
 #include "Utility/SourceLineMapping.h"
@@ -36,6 +35,10 @@ using namespace std;
 //===----------------------------------------------------------------------===//
 //                            Pass Statistics
 //===----------------------------------------------------------------------===//
+// DEBUG_TYPE is defined after the includes: LLVM 14's dom-tree-builder header
+// (GenericDomTreeConstruction.h) does `#undef DEBUG_TYPE`, and the 14.0.0 STATISTIC
+// macro references DEBUG_TYPE at the call site.
+#define DEBUG_TYPE "giriutil"
 STATISTIC(NumOfDynamicBBs, "Number of basic blocks executed in trace");
 STATISTIC(NumSrcLines, "Number of static source lines executed in trace");
 STATISTIC(NumSrcLinesMissing, "Number of insts missing debug info");
@@ -87,7 +90,7 @@ void CountSrcLines::countLines(const string &bbrecord_file) {
 unordered_set<unsigned> CountSrcLines::readBB(const string &bbrecord) {
   int bb_fd = open(bbrecord.c_str(), O_RDONLY);
   if (!bb_fd)
-     report_fatal_error("Error opening trace file: " + bbrecord + "!\n");
+     report_fatal_error(Twine("Error opening trace file: ") + bbrecord + "!\n");
 
   unordered_set<unsigned> bb_set; // Keep track of basic bock ID
   Entry entry;
