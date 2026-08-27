@@ -1,14 +1,17 @@
-# ubuntu:18.04 base (unchanged from the 8.0.0 image): the 14.0.0 prebuilt
-# tarball is built for ubuntu-18.04, and 18.04's gcc 7.5 covers the C++14
-# standard that LLVM 14 builds with (per `llvm-config --cxxflags`).
+# ubuntu:20.04 base (up from 18.04 for the 15.0.0 port): the 15.0.0 prebuilt
+# tarball ships only as x86_64-linux-gnu-rhel-8.4 (glibc 2.28), so the base
+# image must provide glibc >= 2.28. 18.04 (glibc 2.27) is too old; 20.04
+# (glibc 2.31) loads the rhel-8.4 binaries cleanly (spike: `ldd opt` -> 0
+# "not found" symbols). The 15.0.0 prebuilt is built with the C++14 standard
+# (per `llvm-config --cxxflags`); 20.04's gcc 9.4 covers that.
 #
-# Toolchain provenance (new in the 14.0.0 port): LLVM stopped shipping
+# Toolchain provenance (carried from the 14.0.0 port): LLVM stopped shipping
 # prebuilt binaries on releases.llvm.org after 9.0.0; from 10.0.0 onward the
 # prebuilts live on the GitHub Releases of llvm/llvm-project (tag
-# llvmorg-14.0.0). install_llvm.sh downloads the ubuntu-18.04 x86_64 tarball
-# from there. If the tarball route ever breaks, the documented fallback is a
-# 14.0.0 source build (monorepo tarball on the same GitHub release).
-FROM ubuntu:18.04
+# llvmorg-15.0.0). install_llvm.sh downloads the rhel-8.4 x86_64 tarball from
+# there. If the tarball route ever breaks, the documented fallback is a
+# 15.0.0 source build (monorepo tarball on the same GitHub release).
+FROM ubuntu:20.04
 
 ENV LLVM_HOME=/usr/local/llvm
 ENV BuildMode=Release+Asserts
@@ -19,15 +22,23 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -qq -y wget make g++ python zip unzip autoconf libtool automake xz-utils libtinfo-dev zlib1g-dev libncurses5-dev libedit-dev libz-dev libxml2-dev
 
-# Install CMake >= 3.4.3 (Ubuntu 18.04 ships 3.10; pin a known-good 3.12 binary)
-RUN wget -q https://cmake.org/files/v3.12/cmake-3.12.4-Linux-x86_64.tar.gz && \
-    tar -xzf cmake-3.12.4-Linux-x86_64.tar.gz && \
-    cp -a cmake-3.12.4-Linux-x86_64/bin/* /usr/local/bin/ && \
-    cp -a cmake-3.12.4-Linux-x86_64/share/* /usr/local/share/ && \
-    rm -rf cmake-3.12.4-Linux-x86_64.tar.gz cmake-3.12.4-Linux-x86_64
+# Install CMake. The 15.0.0 prebuilt requires CMake >= 3.13.4 to configure
+# (its LLVMConfig.cmake no longer carries a `cmake_minimum_required` of its
+# own; the package is found via CONFIG, and the prebuilt CMake modules target
+# the 3.13.4-era API). Pin the newest 3.31.x binary (3.31.12): 3.31.x is the
+# last major line that keeps full compatibility with older projects, and it is
+# the newest line verified to configure the 15.0.0 prebuilt. (CMake 4.x drops
+# compatibility with `cmake_minimum_required(VERSION < 3.5)`, which is why the
+# root CMakeLists floor is bumped 3.4.3 -> 3.5 so the project stays
+# forward-compatible; 3.31.12 is pinned here as the newest known-good binary.)
+RUN wget -q https://cmake.org/files/v3.31/cmake-3.31.12-linux-x86_64.tar.gz && \
+    tar -xzf cmake-3.31.12-linux-x86_64.tar.gz && \
+    cp -a cmake-3.31.12-linux-x86_64/bin/* /usr/local/bin/ && \
+    cp -a cmake-3.31.12-linux-x86_64/share/* /usr/local/share/ && \
+    rm -rf cmake-3.31.12-linux-x86_64.tar.gz cmake-3.31.12-linux-x86_64
 
 ADD . giri
 
-RUN giri/utils/install_llvm.sh 14.0.0
+RUN giri/utils/install_llvm.sh 15.0.0
 
 # Build step is done interactively via `source /giri/utils/build.sh`

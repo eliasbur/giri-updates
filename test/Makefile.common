@@ -24,7 +24,7 @@ CFLAGS += -g -O0 -c -emit-llvm
 GIRI_LIB_DIR = $(GIRI_DIR)/lib
 GIRI_BIN_DIR = $(GIRI_DIR)/bin
 
-# New pass manager harness (LLVM 14.0.0). Each Giri library is loaded twice:
+# New pass manager harness (LLVM 15.0.0). Each Giri library is loaded twice:
 #   -load registers the cl::opt globals (-trace-file, -slice-file, -criterion-*,
 #       -dump-bbid, -mapping-*, ...) BEFORE opt parses the command line;
 #   -load-pass-plugin registers the -passes pipeline names AFTER parsing.
