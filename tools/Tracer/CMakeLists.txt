@@ -1,4 +1,4 @@
-add_executable(tracer Tracer.cpp)
+add_executable(tracer Tracer.cpp llvm_std_shim.cpp)
 
 target_include_directories(tracer PRIVATE
   ${CMAKE_SOURCE_DIR}/include
