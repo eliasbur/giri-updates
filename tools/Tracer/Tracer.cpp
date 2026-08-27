@@ -126,7 +126,16 @@ int main(int argc, char **argv) {
     MAM.registerPass([] { return dg::QueryLSNumbersPass(); });
     MAM.registerPass([] { return giri::DynamicGiri(); });
 
-    M->setDataLayout(M->getDataLayout());
+    // The module's DataLayout comes from the parsed bitcode (the frontend
+    // emits it); no re-setting is needed. Do NOT write
+    // M->setDataLayout(M->getDataLayout()) here: that is a *self-assignment*,
+    // and from LLVM 15 DataLayout's defaulted memberwise operator= (SmallVector
+    // members share storage) corrupts the parsed alignment table on a
+    // self-copy (ABI(i32) 4 -> 65536 in 15.0.0). That corruption then fails
+    // the new 15.0.0 verifier check (getABITypeAlign > ParamMaxAlignment=2^14)
+    // in the trailing VerifierPass on every pointer-argument call, aborting the
+    // tool. (Opt-driven pipelines are unaffected: they never run this line and
+    // do not verify by default.)
 
     // Number all basic blocks and instructions.
     MPM.addPass(dg::BasicBlockNumberPass());
