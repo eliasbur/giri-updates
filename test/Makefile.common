@@ -20,7 +20,22 @@ EXIT_UNCHECKED ?= 0
 ################# Dont' edit the following lines accidently ##################
 CC = clang
 CXX = clang++
-CFLAGS += -g -O0 -c -emit-llvm
+# -Wno-error=implicit-function-declaration: from Clang 15, an implicit
+# function declaration (calling a function before any prototype, as
+# test/UnitTests/test20/even.c does with is_odd) is a hard error by
+# default; 14.0.0 (and the 3.4-era reference) compiled it with a
+# warning. The flag restores that behavior for the C sources without
+# touching the test cases. (No-op for the C++ sources, where implicit
+# declarations are already an error and none of the tests use them.)
+CFLAGS += -g -O0 -c -emit-llvm -Wno-error=implicit-function-declaration
+# -Xclang -no-opaque-pointers: from LLVM 15, clang emits IR with *opaque*
+# pointers by default; 14.0.0 (and the 3.4-era reference) emitted *typed*
+# pointers (i32*, i8**...). The 3.4 goldens are typed-pointer-based, and the
+# opaque IR changes the program structure the backward slice traverses (the
+# kmeans slice drifted from the golden: 61/240/279 vs 222/276). The flag
+# restores typed-pointer emit so the numbered IR matches the reference.
+# (Passthrough form: in 15.0.0 the flag is a cc1 flag, not a driver flag.)
+CFLAGS += -Xclang -no-opaque-pointers
 GIRI_LIB_DIR = $(GIRI_DIR)/lib
 GIRI_BIN_DIR = $(GIRI_DIR)/bin
 
@@ -83,8 +98,15 @@ else
 		fi
 endif
 
+# -no-pie: from LLVM 15, clang links position-independent executables by
+# default (and assembles .s with -mrelocation-model pic), but `llc -O0`
+# emits *static-model* asm whose absolute .rodata reference is an
+# R_X86_64_32S relocation a PIE link rejects. 14.0.0 (and the 3.4
+# reference) linked the traced exe non-PIE, so -no-pie restores the
+# proven link model. Applied at link only; the .s (and its numbering)
+# is untouched.
 $(NAME).trace.exe : $(NAME).trace.s
-	$(CXX) -fno-strict-aliasing $+ -o $@ -L$(GIRI_LIB_DIR) -lrtgiri $(LDFLAGS)
+	$(CXX) -fno-strict-aliasing -no-pie $+ -o $@ -L$(GIRI_LIB_DIR) -lrtgiri $(LDFLAGS)
 
 $(NAME).trace.s : $(NAME).trace.bc
 	llc -asm-verbose=false -O0 $< -o $@

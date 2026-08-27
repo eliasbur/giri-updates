@@ -44,7 +44,7 @@ $(NAME).trace: $(NAME).trace.exe
 	- ./$< $(INPUT)
 
 $(NAME).trace.exe : $(NAME).trace.s
-	$(CXX) -fno-strict-aliasing $+ -o $@ $(LDFLAGS) -L$(GIRI_LIB_DIR) -lrtgiri
+	$(CXX) -fno-strict-aliasing -no-pie $+ -o $@ $(LDFLAGS) -L$(GIRI_LIB_DIR) -lrtgiri
 
 $(NAME).trace.s : $(NAME).trace.bc
 	llc -asm-verbose=false -O0 $< -o $@
