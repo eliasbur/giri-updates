@@ -13,9 +13,16 @@ transcript).
 ## 1. Cold from-scratch build at HEAD
 
 `/giri/build` wiped, then `source /giri/utils/build.sh` (cmake configure +
-`make -j` + `make -C test`). The source in the container was synced to HEAD
-first (the one file that differed, `tools/Tracer/Tracer.cpp`, was a comment
-only; after sync its md5 matched host HEAD).
+`make -j` + `make -C test`). The container's `/giri` was verified against HEAD
+with a **full-tree md5 manifest** (every committed file's git-blob hash vs the
+on-disk hash): **483/483 committed files byte-identical, 0 missing, 0
+mismatch**. At the moment of the cold build the only drift was in three
+docs/config files the build never reads (`Dockerfile` — comment-only, `AGENTS.md`,
+the task note); **every build input (`.c`/`.cpp`/`.h`/`Makefile`/
+`CMakeLists.txt`/golden/`criterion`/`.sh`) was already byte-identical to HEAD**
+(drift count 0). The three docs were then synced, after which the full tree
+matches HEAD exactly. So the cold build ran on the committed source, not an
+approximation.
 
 Result (`cold-build-suite.log`): **build.sh exit 0**, all **22 tests PASS**
 (19 UnitTests test1–5, test8–21 + matrix_multiply/pca/kmeans seq), five
