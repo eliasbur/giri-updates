@@ -159,7 +159,11 @@ API fixes, toolchain, Dockerfile) unchanged. The 15.0.0 work adds:
 4. **Toolchain**: ubuntu:20.04 + prebuilt rhel-8.4 LLVM/Clang 15.0.0 at
    `/usr/local/llvm` (`llvm-config --version` = 15.0.0), CMake 3.31.12,
    `find_package(LLVM 15.0 REQUIRED CONFIG)` (Giri-side forward-compat choice;
-   the LLVM 15.0.0 CMake floor is 3.5).
+   the LLVM 15.0.0 CMake floor is 3.5). Note the corrected premises carried
+   through the docs: 15.0.0 **builds with C++14** (`llvm-config --cxxflags` =
+   `-std=c++14`; C++17 becomes mandatory only in 16.0.0) and the **legacy PM
+   is still present** in 15.0.0 (removed in 16.0.0) — both were stated
+   incorrectly in the task note's opening and are not repeated here.
 5. **Dockerfile**: `ENV DEBIAN_FRONTEND=noninteractive` so apt/tzdata do not
    prompt unattended on ubuntu:20.04.
 
