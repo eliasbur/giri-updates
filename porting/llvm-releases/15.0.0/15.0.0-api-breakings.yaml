@@ -1,0 +1,800 @@
+---
+version: "15.0.0"
+sourceUrl: "https://releases.llvm.org/15.0.0/docs/ReleaseNotes.html"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-28"
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes") ---
+
+  - id: general-changes-list-redacted
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Top-level change-list bullet: content redacted as an ellipsis in the provided HTML source"
+    description: "…"
+    affectedApi:
+      - "Non-comprehensive list of changes in this release"
+    notes: "Redacted in the provided HTML source; the bullet's text is not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Update on required toolchains to build LLVM (H3 under the top-level list) ---
+
+  - id: build-toolchain-minimum-versions-soft
+    category: "building"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "LLVM 15.x raises the minimum build-toolchain versions (GCC >= 7.1, Clang >= 5.0, Apple Clang >= 9.3, Visual Studio 2019 >= 16.7); soft in 15.x, hard in 16.x (C++17)"
+    description: |-
+        With LLVM 15.x we will raise the version requirements of the toolchain used to build LLVM. The new requirements are as follows: GCC >= 7.1, Clang >= 5.0, Apple Clang >= 9.3, Visual Studio 2019 >= 16.7. In LLVM 15.x these requirements will be "soft" requirements and the version check can be skipped by passing -DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=ON to CMake. With the release of LLVM 16.x these requirements will be hard and LLVM developers can start using C++17 features, making it impossible to build with older versions of these toolchains.
+    affectedApi:
+      - "LLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN"
+      - "GCC >= 7.1"
+      - "Clang >= 5.0"
+      - "Apple Clang >= 9.3"
+      - "Visual Studio 2019 >= 16.7"
+    notes: |-
+        Applies to building LLVM from source. The port builds Giri against the prebuilt x86_64 15.0.0 toolchain, which is itself built with -std=c++14 (verified: `llvm-config --cxxflags`), so the source-build toolchain floor does not apply and C++17 is NOT required for the 15.0.0 port. The 16.x hard-C++17 note is the trigger for a future source-build migration and is recorded here for that reason.
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: llvm-ir-opaque-pointers-default
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "LLVM now uses opaque pointers by default; different pointer types (i8*, i32*, void()**) are represented as a single ptr type"
+    description: |-
+        LLVM now uses opaque pointers. This means that different pointer types like i8*, i32* or void()** are now represented as a single ptr type. See the linked document for migration instructions.
+    affectedApi:
+      - "opaque pointers"
+      - "ptr type"
+      - "typed pointer types"
+      - "clang -opaque-pointers"
+    notes: |-
+        BREAKS the reference harness (not the pass logic): from LLVM 15 clang emits IR with opaque pointers by default, whereas 14.0.0 (and the 3.4 reference the goldens were built with) emits typed pointers. Opaque IR changes the program structure the backward slice traverses, so the kmeans slice drifted from the golden. Fixed in the harness (test/Makefile.common) by adding -Xclang -no-opaque-pointers to the compile line to restore typed-pointer emit, so the numbered IR matches the 3.4 reference (commit 31e36fe); pass logic is unchanged and the full 22/22 suite passes. The 15.0.0 clang driver does not expose -opaque-pointers as a driver flag, so the cc1 flag is passed through -Xclang.
+    relevance: "affected"
+    status: "addressed"
+
+  - id: llvm-ir-vector-extract-intrinsic-renamed
+    category: "llvm-ir"
+    changeType: "renamed"
+    severity: "low"
+    summary: "Renamed llvm.experimental.vector.extract intrinsic to llvm.vector.extract"
+    description: "Renamed llvm.experimental.vector.extract intrinsic to llvm.vector.extract."
+    affectedApi:
+      - "llvm.experimental.vector.extract"
+      - "llvm.vector.extract"
+    notes: |-
+        Intrinsic rename; Giri does not emit or consume vector.extract (no vector intrinsics in the test programs). No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvm-ir-vector-insert-intrinsic-renamed
+    category: "llvm-ir"
+    changeType: "renamed"
+    severity: "low"
+    summary: "Renamed llvm.experimental.vector.insert intrinsic to llvm.vector.insert"
+    description: "Renamed llvm.experimental.vector.insert intrinsic to llvm.vector.insert."
+    affectedApi:
+      - "llvm.experimental.vector.insert"
+      - "llvm.vector.insert"
+    notes: "Intrinsic rename; no vector.insert in the test programs. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvm-ir-constant-expression-variants-removed
+    category: "llvm-ir"
+    changeType: "removed"
+    severity: "medium"
+    summary: "The constant-expression variants of extractvalue, insertvalue, udiv/sdiv/urem/srem and fadd/fsub/fmul/fdiv/frem were removed from the IR"
+    description: |-
+        The constant expression variants of the following instructions have been removed: extractvalue, insertvalue, udiv, sdiv, urem, srem, fadd, fsub, fmul, fdiv, frem.
+    affectedApi:
+      - "extractvalue (const expr)"
+      - "insertvalue (const expr)"
+      - "udiv (const expr)"
+      - "sdiv (const expr)"
+      - "urem (const expr)"
+      - "srem (const expr)"
+      - "fadd (const expr)"
+      - "fsub (const expr)"
+      - "fmul (const expr)"
+      - "fdiv (const expr)"
+      - "frem (const expr)"
+    notes: |-
+        Constant-expression IR removal (parse/emit side). Giri only *creates* cast constant expressions (ConstantExpr::getZExtOrBitCast in include/Utility/Utils.h and lib/Giri/TracingNoGiri.cpp) and reads IR via the C++ API; it never constructs or parses the removed arithmetic const-expr forms. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvm-ir-atomicrmw-fmax-fmin-support
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "The atomicrmw instruction now supports fmax and fmin (matching llvm.maxnum.*/llvm.minnum.*)"
+    description: |-
+        Added the support for fmax and fmin in atomicrmw instruction. The comparison is expected to match the behavior of llvm.maxnum.* and llvm.minnum.* respectively.
+    affectedApi:
+      - "atomicrmw"
+      - "fmax"
+      - "fmin"
+    notes: "IR feature addition; Giri does not use atomicrmw. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvm-ir-callbr-blockaddress-argument-removed
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "callbr no longer uses blockaddress arguments for labels; !-prefixed constraints refer directly to the indirect destination list"
+    description: |-
+        callbr instructions no longer use blockaddress arguments for labels. Instead, label constraints starting with ! refer directly to entries in the callbr indirect destination list.
+    affectedApi:
+      - "callbr"
+      - "blockaddress"
+    notes: "IR encoding change for callbr; no callbr in the test programs. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to building LLVM ---
+
+  - id: building-cmake-build-type-now-required
+    category: "building"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Omitting CMAKE_BUILD_TYPE when using a single-configuration generator is now an error"
+    description: |-
+        Omitting CMAKE_BUILD_TYPE when using a single configuration generator is now an error. You now have to pass -DCMAKE_BUILD_TYPE=<type> in order to configure LLVM. This is done to help new users of LLVM select the correct type: since building LLVM in Debug mode is very resource intensive, we want to make sure that new users make the choice that lines up with their usage.
+    affectedApi:
+      - "CMAKE_BUILD_TYPE"
+    notes: |-
+        Applies to configuring LLVM from source with a single-config generator. The port builds Giri against the prebuilt 15.0.0 toolchain (not LLVM), and the Giri build script (utils/build.sh) already passes -DCMAKE_BUILD_TYPE=Release, so the project configures cleanly. The prebuilt 15.0.0 CMake package imposes no explicit cmake_minimum_required (normal for a prebuilt install), so the Giri CMakeLists.txt floor bump 3.4.3 -> 3.5 (commit 0500b26) is a forward-compatibility choice (CMake 4.x drops support for CMakeLists < 3.5), not a direct LLVM-15 mandate.
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to TableGen (section present, no items in source) ---
+
+  # --- Changes to the AArch64 Backend (section present, no items in source) ---
+
+  # --- Changes to the AMDGPU Backend ---
+
+  - id: amdgpu-8-16-bit-atomic-load-store
+    category: "target-amdgpu"
+    targetName: "amdgpu"
+    changeType: "added"
+    severity: "low"
+    summary: "AMDGPU: 8 and 16-bit atomic loads and stores are now supported"
+    description: "8 and 16-bit atomic loads and stores are now supported."
+    affectedApi:
+      - "AMDGPU target"
+      - "atomic load/store"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the ARM Backend ---
+
+  - id: arm-armv9a-support
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM: support added for the Armv9-A, Armv9.1-A and Armv9.2-A architectures"
+    description: "Added support for the Armv9-A, Armv9.1-A and Armv9.2-A architectures."
+    affectedApi:
+      - "ARM target"
+      - "Armv9-A"
+      - "Armv9.1-A"
+      - "Armv9.2-A"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-armv8-1-m-pacbti-m
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM: support added for the Armv8.1-M PACBTI-M extension"
+    description: "Added support for the Armv8.1-M PACBTI-M extension."
+    affectedApi:
+      - "Armv8.1-M PACBTI-M"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-t32-complex-it-block-deprecation-removed
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "ARM: the deprecation of ARMv8-A T32 Complex IT blocks was removed; -mrestrict-it is now always off by default"
+    description: |-
+        Removed the deprecation of ARMv8-A T32 Complex IT blocks. No deprecation warnings will be generated and -mrestrict-it is now always off by default. Previously it was on by default for Armv8 and off for all other architecture versions.
+    affectedApi:
+      - "ARM target"
+      - "-mrestrict-it"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-a57-a72-erratum-workaround-pass
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM: a pass to workaround Cortex-A57 Erratum 1742098 and Cortex-A72 Erratum 1655431 (enabled by default when targeting either CPU)"
+    description: |-
+        Added a pass to workaround Cortex-A57 Erratum 1742098 and Cortex-A72 Erratum 1655431. This is enabled by default when targeting either CPU.
+    affectedApi:
+      - "ARM target"
+      - "Cortex-A57"
+      - "Cortex-A72"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-windows-seh-unwind-mingw
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "ARM: Windows SEH unwind information generation implemented; the MinGW target switched from DWARF to SEH"
+    description: |-
+        Implemented generation of Windows SEH unwind information. Switched the MinGW target to use SEH instead of DWARF for unwind information.
+    affectedApi:
+      - "ARM target"
+      - "SEH"
+      - "DWARF"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-cortex-m85-support
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM: support added for the Cortex-M85 CPU"
+    description: "Added support for the Cortex-M85 CPU."
+    affectedApi:
+      - "ARM target"
+      - "Cortex-M85"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-mframe-chain-option
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM: new -mframe-chain=(none|aapcs|aapcs+leaf) option controlling AAPCS-compliant Frame Records"
+    description: |-
+        Added support for a new -mframe-chain=(none|aapcs|aapcs+leaf) command-line option, which controls the generation of AAPCS-compliant Frame Records.
+    affectedApi:
+      - "ARM target"
+      - "-mframe-chain"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the AVR Backend (section body redacted in source) ---
+
+  - id: avr-changes-redacted
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AVR section body redacted as an ellipsis in the provided HTML source"
+    description: "…"
+    affectedApi:
+      - "AVR target"
+    notes: |-
+        Redacted in the provided HTML source; the actual changes are not recoverable from this file.
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the DirectX Backend ---
+
+  - id: directx-experimental-target-added
+    category: "target-directx"
+    targetName: "directx"
+    changeType: "added"
+    severity: "low"
+    summary: "DirectX added as an experimental target (-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=DirectX); not packaged in pre-built binaries"
+    description: |-
+        DirectX has been added as an experimental target. Specify -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=DirectX in your CMake configuration to enable it. The target is not packaged in pre-built binaries.
+    affectedApi:
+      - "DirectX target"
+      - "LLVM_EXPERIMENTAL_TARGETS_TO_BUILD"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: directx-dxil-architecture
+    category: "target-directx"
+    targetName: "directx"
+    changeType: "added"
+    severity: "low"
+    summary: "The DirectX backend supports the dxil architecture (LLVM 3.6 IR encoded as bitcode, the format used for DirectX GPU Shader programs)"
+    description: |-
+        The DirectX backend supports the dxil architecture which is based on LLVM 3.6 IR encoded as bitcode and is the format used for DirectX GPU Shader programs.
+    affectedApi:
+      - "DirectX target"
+      - "dxil"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Hexagon Backend (section body redacted in source) ---
+
+  - id: hexagon-changes-redacted
+    category: "target-hexagon"
+    targetName: "hexagon"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Hexagon section body redacted as an ellipsis in the provided HTML source"
+    description: "…"
+    affectedApi:
+      - "Hexagon target"
+    notes: |-
+        Redacted in the provided HTML source; the actual changes are not recoverable from this file.
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the MIPS Backend (section body redacted in source) ---
+
+  - id: mips-changes-redacted
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "MIPS section body redacted as an ellipsis in the provided HTML source"
+    description: "…"
+    affectedApi:
+      - "MIPS target"
+    notes: |-
+        Redacted in the provided HTML source; the actual changes are not recoverable from this file.
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the PowerPC Backend ---
+
+  - id: powerpc-ctr-loops-post-isel-pass
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC: a new post-instruction-selection pass generates CTR loops"
+    description: "Add a new post instruction selection pass to generate CTR loops."
+    affectedApi:
+      - "PowerPC target"
+      - "CTR loops"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-sse4-bmi-intrinsics
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC: SSE4 and BMI compatible intrinsics implementation added"
+    description: "Add SSE4 and BMI compatible intrinsics implementation."
+    affectedApi:
+      - "PowerPC target"
+      - "SSE4"
+      - "BMI"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-16-byte-lock-free-atomics
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC: 16-byte lock-free atomics on PowerPC8 and up; atomic load/store for pointer types; stack size larger than 2G"
+    description: |-
+        Supported 16-byte lock free atomics on PowerPC8 and up. Supported atomic load/store for pointer types. Supported stack size larger than 2G.
+    affectedApi:
+      - "PowerPC target"
+      - "atomics"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-min-max-abs-builtin
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC: __builtin_min/__builtin_max/__abs builtins added"
+    description: "Add __builtin_min/__builtin_max/__abs builtins."
+    affectedApi:
+      - "PowerPC target"
+      - "__builtin_min"
+      - "__builtin_max"
+      - "__abs"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-codegen-splat-shuffle-mulli-improvements
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "PowerPC: code-generation improvements for splat load/vector shuffle/mulli; VSX instructions emitted for vector loads/stores regardless of alignment; bug fixes"
+    description: |-
+        Code generation improvements for splat load/vector shuffle/mulli, etc. Emit VSX instructions for vector loads and stores regardless of alignment. Bug fixes.
+    affectedApi:
+      - "PowerPC target"
+      - "splat load"
+      - "VSX"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-mcpu-future-isa
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC: mcpu=future now has its own ISA (FutureISA); the ppc-set-dscr option was added"
+    description: |-
+        The mcpu=future has its own ISA now (FutureISA). Added the ppc-set-dscr option to set the Data Stream Control Register (DSCR).
+    affectedApi:
+      - "PowerPC target"
+      - "FutureISA"
+      - "ppc-set-dscr"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-xcoff-integrated-as
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC/AIX: 64-bit XCOFF for the integrated-as path; X86-compatible vector intrinsics; 32-byte default code csect alignment; auxiliary header; improved alias symbol handling"
+    description: |-
+        AIX improvements: Supported 64 bit XCOFF for integrated-as path. Supported X86-compatible vector intrinsics. Program code csect default alignment now is 32-byte. Supported auxiliary header in integrated-as path. Improved alias symbol handling.
+    affectedApi:
+      - "PowerPC/AIX target"
+      - "XCOFF"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the RISC-V Backend ---
+
+  - id: riscv-redundant-copy-elimination-pass
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "RISC-V: a RISCVRedundantCopyElimination pass was added to remove unnecessary zero copies"
+    description: "A RISCVRedundantCopyElimination pass was added to remove unnecessary zero copies."
+    affectedApi:
+      - "RISC-V target"
+      - "RISCVRedundantCopyElimination"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-codegenprepare-pass
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "RISC-V: a RISC-V-specific CodeGenPrepare pass was added"
+    description: "A RISC-V specific CodeGenPrepare pass was added."
+    affectedApi:
+      - "RISC-V target"
+      - "CodeGenPrepare"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-machine-outliner-oz
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "RISC-V: the machine outliner is enabled by default at -Oz; the new RISCVMakeCompressible pass modifies instructions at -Oz for C-extension compression"
+    description: |-
+        The machine outliner was enabled by default for RISC-V at -Oz. Additionally, the newly introduced RISCVMakeCompressible pass will make modify instructions prior to emission at -Oz in order to increase opportunities for the compression with the RISC-V C extension.
+    affectedApi:
+      - "RISC-V target"
+      - "-Oz"
+      - "RISCVMakeCompressible"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-vector-extensions-bugfixes
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "RISC-V: various bug fixes and improvements to code generation for the RISC-V vector extensions"
+    description: "Various bug fixes and improvements to code generation for the RISC-V vector extensions."
+    affectedApi:
+      - "RISC-V target"
+      - "RVV"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-optimisation-pass-improvements
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "RISC-V: improvements to RISC-V-specific optimisation passes such as RISCVSExtWRemoval and RISCVMergeBaseOffset"
+    description: |-
+        Various improvements were made to RISC-V specific optimisation passes such as RISCVSExtWRemoval and RISCVMergeBaseOffset.
+    affectedApi:
+      - "RISC-V target"
+      - "RISCVSExtWRemoval"
+      - "RISCVMergeBaseOffset"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-llc-target-abi-generic-cpu
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "RISC-V: llc now computes the target ABI from the target architecture (Clang's logic) when no explicit ABI is given; 'generic' CPU maps to generic-rv32/rv64"
+    description: |-
+        llc now computes the target ABI based on the target architecture using the same logic as Clang if not explicit ABI is given. generic is now recognized as a valid CPU name and is mapped to generic-rv32 or generic-rv64 depending on the target triple.
+    affectedApi:
+      - "RISC-V target"
+      - "llc"
+      - "target ABI"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-zvfh-zihintpause-zfinx-zdinx-zicbom-zmmul-hypervisor-sinval-extensions
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "RISC-V: assembler/disassembler support added for the Zvfh, Zihintpause, Zfinx/Zdinx, Zicbom/Zicboz/Zicbop, Zmmul, hypervisor and Sinval extensions"
+    description: |-
+        Support for the experimental Zvfh extension was added, enabling half-precision floating point in vectors. Support for the Zihintpause (Pause Hint) extension. Assembler and disassembler support for the Zfinx and Zdinx (float / double in integer register) extensions. Assembler and disassembler support for the Zicbom, Zicboz, and Zicbop cache management operation extensions. Support for the Zmmul extension (a subextension of the M extension, adding multiplication instructions only). Assembler and disassembler support for the hypervisor extension and for the Sinval supervisor memory-management extension.
+    affectedApi:
+      - "RISC-V target"
+      - "Zvfh"
+      - "Zihintpause"
+      - "Zfinx"
+      - "Zdinx"
+      - "Zicbom"
+      - "Zicboz"
+      - "Zicbop"
+      - "Zmmul"
+      - "hypervisor"
+      - "Sinval"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the WebAssembly Backend (section body redacted in source) ---
+
+  - id: webassembly-changes-redacted
+    category: "target-webassembly"
+    targetName: "webassembly"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "WebAssembly section body redacted as an ellipsis in the provided HTML source"
+    description: "…"
+    affectedApi:
+      - "WebAssembly target"
+    notes: |-
+        Redacted in the provided HTML source; the actual changes are not recoverable from this file.
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the X86 Backend ---
+
+  - id: x86-half-type-sse2-psabi
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "X86: support the half type on SSE2 and above targets following the X86 psABI"
+    description: "Support half type on SSE2 and above targets following X86 psABI."
+    affectedApi:
+      - "X86 target"
+      - "half"
+      - "_Float16"
+      - "X86 psABI"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-rdpru-zen2
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "X86: support the rdpru instruction on Zen2 and above targets"
+    description: "Support rdpru instruction on Zen2 and above targets."
+    affectedApi:
+      - "X86 target"
+      - "rdpru"
+      - "Zen2"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-half-type-abi-breaking-change
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "X86: during this release the half type has an ABI breaking change to support the _Float16 ABI on SSE2+ following the X86 psABI (D107082)"
+    description: |-
+        During this release, half type has an ABI breaking change to provide the support for the ABI of _Float16 type on SSE2 and above following X86 psABI. (D107082) The change may affect the current use of half includes (but is not limited to): Frontends generating half type in function passing and/or returning arguments. Downstream runtimes providing any half conversion builtins assuming the old ABI. Projects built with LLVM 15.0 but using early versions of compiler-rt. When you find failures with half type, check the calling conversion of the code and switch it to the new ABI.
+    affectedApi:
+      - "X86 target"
+      - "_Float16"
+      - "half ABI"
+      - "D107082"
+    notes: |-
+        Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is an opt pass plugin, not a target backend. No source interaction. Giri's test programs use no half/_Float16 types (verified: no _Float16/half/__fp16 in lib/, include/, runtime/, tools/).
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the C API ---
+
+  - id: llvmcapi-llvmgetcastopcode-added
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "Added LLVMGetCastOpcode (wrapper of CastInst::getCastOpcode) to resolve the best cast op for LLVMBuildCast"
+    description: |-
+        Add LLVMGetCastOpcode function to aid users of LLVMBuildCast in resolving the best cast operation given a source value and destination type. This function is a direct wrapper of CastInst::getCastOpcode.
+    affectedApi:
+      - "LLVMGetCastOpcode"
+    notes: "Giri uses the LLVM C++ API, not the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvmcapi-llvmgetaggregateelement-added-getelementasconstant-deprecated
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "Added LLVMGetAggregateElement (wrapper of Constant::getAggregateElement); LLVMGetElementAsConstant deprecated in its favor"
+    description: |-
+        Add LLVMGetAggregateElement function as a wrapper for Constant::getAggregateElement, which can be used to fetch an element of a constant struct, array or vector, independently of the underlying representation. The LLVMGetElementAsConstant function is deprecated in favor of the new function, which works on all constant aggregates, rather than only instances of ConstantDataSequential.
+    affectedApi:
+      - "LLVMGetAggregateElement"
+      - "LLVMGetElementAsConstant"
+    notes: "Giri uses the LLVM C++ API, not the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvmcapi-constant-expression-creators-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "medium"
+    summary: "C-API constant-expression creators removed (LLVMConstExtractValue/InsertValue/UDiv/SDiv/URem/SRem/FAdd/FSub/FMul/FDiv/FRem incl. Exact variants); use the LLVMBuildXYZ APIs instead (they constant-fold when possible)"
+    description: |-
+        The following functions for creating constant expressions have been removed, because the underlying constant expressions are no longer supported. Instead, an instruction should be created using the LLVMBuildXYZ APIs, which will constant fold the operands if possible and create an instruction otherwise: LLVMConstExtractValue, LLVMConstInsertValue, LLVMConstUDiv, LLVMConstExactUDiv, LLVMConstSDiv, LLVMConstExactSDiv, LLVMConstURem, LLVMConstSRem, LLVMConstFAdd, LLVMConstFSub, LLVMConstFMul, LLVMConstFDiv, LLVMConstFRem.
+    affectedApi:
+      - "LLVMConstExtractValue"
+      - "LLVMConstInsertValue"
+      - "LLVMConstUDiv"
+      - "LLVMConstExactUDiv"
+      - "LLVMConstSDiv"
+      - "LLVMConstExactSDiv"
+      - "LLVMConstURem"
+      - "LLVMConstSRem"
+      - "LLVMConstFAdd"
+      - "LLVMConstFSub"
+      - "LLVMConstFMul"
+      - "LLVMConstFDiv"
+      - "LLVMConstFRem"
+    notes: |-
+        Giri is written against the C++ API (no LLVMBuild*/LLVMConst* C-API usage anywhere in the tree), and its only ConstantExpr creation is the cast form (getZExtOrBitCast), which is unaffected. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvmcapi-llvmdeleteinstruction-added
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "Added LLVMDeleteInstruction, allowing deletion of instructions that are not inserted into a basic block"
+    description: |-
+        Add LLVMDeleteInstruction function which allows deleting instructions that are not inserted into a basic block.
+    affectedApi:
+      - "LLVMDeleteInstruction"
+    notes: "Giri uses the LLVM C++ API, not the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvmcapi-opaque-pointer-migration-deprecations-1500
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "As part of the opaque-pointer migration these C-APIs are deprecated and will be removed in the next release: LLVMBuildLoad->Load2, LLVMBuildCall->Call2, LLVMBuildInvoke->Invoke2, LLVMBuildGEP->GEP2, LLVMBuildInBoundsGEP->InBoundsGEP2, LLVMBuildStructGEP->StructGEP2, LLVMBuildPtrDiff->PtrDiff2, LLVMConstGEP->ConstGEP2, LLVMConstInBoundsGEP->ConstInBoundsGEP2, LLVMAddAlias->Alias2"
+    description: |-
+        As part of the opaque pointer migration, the following APIs are deprecated and will be removed in the next release: LLVMBuildLoad -> LLVMBuildLoad2, LLVMBuildCall -> LLVMBuildCall2, LLVMBuildInvoke -> LLVMBuildInvoke2, LLVMBuildGEP -> LLVMBuildGEP2, LLVMBuildInBoundsGEP -> LLVMBuildInBoundsGEP2, LLVMBuildStructGEP -> LLVMBuildStructGEP2, LLVMBuildPtrDiff -> LLVMBuildPtrDiff2, LLVMConstGEP -> LLVMConstGEP2, LLVMConstInBoundsGEP -> LLVMConstInBoundsGEP2, LLVMAddAlias -> LLVMAddAlias2.
+    affectedApi:
+      - "LLVMBuildLoad"
+      - "LLVMBuildLoad2"
+      - "LLVMBuildCall"
+      - "LLVMBuildCall2"
+      - "LLVMBuildInvoke"
+      - "LLVMBuildInvoke2"
+      - "LLVMBuildGEP"
+      - "LLVMBuildGEP2"
+      - "LLVMBuildInBoundsGEP"
+      - "LLVMBuildInBoundsGEP2"
+      - "LLVMBuildStructGEP"
+      - "LLVMBuildStructGEP2"
+      - "LLVMBuildPtrDiff"
+      - "LLVMBuildPtrDiff2"
+      - "LLVMConstGEP"
+      - "LLVMConstGEP2"
+      - "LLVMConstInBoundsGEP"
+      - "LLVMConstInBoundsGEP2"
+      - "LLVMAddAlias"
+      - "LLVMAddAlias2"
+    notes: |-
+        Giri uses the C++ API (no C-API usage in the tree), so the deprecated C-API set has no source interaction. The corresponding C++/IR impact (opaque pointers) is tracked as llvm-ir-opaque-pointers-default.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvmcapi-compression-namespace-refactor
+    category: "c-api"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "Refactored compression namespaces: llvm::zlib relocated to llvm::compression::zlib; crc32 removed from the zlib namespace (use llvm::crc32)"
+    description: |-
+        Refactor compression namespaces across the project, making way for a possible introduction of alternatives to zlib compression in the llvm toolchain. Changes are as follows: Relocate the llvm::zlib namespace to llvm::compression::zlib. Remove crc32 from zlib compression namespace, people should use the llvm::crc32 instead.
+    affectedApi:
+      - "llvm::zlib"
+      - "llvm::compression::zlib"
+      - "llvm::crc32"
+    notes: |-
+        Compression-namespace refactor; Giri references none of these namespaces (verified: no llvm::zlib / crc32 / compression usage in the tree) and writes raw .bc without bitcode compression. No source interaction.
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Go bindings (section present, no items in source) ---

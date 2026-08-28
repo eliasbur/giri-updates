@@ -1,0 +1,363 @@
+---
+version: "13.0.0"
+sourceUrl: "https://releases.llvm.org/13.0.0/docs/ReleaseNotes.html"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-25"
+
+changes:
+
+
+  # --- General changes (top-level "Non-comprehensive list of changes") ---
+
+  - id: windows-cet-ehcontguard-unwind-entrypoints
+    category: "general"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Windows CET: the -ehcontguard option now emits valid unwind entrypoints validated when the exception context is set"
+    description: "Windows Control-flow Enforcement Technology: the -ehcontguard option now emits valid unwind entrypoints which are validated when the context is being set during exception handling."
+    affectedApi:
+      - "-ehcontguard"
+    notes: "Windows CET; the port targets Linux ELF/DWARF. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: flang-included-in-binary-packages
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Flang is now included in the binary packages released by LLVM"
+    description: "Flang is now included in the binary packages released by LLVM."
+    affectedApi:
+      - "Flang"
+    notes: "Packaging of the Flang frontend; Giri is not affected by frontend packaging."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: debuginfo-test-renamed-cross-project-tests
+    category: "general"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "The debuginfo-test project was renamed cross-project-tests; the new name replaces it in LLVM_ENABLE_PROJECTS and a check-cross-project-tests target was added"
+    description: "The debuginfo-test project has been renamed cross-project-tests and is now intended for testing components from multiple projects, not just debug information. The new “cross-project-tests” name replaces “debuginfo-test” in LLVM_ENABLE_PROJECTS, and a new check-cross-project-tests target has been added for running all tests in the project. The pre-existing check-debuginfo- test target remains for running just the debug information tests. (D95339 and D96513)"
+    affectedApi:
+      - "cross-project-tests"
+      - "debuginfo-test"
+      - "LLVM_ENABLE_PROJECTS"
+      - "check-cross-project-tests"
+      - "check-debuginfo-test"
+    notes: "Build/test-infra rename of a test project; Giri uses its own test harness."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: inalloca-mandatory-type-field
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "The inalloca attribute now has a mandatory type field, similar to byval and sret"
+    description: "The inalloca attribute now has a mandatory type field, similar to byval and sret."
+    affectedApi:
+      - "inalloca"
+    notes: "The inalloca attribute; Giri source does not use inalloca."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: opaque-pointer-type-ptr-introduced
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "The opaque pointer type ptr has been introduced (still experimental; not ready for use)"
+    description: "The opaque pointer type ptr has been introduced. It is still in the process of being worked on and should not be used yet."
+    affectedApi:
+      - "ptr"
+    notes: "Opaque-pointer type is experimental and unused; Giri still uses typed pointers. Theoretical adjacency only (the type system surfaces it but Giri does not switch to it)."
+    relevance: "unlikely"
+    status: "pending"
+  - id: legacy-pass-manager-deprecated
+    category: "llvm-ir"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "Using the legacy pass manager for the optimization pipeline is deprecated and will be removed after LLVM 14"
+    description: "Using the legacy pass manager for the optimization pipeline is deprecated and will be removed after LLVM 14. In the meantime, only minimal effort will be made to maintain the legacy pass manager for the optimization pipeline."
+    affectedApi:
+      - "legacy pass manager"
+    notes: "The 14.0.0-legacypm branch intentionally keeps the legacy PM (`opt -enable-new-pm=0`); the deprecation does not break this port but is the forward-compat concern motivating the separate new-PM port branch (`port/llvm-14.0.0`)."
+    relevance: "unlikely"
+    status: "pending"
+
+  # --- Changes to building LLVM ---
+
+  - id: multi-distribution-build-support
+    category: "building"
+    changeType: "added"
+    severity: "low"
+    summary: "The build system now supports building multiple distributions (e.g. one with just tools, another for libraries)"
+    description: "The build system now supports building multiple distributions, so that you can e.g. have one distribution containing just tools and another for libraries (to enable development). See Multi-distribution configurations for details."
+    affectedApi:
+      - "CMake"
+      - "Multi-distribution configurations"
+    notes: "CMake distribution-build feature; not used by the Giri build."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the AArch64 Target/Backend ---
+
+  - id: aarch64-armv9a-rme-sme-assembly-support
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Introduced assembly support for Armv9-A's Realm Management Extension (RME) and Scalable Matrix Extension (SME)"
+    description: "Introduced assembly support for Armv9-A’s Realm Management Extension (RME) and Scalable Matrix Extension (SME)."
+    affectedApi:
+      - "AArch64"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: aarch64-coff-cross-section-relocations
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "AArch64 now produces proper cross-section relative relocations on COFF"
+    description: "Produce proper cross-section relative relocations on COFF"
+    affectedApi:
+      - "AArch64"
+      - "COFF"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: aarch64-windows-variadic-float-calling-convention-fix
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Fixed the calling convention on Windows for variadic functions involving floats in the fixed arguments"
+    description: "Fixed the calling convention on Windows for variadic functions involving floats in the fixed arguments"
+    affectedApi:
+      - "AArch64"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the ARM Target/Backend ---
+
+  - id: arm-coff-cross-section-relocations
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "ARM now produces proper cross-section relative relocations on COFF"
+    description: "Produce proper cross-section relative relocations on COFF"
+    affectedApi:
+      - "ARM"
+      - "COFF"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Hexagon Target/Backend ---
+
+  - id: hexagon-v68-hvx-isa-support
+    category: "target-hexagon"
+    targetName: "hexagon"
+    changeType: "added"
+    severity: "low"
+    summary: "The Hexagon target now supports the V68/HVX ISA"
+    description: "The Hexagon target now supports V68/HVX ISA."
+    affectedApi:
+      - "Hexagon"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the C API ---
+
+  - id: c-api-llvmgetsetalignment-atomicrmw-cmpxchg
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "LLVMGetAlignment and LLVMSetAlignment now allow changing alignment on atomicrmw and cmpxchg instructions"
+    description: "The C API functions LLVMGetAlignment and LLVMSetAlignment now allow changing alignment on atomicrmw and cmpxchg instructions"
+    affectedApi:
+      - "LLVMGetAlignment"
+      - "LLVMSetAlignment"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-llvmdiarglistmetadatokind-added
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "A new entry LLVMDIArgListMetadataKind was added to the LLVMMetadataKind enum, representing DIArgLists"
+    description: "A new entry LLVMDIArgListMetadataKind was added to the LLVMMetadataKind enum, representing DIArgLists (D88175)"
+    affectedApi:
+      - "LLVMDIArgListMetadataKind"
+      - "LLVMMetadataKind"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-type-attributes-added
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "Type attributes were added to LLVM-C: LLVMCreateTypeAttribute, LLVMGetTypeAttributeValue and LLVMIsTypeAttribute"
+    description: "Type attributes have been added to LLVM-C, introducing LLVMCreateTypeAttribute, LLVMGetTypeAttributeValue and LLVMIsTypeAttribute. (D977763’)"
+    affectedApi:
+      - "LLVMCreateTypeAttribute"
+      - "LLVMGetTypeAttributeValue"
+      - "LLVMIsTypeAttribute"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: lto-api-version-bumped-28
+    category: "c-api"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "LTO_API_VERSION was bumped to 28, introducing a new function lto_set_debug_options for parsing LTO debug options"
+    description: "The LTO_API_VERSION was bumped to 28, introducing a new function lto_set_debug_options for parsing LTO debug options (D92611)"
+    affectedApi:
+      - "LTO_API_VERSION"
+      - "lto_set_debug_options"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: llvmjit-symbol-target-flags-renamed
+    category: "c-api"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "LLVMJITTargetSymbolFlags was renamed to LLVMJITSymbolTargetFlags"
+    description: "LLVMJITTargetSymbolFlags was renamed to LLVMJITSymbolTargetFlags (rG8d718a0bff73af066675a6258c01307937c33cf9)"
+    affectedApi:
+      - "LLVMJITTargetSymbolFlags"
+      - "LLVMJITSymbolTargetFlags"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-objc-orcv2-materializationunits
+    category: "c-api"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "C API support for creating custom ORCv2 MaterializationUnits and retrieving an LLJIT instance's linking layers; an ABI breaking change to LLVMOrcAbsoluteSymbols was introduced"
+    description: "The C API received support for creating custom ORCv2 MaterializationUnits and APIs to retrieve an LLJIT instance’s linking layers. An ABI breaking change for LLVMOrcAbsoluteSymbols was introduced to make it consistent with LLVMOrcCreateCustomMaterializationUnit. (rGc8fc5e3ba942057d6c4cdcd1faeae69a28e7b671)"
+    affectedApi:
+      - "LLVMOrcAbsoluteSymbols"
+      - "LLVMOrcCreateCustomMaterializationUnit"
+      - "MaterializationUnits"
+      - "LLJIT"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-orcv2-object-buffers-object-layer
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "The C API received support for adding ORCv2 object buffers directly to an object layer"
+    description: "The C API received support for adding ORCv2 object buffers directly to an object layer. (rG7b73cd684a8d5fb44d34064200f10e2723085c33)"
+    affectedApi:
+      - "ORCv2 object layer"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-llvmgetinlineasm-canthrow-arg
+    category: "c-api"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "A breaking change to LLVMGetInlineAsm was introduced, adding a ninth argument LLVMBool CanThrow"
+    description: "A breaking change to LLVMGetInlineAsm was introduced, adding a ninth argument LLVMBool CanThrow (D95745)"
+    affectedApi:
+      - "LLVMGetInlineAsm"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-new-pass-manager-support
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "The C API received support for calling into the new pass manager"
+    description: "The C API received support for calling into the new pass manager. (D102136)"
+    affectedApi:
+      - "new pass manager"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-llvmintrinsiccopyoverloadedname-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "medium"
+    summary: "LLVMIntrinsicCopyOverloadedName was deprecated; migrate to LLVMIntrinsicCopyOverloadedName2 which takes an extra module argument and handles unnamed types"
+    description: "The C API function LLVMIntrinsicCopyOverloadedName has been deprecated. Please migrate to LLVMIntrinsicCopyOverloadedName2 which takes an extra module argument and which also handles unnamed types. (D99173)"
+    affectedApi:
+      - "LLVMIntrinsicCopyOverloadedName"
+      - "LLVMIntrinsicCopyOverloadedName2"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-orcv2-dump-objects
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "The C API received support for dumping objects from ORCv2"
+    description: "The C API received support for dumping objects from ORCv2 (rGcec8e69f01c3374cb38c6683058381b96fab8f89)"
+    affectedApi:
+      - "ORCv2"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-objc-objecttransformlayer-args-reordered
+    category: "c-api"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "A breaking change to LLVMOrcObjectTransformLayerTransformFunction was introduced, changing the order of the function pointer's arguments"
+    description: "A breaking change to LLVMOrcObjectTransformLayerTransformFunction was introduced, changing the order of the function pointer’s arguments. (rG8962c68ad007a525f9daa987c99eda57e0d0069a)"
+    affectedApi:
+      - "LLVMOrcObjectTransformLayerTransformFunction"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-lljit-irtransformlayer-tsm-utilities
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "The C API received support for accessing utilities from the LLJIT IRTransformLayer and ThreadSafeModule classes"
+    description: "The C API received support for accessing utilities from the LLJIT IRTransformLayer and ThreadSafeModule classes. (D103855)"
+    affectedApi:
+      - "LLJIT IRTransformLayer"
+      - "ThreadSafeModule"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-lazy-export-materializationunits
+    category: "c-api"
+    changeType: "added"
+    severity: "low"
+    summary: "The C API received support for creating lazy-export MaterializationUnits"
+    description: "The C API received support for creating lazy-export MaterializationUnits (D104672)"
+    affectedApi:
+      - "MaterializationUnits"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: c-api-passbuilderoptionssetcoroutines-removed
+    category: "c-api"
+    changeType: "removed"
+    severity: "high"
+    summary: "LLVMPassBuilderOptionsSetCoroutines was removed because coroutine passes have been enabled by default"
+    description: "The C API function LLVMPassBuilderOptionsSetCoroutines was removed because couroutine passes have been enabled by default. (D105877)"
+    affectedApi:
+      - "LLVMPassBuilderOptionsSetCoroutines"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+  - id: comdat-noduplicates-renamed-nodeduplicate
+    category: "c-api"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "comdat noduplicates was renamed to comdat nodeduplicate; LLVMNoDuplicatesComdatSelectionKind was renamed to LLVMNoDeduplicateComdatSelectionKind"
+    description: "comdat noduplicates was renamed to comdat nodeduplicate and as a result, LLVMNoDuplicatesComdatSelectionKind was renamed to LLVMNoDeduplicateComdatSelectionKind. (D106319)"
+    affectedApi:
+      - "comdat noduplicates"
+      - "comdat nodeduplicate"
+      - "LLVMNoDuplicatesComdatSelectionKind"
+      - "LLVMNoDeduplicateComdatSelectionKind"
+    notes: "ComDAT / NoDuplicates selection-kind rename; Giri source does not use ComDAT or the NoDuplicates selection kind."
+    relevance: "irrelevant"
+    status: "pending"
