@@ -260,7 +260,7 @@ Commits on `72258e4` (chronological):
   without a genuinely written+read trace. Restoring the trace reproduces the
   4-line golden match (exit 0). This mirrors the 14.0.0-newpm negative
   control (`9a2a29e`).
-- `e80419b` + `b179406` + `1df52e3` **doc tweaks** (post-PR): tightened the
+- `e80419b` + `b179406` + `1df52e3` + `14a774f` **doc tweaks** (post-PR): tightened the
   link-shim wording (a 3-line *function body*, not a 3-line file) in
   SUMMARY/AGENTS.md/task note; committed the negative-control raw transcript
   (`_cold_acceptance/negative-control.log`); and replaced the one-file sync
@@ -324,6 +324,50 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
     build never reads; every build input already byte-identical, drift 0).
 
   Result: no discrepancy found; all evidence claims stand.
+
+
+  **Deep-dive round 3 (post-delivery, commits `308a2bc` + `14a774f`)** — integrity
+  checks *on* the checks themselves, all re-executed live:
+
+  - **Toolchain provenance** (d1): re-downloaded the exact pinned GitHub release
+    tarball (`llvmorg-15.0.0` rhel-8.4, sha256 `20b17fa…`) and hash-compared 5
+    key binaries (`opt`, `clang`, `clang-15`, `llvm-config`, `libLLVM.so`)
+    against the installed `/usr/local/llvm` — **all byte-identical**, proving the
+    suite ran against the pinned LLVM 15.0.0, not a drifted install. The harness
+    resolves `opt`/`clang` to `/usr/local/llvm/bin`.
+  - **Entry ABI deep** (d3/d6): every one of the 22 fresh-run trace sizes is a
+    whole multiple of 32; a fresh compile probe with
+    `static_assert(sizeof(Entry)==32)` + `4096 % 32 == 0` built and ran
+    (`sizeof(Entry)` returned 32).
+  - **Change-data deep** (d7): all 46 per-version entries carry
+    `id`/`changeType`/`description`. The 3 entries whose descriptions differ
+    between per-version and consolidated are **intentional redactions** (the
+    per-version file shows `…` for the AV/MIPS/WebAssembly sections whose full
+    text is carried only in the consolidated file) — correct by design.
+  - **PR deep** (d5): base `port/llvm-15.0.0 @ 72258e4`; 18 commits (local ==
+    PR); the actual `test/` diff hunks are **pure harness-flag additions**
+    (`-no-pie`, `-Wno-error=implicit-function-declaration`,
+    `-Xclang -no-opaque-pointers`), each with a root-cause comment; no harness
+    *logic* changed.
+  - **Two residuals found and fixed** (`14a774f`):
+    - The DoD's last checklist item ("PR opened … and linked below") had been
+      left unchecked though PR #21 is open and linked in Handoff → now checked;
+      all 9 DoD items are `[x]`.
+    - The original `_cold_acceptance/negative-control.log` captured only the
+      `tail -4` stack trace, so the `-passes` command it used was not present in
+      the transcript (the parity check against `Makefile.common:71` came back
+      empty). Regenerated the run with the **exact command echoed** (identical
+      `-passes` to the harness `dgiri` rule:
+      `function(mergereturn),bbnum,lsnum,dgiri,remove-bbnum,remove-lsnum`) and
+      the correct baseline (`.slice.loc`, the 4 line numbers `9 12 13 18`).
+      Same result: rc 139, `slice`/`slice.loc` ABSENT, restoring the trace →
+      diff rc 0.
+  - **Fresh HelloWorld hand-run** (d8): full new-PM pipeline runs, prints slice
+    lines `8 10` (matches 14.0.0-newpm).
+
+    Result: 2 real residuals fixed; the 2 apparent failures (d7 description
+    differences, d8 empty parity) were root-caused to intentional design and to
+    the original transcript's omission respectively. All claims stand.
 
 ## Handoff
 
