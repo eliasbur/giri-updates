@@ -397,6 +397,21 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
   exact-command transcript), the full-tree identity check recorded in the
   cold-acceptance README, and the record commits that make this log cover
   every commit on the branch.
+  - `dcb28c2` **round 5 — carry-over + full-tree re-verification** (post-PR):
+    the commit that corrected the round-4 labels and named `9b3a99e`,
+    closing the progress-log self-reference. On top of it, two fresh checks:
+    (a) **22/22 carry-over** — `git diff 51fa746..dcb28c2` (51fa746 = the
+    commit holding the green suite + standalone evidence) touches only
+    documentation plus the `Dockerfile`, and the Dockerfile diff is
+    comment-only (17 changed lines, all `#`; the `wget`/`tar`/`cp` RUN
+    commands are unchanged), so the build environment is functionally
+    identical to the one that produced 22/22; (b) **full-tree identity** —
+    an md5 manifest of all 483 committed blobs at `dcb28c2` vs the live
+    container `/giri` shows 0 missing / 0 differing (the first attempt
+    mis-parsed 19 space-named `llvm-releases/*/LLVM *.html` release-notes
+    files and a `docker cp` dir-nesting artifact; both fixed and
+    re-verified with tab-aware parsing). DoD 10/10; PR #21 OPEN/MERGEABLE
+    at head `dcb28c2`; `driver.py finish` already run (`status: done`).
 
     (meta) The final commit of the branch cannot name its own hash (a hash
   only exists once the commit is created), so it is covered by this entry
