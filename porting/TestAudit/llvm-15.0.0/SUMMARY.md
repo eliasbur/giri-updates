@@ -115,8 +115,8 @@ API fixes, toolchain, Dockerfile) unchanged. The 15.0.0 work adds:
 2. **`tracer` link shim** (`tools/Tracer/llvm_std_shim.cpp`). The prebuilt
    rhel-8.4 LLVM 15.0.0 libs reference
    `std::__throw_bad_array_new_length` (GLIBCXX 3.4.29); focal's libstdc++
-   6.0.28 predates that out-of-line helper. A 3-line shim supplies it so the
-   tracer links and runs.
+   6.0.28 predates that out-of-line helper. A minimal shim (a 3-line function
+   body, `llvm_std_shim.cpp`) supplies it so the tracer links and runs.
 3. **Harness parity fixes** (`test/Makefile.common`, `test/HelloWorld/Makefile`):
    - `-Xclang -no-opaque-pointers` — the 15.0.0 clang driver does not expose
      `-opaque-pointers` directly, so opaque pointers are disabled at the Clang

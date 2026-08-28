@@ -180,7 +180,8 @@ Commits on `72258e4` (chronological):
 - `6f7954d` **`tracer` link shim** (`tools/Tracer/llvm_std_shim.cpp`). The
   prebuilt rhel-8.4 LLVM libs reference `std::__throw_bad_array_new_length`
   (GLIBCXX 3.4.29); focal's libstdc++ 6.0.28 predates that out-of-line helper.
-  3-line shim so the tracer links.
+  The shim (`llvm_std_shim.cpp`, 3-line function body) supplies it so the tracer
+  links.
 - `31e36fe` **Harness parity fixes** (`test/Makefile.common`,
   `test/HelloWorld/Makefile`): `-Xclang -no-opaque-pointers` (the 15.0.0
   clang driver does not expose `-opaque-pointers` directly), `-fPIE`/`-no-pie`
