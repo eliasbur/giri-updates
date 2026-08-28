@@ -6,6 +6,10 @@ validation from that cold build, and a **negative control** proving the golden
 match is not a false positive. Run in the `giri15` container (image
 `giri-llvm-15`, source synced to HEAD) on 2026-08-28.
 
+Files: `cold-build-suite.log` (cold build + suite), `cold-standalone-tracer.log`
+(cold-build tracer validation), `negative-control.log` (missing-trace
+transcript).
+
 ## 1. Cold from-scratch build at HEAD
 
 `/giri/build` wiped, then `source /giri/utils/build.sh` (cmake configure +
@@ -28,6 +32,7 @@ PASS / 0 FAIL (of 22)**; `prtrace` OK on every trace. Same result as the
 committed validation, now reproduced from a cold build.
 
 ## 3. Negative control (failure mode): missing trace must not match the golden
+(Full raw transcript: `negative-control.log`.)
 
 A golden match is only meaningful if a *missing* trace cannot reproduce it.
 In `test/UnitTests/test1`: after a normal instrument+run (trace file present,

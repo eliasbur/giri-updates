@@ -212,6 +212,19 @@ Commits on `72258e4` (chronological):
   suite logs (`_test_logs/`, `suite_final_table.txt` = 22 PASS / 0 FAIL),
   standalone-tracer validation (`_tool_validation/`, 22 PASS / 0 FAIL), 22
   per-test reports, and `SUMMARY.md`.
+- `32fbe54` **Task-note corrections.** Fixed the two wrong opening premises
+  (legacy PM is still present in 15.0.0; 15.0.0 is C++14, C++17 is a 16.0.0
+  mandate; the CMake 3.5 floor + `find_package(LLVM 15.0)` are Giri-side
+  choices), checked the DoD with the verified results, filled the progress
+  log, and corrected the Dockerfile CMake comment (the prebuilt's
+  `LLVMConfigVersion.cmake` sets no CMake version floor).
+- `1ba5b47` **AGENTS.md branch copy.** Rewrote `## Current state` +
+  `## Known residuals` for the 15.0.0 port (corrected legacy-PM/C++14
+  narrative, DataLayout root cause, the `opt -stats` stderr difference,
+  HelloWorld hand-run `8 10`); the shared tail (`## Containers` onward) kept
+  byte-identical to the inherited copy.
+- `3f20a7c` **`driver.py finish`.** Status `done`, `completedDate`, Handoff
+  line `PR: giriupdates #21`; opened PR #21 into `port/llvm-15.0.0`.
 
 **Results (verified in the `giri15` container):**
 

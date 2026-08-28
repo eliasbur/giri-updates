@@ -1,0 +1,28 @@
+### NEGATIVE CONTROL: missing-trace must not match the golden (LLVM 15.0.0 new-PM) ###
+### 2026-08-28T18:21:38Z  in /giri/test/UnitTests/test1 (extlibcalls) ###
+
+=== baseline: normal instrument+run -> 4-line slice == golden ===
+  -rw-rw-rw- 1 root root 4663 Aug 28 18:21 extlibcalls.slice
+  -rw-r----- 1 root root 1216 Aug 28 18:21 extlibcalls.trace
+  slice.loc contents (golden is 9 12 13 18):
+    9
+    12
+    13
+    18
+
+=== remove the trace file, keep the .bc, re-run the dgiri slice ===
+  trace present now? ls: cannot access 'extlibcalls.trace': No such file or directory
+    #11 0x0000563e6c521423 llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::StringRef>, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool) (/usr/local/llvm/bin/opt+0xa01423)
+    #12 0x0000563e6c5323d6 main (/usr/local/llvm/bin/opt+0xa123d6)
+    #13 0x00007f5db9615083 __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24083)
+    #14 0x0000563e6c51a30e _start (/usr/local/llvm/bin/opt+0x9fa30e)
+  opt rc=139
+=== slice artifact after crash (must be ABSENT => no false golden match) ===
+  slice ABSENT
+  slice.loc ABSENT
+
+=== positive control: restore the real trace, re-run through honest harness ===
+    	-stats  extlibcalls.all.bc -o /dev/null
+    diff extlibcalls.slice.loc ans-inst.txt
+  re-run diff rc=0  (0 => slice == golden)
+### NEGATIVE CONTROL DONE 2026-08-28T18:21:38Z ###
