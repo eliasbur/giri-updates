@@ -194,7 +194,9 @@ Commits on `72258e4` (chronological):
   (`llvm/IR/DataLayout.h:213`, byte-identical 14.0.0/15.0.0), which calls
   `clear()` then copies members from the (cleared) same object → corrupts the
   layout. Latent in ≤14.0.0; the 15.0.0 verifier's
-  `DataLayout::ParamMaxAlignment = 1 << 14` check aborts the standalone tracer
+  the 15.0.0 `Verifier::visitCallBase` alignment check (`ParamMaxAlignment
+  = 1 << 14`, a class-local constant in `Verifier.cpp`) aborts the standalone
+  tracer
   on it. Removed (the no-op it is). Commit message corrected to this verified
   mechanism (not "defaulted/memberwise").
 - `56d0d4c` **Change data** at `porting/llvm-releases/15.0.0/`: per-version
@@ -368,6 +370,20 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
     Result: 2 real residuals fixed; the 2 apparent failures (d7 description
     differences, d8 empty parity) were root-caused to intentional design and to
     the original transcript's omission respectively. All claims stand.
+
+  **Deep-dive round 4 (docs-prose audit, verifier-check correction)** —
+  line-by-line audit of the reader-facing docs (PR body, AGENTS.md `Current
+  state`/`Known residuals`, SUMMARY.md) against ground truth. Verified true:
+  the CMake floor diff (`3.4.3 → 3.5` + `find_package(LLVM 15.0)`), the
+  DataLayout.h:213 `operator=` byte-identity across 14.0.0 (ubuntu-18.04
+  prebuilt) and 15.0.0 (rhel-8.4 prebuilt), the Tracer.cpp self-assignment
+  removal (line present at base `72258e4`, only a comment remains at HEAD),
+  the shim's 3-line body, the `TEST_PARALLELISM=seq` pin, and the `-no-pie`
+  harness hunks. **Found and corrected a real inaccuracy:** the docs
+  attributed the verifier constant as `DataLayout::ParamMaxAlignment` and
+  quoted the error as `DataLayout::ParamMaxAlignment too small: 0 …`. The
+  `llvmorg-15.0.0` source (`llvm/lib/IR/Verifier.cpp`) shows the truth: `ParamMaxAlignment = 1 << 14` is a `static constexpr unsigned` **class-local to `Verifier`** (line 287), used by `Verifier::visitCallBase` (line 3153) via a `VerifyTypeAlign` lambda; the real error string is `Incorrect alignment of argument passed to called function!`. The misattribution and the fabricated quote were corrected in AGENTS.md, SUMMARY.md (2 spots), and this note (the consolidated `api-breakings.yaml` already attributed it to `Verifier.cpp` correctly). The **mechanism** was re-proven live: the string `Incorrect alignment of ` is present in 15.0.0's `opt` and absent from 14.0.0's; 14.0.0's `Verifier.cpp` has zero occurrences of the check. So: check added in 15.0.0, constant is Verifier-local, message is `Incorrect alignment of … to called function!` — all now stated accurately.
+
 
 - `bc52020` + `fcb694d` + `1dfeeea` **evidence/doc commits** (post-PR; see the
   two re-validation sections above): the cold-build + negative-control

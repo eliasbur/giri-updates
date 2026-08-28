@@ -89,8 +89,9 @@ unchanged; the 15.0.0 work is:
   alignment/pointer tables (measured: `ABI(i32) 4 → 65536`). This was a
   pre-existing defect in this line, **latent under 14.0.0** (the `opt`-driven
   suite never executes this line and does not verify by default). LLVM 15.0.0
-  added a module-verifier check
-  (`DataLayout::ParamMaxAlignment = 1 << 14`) that rejects a call argument
+  added a module-verifier check (`Verifier::visitCallBase`, with
+  `ParamMaxAlignment = 1 << 14` a class-local constant in `Verifier.cpp`)
+  that rejects a call argument
   whose ABI alignment exceeds 2^14; the corrupted layout reports absurd
   alignments, so the standalone `tracer`'s trailing `VerifierPass` now fails
   on every pointer-argument call and aborts. Removing the (no-op) line fixes

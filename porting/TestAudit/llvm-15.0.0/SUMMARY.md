@@ -95,7 +95,9 @@ taken at the harness's implicit criterion.
 `ModuleAnalysisManager`) instead of `opt`. Result: **22 PASS / 0 FAIL**
 (`full-tool-validation.txt` records `standalone-tracer FULL RESULT: 22 PASS /
 0 FAIL`). This is the path that previously aborted in the 15.0.0 container
-with a `DataLayout::ParamMaxAlignment too small` verifier error; it now passes
+with the 15.0.0 `Incorrect alignment of argument passed to called
+  function!` verifier error (`Verifier::visitCallBase`, `ParamMaxAlignment =
+  1 << 14`); it now passes
 cleanly because the tracer no longer self-assigns its `DataLayout`.
 
 ## Cold-build + negative-control acceptance
@@ -134,9 +136,11 @@ API fixes, toolchain, Dockerfile) unchanged. The 15.0.0 work adds:
    source, so the copy reads the just-cleared members and corrupts the layout.
    In ≤14.0.0 `opt` never reached the 15.0.0 verifier check, so the corruption
    was latent. The 15.0.0 module verifier added a
-   `DataLayout::ParamMaxAlignment = 1 << 14` check that **aborts the standalone
-   tracer** on the corrupted alignment (`DataLayout::ParamMaxAlignment too
-   small: 0 … while Verifying Function 'main'`). Removed the self-assignment
+   `ParamMaxAlignment = 1 << 14` check in `Verifier::visitCallBase` (a
+   class-local constant in `Verifier.cpp`, not a `DataLayout` member) that
+   **aborts the standalone tracer** on the corrupted alignment (real error:
+   `Incorrect alignment of argument passed to called function!`). Removed the
+   self-assignment
    (the no-op it is) — verified root cause in-container.
 2. **`tracer` link shim** (`tools/Tracer/llvm_std_shim.cpp`). The prebuilt
    rhel-8.4 LLVM 15.0.0 libs reference
