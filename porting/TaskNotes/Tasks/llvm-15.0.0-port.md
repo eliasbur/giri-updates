@@ -372,8 +372,12 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
     the original transcript's omission respectively. All claims stand.
 
   **Deep-dive round 4 (docs-prose audit, verifier-check correction)**
-  (`05cc5cb` log-completeness entry, `c5e539b` verifier attribution fix,
-  `5756c76` SUMMARY premises note, `bbe065f` log naming of the round-4 commits, `2381339` naming bbe065f, `6958388` de-duplicating the meta note + naming 2381339, `3fc0574` naming 6958388, `4e8472a` naming 3fc0574 + 4e8472a's predecessor) —
+  (`05cc5cb` full progress-log entry; `c5e539b` verifier attribution fix —
+  `ParamMaxAlignment` is `Verifier`-local, not `DataLayout::`; `5756c76`
+  SUMMARY C++14/legacy-PM premises; then the progress-log self-reference
+  resolved across `bbe065f` → `2381339` → `6958388` → `3fc0574` →
+  `4e8472a` → `9b3a99e` so every commit except the final one carries an
+  explicit hash — see the (meta) note) —
   line-by-line audit of the reader-facing docs (PR body, AGENTS.md `Current
   state`/`Known residuals`, SUMMARY.md) against ground truth. Verified true:
   the CMake floor diff (`3.4.3 → 3.5` + `find_package(LLVM 15.0)`), the
