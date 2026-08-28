@@ -1,5 +1,5 @@
 ---
-title: Port Giri to LLVM 15.0.0 (new pass manager; the legacy PM is gone in 15).
+title: Port Giri to LLVM 15.0.0 (new pass manager; new PM is the default, legacy PM still available)
 status: open
 priority: high           # low | medium | high
 repo: giriupdates        # required; must match a GITHUB_<KEY>_TOKEN or GITLAB_<KEY>_TOKEN
@@ -15,11 +15,14 @@ dateCreated: 2026-08-27
 
 A Giri source tree on `port/llvm-15.0.0` that builds cleanly against LLVM/Clang
 15.0.0 (prebuilt-tarball toolchain), whose execution path is the **new pass
-manager** — 15.0.0 is the first release where the **legacy pass manager is
-gone** ("deprecated in 14, removed after 14"), so only the new-PM code path
-survives it — runs the full test suite on the honest harness with new-PM
-`opt -passes` pipelines, with every remaining test failure root-caused and
-documented, and the three critical invariants preserved.
+manager** — 15.0.0 made the new PM the **default** (the legacy PM is deprecated
+in 14 and scheduled for removal *after* 14, but it is still present in 15.0.0:
+`opt` retains `--enable-new-pm` and `-enable-new-pm=0` still works). This port
+deliberately runs the forward-compatible new-PM path, which is the one that
+survives LLVM 16+ where the legacy PM is actually gone — runs the full test
+suite on the honest harness with new-PM `opt -passes` pipelines, with every
+remaining test failure root-caused and documented, and the three critical
+invariants preserved.
 
 This is the continuation of the new-PM line. The base is the completed
 14.0.0 new-PM head (`agent/jcode/llvm-14-newpm-port` @ `72258e4`, PR #20),
@@ -42,20 +45,29 @@ fix are already done and inherited. What this port changes on top:
      `clang+llvm-15.0.0-x86_64-linux-gnu-rhel-8.4.tar.xz` (verified against the
      GitHub API). The rhel-8.4 tarball is glibc 2.28, so the base image must
      provide glibc ≥ 2.28 → **bump the Dockerfile base to `ubuntu:20.04`**
-     (glibc 2.31; gcc 9.4 covers the C++17 that 15.0.0 builds with, the first
-     LLVM to require C++17).
+     (glibc 2.31). (15.0.0 builds with **C++14**, not C++17 — verified:
+     `llvm-config --cxxflags` on the 15.0.0 toolchain is `-std=c++14`; C++17
+     only becomes a hard requirement in 16.0.0.)
    - `Dockerfile`: `FROM ubuntu:20.04`; bump the pinned CMake binary as far as
-     possible (15.0.0 requires CMake ≥ 3.13.4; the 14.0.0 image pinned 3.12.4,
-     below that). Pin a known-good recent CMake Linux-x86_64 binary and record
-     the version here.
-   - `CMakeLists.txt`: `cmake_minimum_required(VERSION 3.4.3)` → `3.13.4`
-     (15.0.0's requirement) so a recent CMake does not emit a < 3.10
-     compatibility deprecation.
+     possible (the 15.0.0 source CMake floor is **3.5**; the 14.0.0 image
+     pinned 3.12.4. Pin a known-good recent CMake Linux-x86_64 binary and
+     record the version here; CMake 3.31.12 was chosen and is pinned).
+   - `CMakeLists.txt`: `cmake_minimum_required(VERSION 3.4.3)` → `3.5` —
+     matches the LLVM 15.0.0 source CMake floor (verified from
+     `llvm/llvm-project` 15.0.0 `CMakeLists.txt`). This is a Giri-side
+     forward-compatibility choice, **not** a direct LLVM-15 mandate on
+     consumers; `find_package(LLVM 15.0 REQUIRED CONFIG)` is likewise
+     Giri-side (the 15.0.0 config files set their own version policy).
 2. **14→15 API deltas (expected small; verify, don't assume).** The 14.0.0
    new-PM code uses no legacy-PM API (zero residual, verified). Known 14→15
    breaks that could touch Giri:
-   - C++17 mandatory — the Giri C++ is already clean of the removed constructs
-     (no `register`, `auto_ptr`, `unary_function`, `random_shuffle` — grepped).
+   - C++ standard: **15.0.0 still builds with C++14** (`llvm-config --cxxflags`
+     = `-std=c++14`); C++17 only becomes mandatory in 16.0.0. The 15.x
+     toolchain minimums are *soft* and skippable with
+     `-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=ON`, so no Giri C++ change is
+     required by the standard bump (the Giri C++ is also already clean of the
+     removed constructs — no `register`, `auto_ptr`, `unary_function`,
+     `random_shuffle` — grepped).
    - `PassPluginLibraryInfo` / `opt -load` / `-load-pass-plugin` behavior —
      re-spike in 15.0.0 (14.0.0 had 4 fields; confirm 15.0.0 still resolves
      `llvmGetPassPluginInfo` and registers the passes, and that the plain
@@ -95,23 +107,30 @@ surfaced before phase 2.
 
 ## Definition of done
 
-- [ ] Spike: 15.0.0 prebuilt loads on `ubuntu:20.04` (`ldd` clean);
-      `llvm-config --version` == 15.0.0; assertion-mode recorded; new-PM probe
-      plugin + `mergereturn` + `PostDominatorTree` verified
-- [ ] Toolchain wired: `install_llvm.sh` 15.0.0 case, `Dockerfile`
-      (`ubuntu:20.04` + CMake bump + `install_llvm.sh 15.0.0`),
-      `CMakeLists.txt` `cmake_minimum_required` bump
-- [ ] Build green in `giri-llvm-15`: 5 artifacts in `build/{lib,bin}`;
+- [x] Spike: 15.0.0 prebuilt loads on `ubuntu:20.04` (`ldd` clean);
+      `llvm-config --version` == 15.0.0; assertion-mode recorded (Release,
+      assertions OFF); new-PM probe plugin + `mergereturn` + `PostDominatorTree`
+      verified
+- [x] Toolchain wired: `install_llvm.sh` 15.0.0 case, `Dockerfile`
+      (`ubuntu:20.04` + CMake 3.31.12 pinned + `install_llvm.sh 15.0.0` +
+      `DEBIAN_FRONTEND=noninteractive`), `CMakeLists.txt` `cmake_minimum_required`
+      bump to 3.5
+- [x] Build green in `giri-llvm-15`: 5 artifacts in `build/{lib,bin}`;
       `opt -passes=...` lists/runs the Giri passes; any 14→15 API fixes keep
       pass logic byte-identical
-- [ ] Honest-harness seq suite run in `giri-llvm-15`; per-test results + root
-      causes at `porting/TestAudit/llvm-15.0.0/` (target 22/22 PASS, rc=0)
-- [ ] The three critical invariants re-verified (ABI / `-g` / numbering)
-- [ ] `git diff 72258e4..HEAD -- test/` empty (or only documented harness deltas)
-- [ ] Standalone-tool whole-result validation: 22/22 via `tracer` CLI +
-      `prtrace` on all traces + `test/HelloWorld` harness
-- [ ] Change data: 14→15 breaks (C++17, legacy-PM removal, PassPlugin/analysis
-      deltas) recorded at `porting/llvm-releases/15.0.0/`
+- [x] Honest-harness seq suite run in `giri-llvm-15`; per-test results + root
+      causes at `porting/TestAudit/llvm-15.0.0/` (**22/22 PASS, rc=0**)
+- [x] The three critical invariants re-verified (ABI `sizeof(Entry)=32`,
+      `4096 % 32 == 0` / `-g` `file:line` slices / numbering determinism)
+- [x] `git diff 72258e4..HEAD -- test/` = only the documented harness deltas
+      (`test/Makefile.common` + `test/HelloWorld/Makefile`)
+- [x] Standalone-tool whole-result validation: **22/22** via `tracer` CLI +
+      `prtrace` on all 22 traces + `test/HelloWorld` harness (slice lines
+      `8 10`, matches 14.0.0-newpm)
+- [x] Change data: 14→15 breaks recorded at `porting/llvm-releases/15.0.0/`
+      (per-version `15.0.0-api-breakings.yaml` 46 entries + consolidated
+      `api-breakings.yaml` 397 entries + 9.0.0–15.0.0 release-notes HTMLs;
+      note: 15.0.0 keeps C++14 and the legacy PM — those are 16.0.0 mandates)
 - [ ] `AGENTS.md` branch copy updated (Current state + Known residuals)
 - [ ] PR opened into `port/llvm-15.0.0` and linked below
 
@@ -122,7 +141,7 @@ surfaced before phase 2.
 - `CMakeLists.txt` (`cmake_minimum_required` bump, if the recent CMake warns)
 - `lib/`, `tools/`, `include/` — **only if** the spike/build surface a 14→15
   API break in Giri code (expected minimal: the 14.0.0 new-PM code uses no
-  legacy-PM API and the C++ is already C++17-clean)
+  legacy-PM API, and 15.0.0's C++14 standard is a non-change for the tree)
 - `porting/llvm-releases/15.0.0/` (change data: `15.0.0-api-breakings.yaml`,
   Release Notes, `api-breakings.yaml` aggregator)
 - `porting/TestAudit/llvm-15.0.0/`, `AGENTS.md` (evidence)
@@ -137,6 +156,96 @@ need to be justified and documented).
 - ~~llvm-14-newpm-port (done, PR #20; the base is the new-PM head `72258e4`)~~
 
 ## Progress log
+
+### 2026-08-27 — Port cut from the 14.0.0 new-PM head
+
+Branch `agent/jcode/llvm-15.0.0-port` cut from `72258e4` (the 14.0.0 new-PM
+head; the 9.0.0–14.0.0 change history is inherited unchanged). Task note
+opened (commit `40780f3`).
+
+### 2026-08-28 — Port complete (functional + evidence)
+
+Commits on `72258e4` (chronological):
+
+- `0500b26` **Toolchain wiring.** `Dockerfile` → `ubuntu:20.04` (the 15.0.0
+  rhel-8.4 prebuilt needs glibc ≥ 2.28; focal provides 2.31), CMake 3.31.12
+  pinned, `utils/install_llvm.sh` 15.0.0 case (the only x86_64 prebuilt is the
+  `clang+llvm-15.0.0-x86_64-linux-gnu-rhel-8.4.tar.xz`; verified against the
+  GitHub API), `CMakeLists.txt` floor `3.4.3 → 3.5` + `find_package(LLVM 15.0
+  REQUIRED CONFIG)`. The 3.5 floor is a Giri-side forward-compat choice, not a
+  direct LLVM-15 mandate on consumers (the 15.0.0 source CMakeLists floor is
+  3.5; the prebuilt's `LLVMConfigVersion.cmake` sets no CMake version floor).
+- `6f7954d` **`tracer` link shim** (`tools/Tracer/llvm_std_shim.cpp`). The
+  prebuilt rhel-8.4 LLVM libs reference `std::__throw_bad_array_new_length`
+  (GLIBCXX 3.4.29); focal's libstdc++ 6.0.28 predates that out-of-line helper.
+  3-line shim so the tracer links.
+- `31e36fe` **Harness parity fixes** (`test/Makefile.common`,
+  `test/HelloWorld/Makefile`): `-Xclang -no-opaque-pointers` (the 15.0.0
+  clang driver does not expose `-opaque-pointers` directly), `-fPIE`/`-no-pie`
+  handling, and `-Wno-error=implicit-function-declaration` (15.0.0's clang
+  errors on implicit function declarations; the 3.4-vintage `even.c` relies on
+  them). No test case/golden/criterion file touched.
+- `847a130` **Tracer `DataLayout` self-assignment removed**
+  (`tools/Tracer/Tracer.cpp`). `M->setDataLayout(M->getDataLayout())` is a
+  self-assignment through the **hand-written** `DataLayout::operator=`
+  (`llvm/IR/DataLayout.h:213`, byte-identical 14.0.0/15.0.0), which calls
+  `clear()` then copies members from the (cleared) same object → corrupts the
+  layout. Latent in ≤14.0.0; the 15.0.0 verifier's
+  `DataLayout::ParamMaxAlignment = 1 << 14` check aborts the standalone tracer
+  on it. Removed (the no-op it is). Commit message corrected to this verified
+  mechanism (not "defaulted/memberwise").
+- `56d0d4c` **Change data** at `porting/llvm-releases/15.0.0/`: per-version
+  `15.0.0-api-breakings.yaml` (46 entries, matching the 14.0.0 per-version
+  scope; 5 redacted markers: top-level list, AVR, Hexagon, MIPS, WebAssembly;
+  1 affected release-note entry `llvm-ir-opaque-pointers-default`, fixed via
+  `-Xclang -no-opaque-pointers`) + consolidated `api-breakings.yaml` (354 →
+  397 entries: 39 new 15.0.0 release-note entries, 7 colliding ids extended
+  with `15.0.0`, 4 new header-level port-critical entries) + all 9.0.0–15.0.0
+  LLVM release-notes HTML provenance.
+- `227c008` **Dockerfile `DEBIAN_FRONTEND=noninteractive`** (focal's
+  tzdata/apt prompt) + corrected `Tracer.cpp` comment documenting the
+  hand-written `operator=` mechanism.
+- `51fa746` **TestAudit evidence** at `porting/TestAudit/llvm-15.0.0/`: raw
+  suite logs (`_test_logs/`, `suite_final_table.txt` = 22 PASS / 0 FAIL),
+  standalone-tracer validation (`_tool_validation/`, 22 PASS / 0 FAIL), 22
+  per-test reports, and `SUMMARY.md`.
+
+**Results (verified in the `giri15` container):**
+
+- Suite: **22 PASS / 0 FAIL** (rc=0) — 19 UnitTests (test1–5, test8–21) + 3
+  benchmark seq (`matrix_multiply`, `pca`, `kmeans`), all against the pristine
+  3.4 goldens. `suite_final_table.txt` = 22 `[PASS]` rows.
+- Standalone `tracer` (the new-PM programmatic-pipeline path, hand-built MAM):
+  **22 PASS / 0 FAIL** (`full-tool-validation.txt`); `prtrace` OK on all 22
+  traces. The DataLayout abort is gone.
+- `test/HelloWorld` hand-run (`make -C test/HelloWorld all`): full new-PM
+  pipeline prints slice lines `8 10` (matches 14.0.0-newpm).
+- Invariants: `git diff 72258e4..HEAD -- include/Giri/Runtime.h` empty;
+  `sizeof(Entry)=32`, `4096 % 32 == 0` re-checked in-container; `-g`
+  debug-info slicing and numbering determinism hold (22/22 against 3.4
+  goldens).
+- `llvm-config --version` = 15.0.0; `--cxxflags` = `-std=c++14` (**not** C++17
+  — C++17 becomes hard in 16.0.0); the 15.x toolchain minimums are soft
+  (`-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=ON`).
+- Legacy PM **still present** in 15.0.0: `opt` retains `--enable-new-pm` and
+  `-enable-new-pm=0` works; the new PM is the default. This port runs the
+  forward-compatible new-PM path (the one that survives 16+ where the legacy
+  PM is actually gone). **The task-note's two opening premises — "legacy PM is
+  gone in 15" and "LLVM 15 requires C++17" — were wrong and have been
+  corrected here; do not propagate them into AGENTS.md or the change data.**
+- `opt -stats` stderr difference: 15.0.0 prebuilt `opt` prints nothing for
+  `-stats`; 14.0.0 prebuilt `opt` prints
+  `Statistics are disabled.  Build with asserts or with -DLLVM_FORCE_ENABLE_STATS`
+  (44× in the 14.0.0-newpm suite logs, 0× in 15.0.0). Harmless (stderr only).
+
+**Remaining:** update the `AGENTS.md` branch copy (15.0.0 narrative, corrected
+premises), push, open the PR into `port/llvm-15.0.0`, `driver.py finish`.
+
+**Container:** `giri15` (image `giri-llvm-15`; ubuntu:20.04 + prebuilt
+rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
+`source /giri/utils/build.sh`. Build output flat: `build/lib`
+(`libgiri.so`, `libdgutility.so`, `librtgiri.a`) + `build/bin`
+(`tracer`, `prtrace`).
 
 ## Handoff
 

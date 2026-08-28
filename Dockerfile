@@ -26,15 +26,14 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -qq -y wget make g++ python zip unzip autoconf libtool automake xz-utils libtinfo-dev zlib1g-dev libncurses5-dev libedit-dev libz-dev libxml2-dev
 
-# Install CMake. The 15.0.0 prebuilt requires CMake >= 3.13.4 to configure
-# (its LLVMConfig.cmake no longer carries a `cmake_minimum_required` of its
-# own; the package is found via CONFIG, and the prebuilt CMake modules target
-# the 3.13.4-era API). Pin the newest 3.31.x binary (3.31.12): 3.31.x is the
-# last major line that keeps full compatibility with older projects, and it is
-# the newest line verified to configure the 15.0.0 prebuilt. (CMake 4.x drops
-# compatibility with `cmake_minimum_required(VERSION < 3.5)`, which is why the
-# root CMakeLists floor is bumped 3.4.3 -> 3.5 so the project stays
-# forward-compatible; 3.31.12 is pinned here as the newest known-good binary.)
+# Install CMake. The 15.0.0 prebuilt's LLVMConfigVersion.cmake sets no CMake
+# version floor (it only gates on the LLVM package version); the binding
+# constraint is the project's own `cmake_minimum_required`. The 15.0.0 source
+# CMakeLists floor is 3.5, so the root floor is bumped 3.4.3 -> 3.5 — which is
+# also the CMake 4.0 compatibility boundary (CMake 4.x drops
+# `cmake_minimum_required(VERSION < 3.5)`). Pin the newest 3.31.x binary
+# (3.31.12): 3.31.x keeps full compatibility with 3.5-era projects and is the
+# newest line verified to configure the 15.0.0 prebuilt.
 RUN wget -q https://cmake.org/files/v3.31/cmake-3.31.12-linux-x86_64.tar.gz && \
     tar -xzf cmake-3.31.12-linux-x86_64.tar.gz && \
     cp -a cmake-3.31.12-linux-x86_64/bin/* /usr/local/bin/ && \
