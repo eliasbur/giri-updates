@@ -373,7 +373,7 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
 
   **Deep-dive round 4 (docs-prose audit, verifier-check correction)**
   (`05cc5cb` log-completeness entry, `c5e539b` verifier attribution fix,
-  `5756c76` SUMMARY premises note) —
+  `5756c76` SUMMARY premises note, `bbe065f` log naming of the round-4 commits) —
   line-by-line audit of the reader-facing docs (PR body, AGENTS.md `Current
   state`/`Known residuals`, SUMMARY.md) against ground truth. Verified true:
   the CMake floor diff (`3.4.3 → 3.5` + `find_package(LLVM 15.0)`), the
@@ -394,7 +394,7 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
   cold-acceptance README, and the record commits that make this log cover
   every commit on the branch.
 
-      (meta) The final commit of the branch cannot name its own hash (a hash
+    (meta) The final commit of the branch cannot name its own hash (a hash
   only exists once the commit is created), so it is covered by this entry
   rather than by a backticked hash. Every other commit on the branch has
   an explicit hash.
