@@ -394,11 +394,10 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
   cold-acceptance README, and the record commits that make this log cover
   every commit on the branch.
 
-    (meta) The final commit of the branch — the one that adds this
-  completeness note — necessarily carries a hash that cannot appear
-  inside itself (a hash only exists once the commit is created), so it
-  is covered by this entry rather than by a backticked hash. Every other
-  commit on the branch has an explicit hash.
+      (meta) The final commit of the branch cannot name its own hash (a hash
+  only exists once the commit is created), so it is covered by this entry
+  rather than by a backticked hash. Every other commit on the branch has
+  an explicit hash.
 
 ## Handoff
 
