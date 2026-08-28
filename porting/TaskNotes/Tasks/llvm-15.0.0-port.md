@@ -369,6 +369,19 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
     differences, d8 empty parity) were root-caused to intentional design and to
     the original transcript's omission respectively. All claims stand.
 
+- `bc52020` + `fcb694d` + `1dfeeea` **evidence/doc commits** (post-PR; see the
+  two re-validation sections above): the cold-build + negative-control
+  acceptance evidence (`_cold_acceptance/`, including the regenerated
+  exact-command transcript), the full-tree identity check recorded in the
+  cold-acceptance README, and the record commits that make this log cover
+  every commit on the branch.
+
+    (meta) The final commit of the branch — the one that adds this
+  completeness note — necessarily carries a hash that cannot appear
+  inside itself (a hash only exists once the commit is created), so it
+  is covered by this entry rather than by a backticked hash. Every other
+  commit on the branch has an explicit hash.
+
 ## Handoff
 
 - branch `agent/jcode/llvm-15.0.0-port`
