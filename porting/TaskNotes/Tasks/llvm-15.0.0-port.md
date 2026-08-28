@@ -397,9 +397,11 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
   exact-command transcript), the full-tree identity check recorded in the
   cold-acceptance README, and the record commits that make this log cover
   every commit on the branch.
-  - `dcb28c2` **round 5 — carry-over + full-tree re-verification** (post-PR):
-    the commit that corrected the round-4 labels and named `9b3a99e`,
-    closing the progress-log self-reference. On top of it, two fresh checks:
+  - `dcb28c2` **round 5 — label fix + carry-over/full-tree
+    re-verification** (post-PR): the commit that corrected the
+    round-4 labels and named `9b3a99e`, closing the progress-log
+    self-reference. On top of it, two fresh checks (recorded in
+    `a95536c`; indent fixes `0c26a76` + `402cc87`):
     (a) **22/22 carry-over** — `git diff 51fa746..dcb28c2` (51fa746 = the
     commit holding the green suite + standalone evidence) touches only
     documentation plus the `Dockerfile`, and the Dockerfile diff is
