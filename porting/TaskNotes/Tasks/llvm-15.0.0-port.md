@@ -286,6 +286,45 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
 (`libgiri.so`, `libdgutility.so`, `librtgiri.a`) + `build/bin`
 (`tracer`, `prtrace`).
 
+### 2026-08-28 — Independent re-validation pass (post-delivery)
+
+  After delivery (PR #21, `driver.py finish`), every claim was re-validated by
+  re-executing the checks live (not by re-reading committed evidence):
+
+  - **Fresh full-suite run** (`make -C test`, `giri15`): 22/22 PASS, rc=0, same
+    22 test dirs as the committed `suite_final_table.txt`.
+  - **Fresh standalone-tracer run** (`full_tool_validation.py`): 22 PASS / 0
+    FAIL; every slice MATCH == golden; `prtrace` OK on all 22 traces.
+  - **Fresh toolchain confirmation**: `llvm-config --version` 15.0.0,
+    `--cxxflags` `-std=c++14`, cmake 3.31.12, Ubuntu 20.04; the only
+    `enable-new-pm` occurrence in the harness/build is a comment line.
+  - **Invariants re-derived**: `git diff 72258e4..HEAD -- include/Giri/Runtime.h`
+    empty; `git diff 72258e4..HEAD --name-only -- test/` = exactly
+    `test/Makefile.common` + `test/HelloWorld/Makefile`; `bbnum,lsnum` ordering
+    identical in the instrument and slice stage pipelines; `-g` in `CFLAGS`;
+    `-Xclang -no-opaque-pointers` present and documented with its root cause
+    (15.0.0 emits opaque pointers by default, which drifted the kmeans slice;
+    the cc1 flag is passed via `-Xclang` because the driver doesn't expose it).
+  - **Task-note self-audit**: all 16 logged commit hashes exist in git and are
+    ancestors of HEAD; frontmatter (`status: done`, `completedDate`) matches
+    reality.
+  - **PR #21 audit**: base `port/llvm-15.0.0`, `mergeable=MERGEABLE` (no
+    conflicts; `mergeState=BLOCKED` is branch protection only — no CI checks are
+    defined on the repo), head = local = remote = `42ee043`; the only `test/`
+    files in the PR are the two pre-approved harness files; no golden/criterion/
+    `Runtime.h`/test-source file touched.
+  - **Change-data audit**: per-version `15.0.0-api-breakings.yaml` is
+    template-conformant (same 5 top-level keys as
+    `.release-notes-changes-template.yaml`, 46 entries each with an `id`);
+    consolidated `api-breakings.yaml` = 397 entries, ids unique, all 46
+    15.0.0 entries present.
+  - **Cold-build source identity**: full-tree md5 manifest of the container's
+    `/giri` vs all 483 committed git blobs → 483/483 byte-identical, 0 missing,
+    0 mismatch (at cold-build time 480/483, the 3 drifts were docs/config the
+    build never reads; every build input already byte-identical, drift 0).
+
+  Result: no discrepancy found; all evidence claims stand.
+
 ## Handoff
 
 - branch `agent/jcode/llvm-15.0.0-port`
