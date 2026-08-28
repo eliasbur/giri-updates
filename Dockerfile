@@ -17,6 +17,10 @@ ENV LLVM_HOME=/usr/local/llvm
 ENV BuildMode=Release+Asserts
 ENV TEST_PARALLELISM=seq
 ENV PATH=/usr/local/llvm/bin:$PATH
+# Non-interactive apt: on 20.04 the 2025 security updates to tzdata (and
+# friends) ask a timezone question during `apt-get upgrade`, which hangs an
+# unattended build. noninteractive makes dpkg take the defaults (UTC).
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get upgrade -y && \
