@@ -8,129 +8,136 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 
 ## Current state
 
-`port/llvm-14.0.0` (working branch `agent/jcode/llvm-14-newpm-port`) is the
-**new pass manager** port to LLVM 14.0.0, cut from the completed
-`port/llvm-14.0.0-legacypm` head (`fba2565`, legacy-PM head `224bdfb`). It
-re-executes the entire Giri pipeline on the **new pass manager** — the
-forward-compatible path that survives LLVM 15+, where the legacy PM is gone
-(deprecated in 14, "removed after LLVM 14"). No `-enable-new-pm=0` anywhere;
-every `opt` invocation runs a `-passes="…"` pipeline and each Giri library is
-loaded twice — `-load` (registers the plugin's `cl::opt` globals *before*
-`opt` parses the command line: `-trace-file`, `-slice-file`, `-criterion-*`,
-`-dump-bbid`, `-mapping-*`) plus `-load-pass-plugin` (registers the `-passes`
-pipeline names *after* parsing).
+`port/llvm-15.0.0` (working branch `agent/jcode/llvm-15.0.0-port`) is the
+**new pass manager** port to LLVM 15.0.0, cut from the completed 14.0.0 new-PM
+head (`72258e4`). It inherits the entire 9.0.0–14.0.0 change set unchanged
+(pass conversion, plugin registration, the harness, and the `Tracer`'s
+hand-built `ModuleAnalysisManager`) and re-executes the pipeline on the
+**new pass manager** — the forward-compatible path that survives LLVM 16+,
+where the legacy PM is actually removed. **The legacy PM is still present in
+15.0.0** (it was deprecated in 14 and is removed *after* 14, i.e. in 16):
+`opt` retains `--enable-new-pm` and `-enable-new-pm=0` still works; the new PM
+is the default. This branch deliberately runs the new-PM path only — no
+`-enable-new-pm=0` anywhere; every `opt` invocation runs a `-passes="…"`
+pipeline and each Giri library is loaded twice — `-load` (registers the
+plugin's `cl::opt` globals *before* `opt` parses the command line:
+`-trace-file`, `-slice-file`, `-criterion-*`, `-dump-bbid`, `-mapping-*`) plus
+`-load-pass-plugin` (registers the `-passes` pipeline names *after* parsing).
 
 The automated suite (`make -C /giri/test`, `TEST_PARALLELISM=seq`) reports
-**22 PASS / 0 FAIL** (rc=0) on the 14.0.0 new-PM port: 19 UnitTests
+**22 PASS / 0 FAIL** (rc=0) on the 15.0.0 new-PM port: 19 UnitTests
 (test1–5, test8–21) plus the three app benchmarks in their seq variant, all
-against the pristine 3.4 goldens. `git diff fba2565..HEAD -- test/` is empty
-except the pre-approved new-PM harness lines in `test/Makefile.common` and
-`test/HelloWorld/Makefile` (the `-enable-new-pm=0` + legacy `-<passname>`
-flags replaced by `-load` + `-load-pass-plugin` + `-passes="…"`); no golden or
-criterion file changed. Full history and root causes:
-`porting/TestAudit/llvm-14.0.0-newpm/SUMMARY.md` → "Suite results across the
-port".
+against the pristine 3.4 goldens. A second, independent validation of the
+**standalone `tracer`** binary (not `opt`) over the same 22 test cases is also
+**22 PASS / 0 FAIL**. `git diff 72258e4..HEAD -- test/` is empty except the
+pre-approved harness lines in `test/Makefile.common` and
+`test/HelloWorld/Makefile` (the 15.0.0 toolchain parity flags:
+`-Xclang -no-opaque-pointers`, `-fPIE`/`-no-pie`, and
+`-Wno-error=implicit-function-declaration`); no golden or criterion file
+changed. Full history and root causes:
+`porting/TestAudit/llvm-15.0.0/SUMMARY.md`.
 
-The 14.0.0 image is `giri-llvm-14` (base **ubuntu:18.04**, prebuilt x86_64
-LLVM/Clang **14.0.0** GitHub-Releases tarball, `llvm-config --version` ==
-14.0.0). Build/test (inside a `giri-llvm-14` container; see
-`porting/AgentGuide.md`):
+The 15.0.0 image is `giri-llvm-15` (base **ubuntu:20.04**, prebuilt x86_64
+LLVM/Clang **15.0.0** `clang+llvm-15.0.0-x86_64-linux-gnu-rhel-8.4.tar.xz`
+GitHub-Releases tarball at `/usr/local/llvm`, `llvm-config --version` ==
+15.0.0). The rhel-8.4 prebuilt is glibc 2.28, so the base image had to move off
+ubuntu:18.04 (glibc 2.27) to ubuntu:20.04 (glibc 2.31). CMake 3.31.12 is
+pinned. Build/test (inside a `giri15` container; see `porting/AgentGuide.md`):
 
 ```bash
-docker build -t giri-llvm-14 .          # from the repo root
-docker run -it --rm giri-llvm-14 bash
+docker build -t giri-llvm-15 .          # from the repo root
+docker run -it --rm giri-llvm-15 bash
 source /giri/utils/build.sh             # cmake + make + make -C test
 ```
 
-What this port changes on top of the legacy-PM port (the 8→14 C++ API fixes,
-toolchain, and Dockerfile are inherited unchanged):
+What this port changes on top of the 14.0.0 new-PM head (`72258e4`). The
+inherited new-PM machinery (pass conversion, plugin registration, `mergereturn`
+parity, the `Tracer`'s hand-built MAM + built-in-analysis registration) is
+unchanged; the 15.0.0 work is:
 
-- **Pass conversion.** All Giri/Utility passes/analyses converted from
-  legacy-PM classes (`PassInfoMixin` + `getAnalysisUsage` / `RegisterPass`) to
-  new-PM `llvm::Pass` / `llvm::Analysis` classes with `run(...)`; pass logic is
-  byte-identical (only the plumbing changed). `TracingNoGiri` (the former
-  `BasicBlockPass`, deleted in 10.0.0) is now a new-PM **module pass**:
-  `run(Module&, MAM)` does the module-level init once, then loops functions and,
-  per function, basic blocks, driving the renamed `instrument`/
-  `runOnBasicBlock` per-BB logic (per-BB order and insertion order preserved).
-  `DynamicGiri` is a new-PM **module analysis** (`AnalysisKey Key`), fetched by
-  the `dgiri`/`test-giri` module passes via `MAM.getResult<DynamicGiri>(M)`; its
-  `ensurePostDomFrontierComputed` builds the `PostDominatorTree` inline (public
-  `Function&` ctor) then runs `PostDominanceFrontier::computeFrontiers`.
-  `QueryBasicBlockNumbers`/`QueryLoadStoreNumbers` are new-PM **module
-  analyses** whose result object carries the ID maps; the no-op `bbnum`/
-  `lsnum`/`remove-*` passes force those lazy analyses
-  (`MAM.getResult<Query…>(M)`), preserving the legacy `getAnalysis`-triggered
-  numbering behavior. `PostDominanceFrontierAnalysis` (function analysis) takes
-  `FAM.getResult<PostDominatorTreeAnalysis>(F)` — `PostDominatorTreeAnalysis`
-  (the analysis, `Result = PostDominatorTree`), not the `PostDominatorTree`
-  data structure.
-- **Plugin registration.** `lib/Utility/UtilityPassPlugin.cpp` (bbnum,
-  remove-bbnum, lsnum, remove-lsnum, postdomfrontier, countsrc,
-  srcline-mapping + the Query* module analyses + the PostDominanceFrontier
-  function analysis) and `lib/Giri/GiriPassPlugin.cpp` (trace-giri, dgiri,
-  test-giri + DynamicGiri + re-registered Query* so libgiri works standalone)
-  both export `llvmGetPassPluginInfo`. `libgiri.so` → `libdgutility.so` via
-  NEEDED; a spike verified cross-library analysis `getResult` sees a single
-  analysis instance.
-- **`mergereturn` parity.** No test-only `MergeReturn` was needed: in 14.0.0 the
-  legacy and new-PM `mergereturn` are the same transform (`UnifyFunctionExitNodes`),
-  spike-verified **byte-identical** IR. The harness wraps it in an explicit
-  `function(mergereturn)` sub-pipeline (it must be first to fix the top-level
-  element type); every Giri pass is a module pass at the top level.
-- **`Tracer`.** Builds its pipeline programmatically with the new PM
-  (`ModulePassManager` + a hand-built `ModuleAnalysisManager` — **no
-  `PassBuilder`**); `WriteBitcodeToFile` is void in 14.0.0. Because the MAM is
-  hand-built, `tracer` must register the built-in analyses that `opt`'s
-  `PassBuilder::registerModuleAnalyses` would otherwise register for free:
-  14.0.0's `ModulePassManager::run` fetches `PassInstrumentationAnalysis`
-  before running any pass and `VerifierPass::run` fetches `VerifierAnalysis`;
-  with the prebuilt toolchain built without assertions (Release), a missing
-  registration is a silent null-deref/segfault, so both are registered
-  explicitly. Verified end-to-end: instrument → llc → link → run → slice, with
-  the test1 slice matching the 3.4 golden.
+- **Toolchain.** `Dockerfile` → `ubuntu:20.04` + `ENV DEBIAN_FRONTEND=noninteractive`
+  (focal's tzdata/apt prompt would otherwise hang an unattended build); CMake
+  3.31.12 pinned; `utils/install_llvm.sh` gains a `15.0.0` case (the only
+  x86_64-linux prebuilt is the rhel-8.4 tarball, verified against the GitHub
+  API). `CMakeLists.txt` floor `cmake_minimum_required` `3.4.3 → 3.5` and
+  `find_package(LLVM 15.0 REQUIRED CONFIG)` — both **Giri-side
+  forward-compatibility choices, not a direct LLVM-15 mandate on consumers**:
+  the 15.0.0 source `CMakeLists.txt` floor is 3.5, and the prebuilt's
+  `LLVMConfigVersion.cmake` sets no CMake version floor. (15.0.0 builds with
+  **C++14**, not C++17 — `llvm-config --cxxflags` is `-std=c++14`; C++17
+  becomes a hard requirement in 16.0.0, and the 15.x toolchain minimums are
+  soft and skippable with `-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=ON`.)
+- **`tracer` link shim** (`tools/Tracer/llvm_std_shim.cpp`). The prebuilt
+  rhel-8.4 LLVM 15.0.0 libs reference `std::__throw_bad_array_new_length`
+  (GLIBCXX 3.4.29); focal's libstdc++ 6.0.28 predates that out-of-line helper.
+  A 3-line shim supplies it so the tracer links and runs.
+- **Harness parity** (`test/Makefile.common`, `test/HelloWorld/Makefile`):
+  `-Xclang -no-opaque-pointers` (the 15.0.0 clang driver does not expose
+  `-opaque-pointers` directly, so opaque pointers are disabled at the front
+  end to keep the IR in the explicit-pointer form the passes and 3.4-era
+  goldens expect); `-fPIE`/`-no-pie` (the 15.0.0 clang driver defaults to
+  `-fPIE`); and `-Wno-error=implicit-function-declaration` (15.0.0's clang
+  errors on implicit function declarations; the 3.4-vintage `even.c` relies on
+  them).
+- **`Tracer` `DataLayout` self-assignment removed**
+  (`tools/Tracer/Tracer.cpp`). The inherited line
+  `M->setDataLayout(M->getDataLayout())` is a **self-assignment** through the
+  hand-written `DataLayout::operator=` (`llvm/IR/DataLayout.h:213`,
+  byte-identical in 14.0.0 and 15.0.0): it calls `clear()` and then copies
+  members from the (same, now-cleared) source, corrupting the parsed
+  alignment/pointer tables (measured: `ABI(i32) 4 → 65536`). This was a
+  pre-existing defect in this line, **latent under 14.0.0** (the `opt`-driven
+  suite never executes this line and does not verify by default). LLVM 15.0.0
+  added a module-verifier check
+  (`DataLayout::ParamMaxAlignment = 1 << 14`) that rejects a call argument
+  whose ABI alignment exceeds 2^14; the corrupted layout reports absurd
+  alignments, so the standalone `tracer`'s trailing `VerifierPass` now fails
+  on every pointer-argument call and aborts. Removing the (no-op) line fixes
+  the root cause.
 
 The three critical invariants are verified (this port):
 1. **Numbering determinism** — identical pass sequence in both pipeline stages
    (`-passes="function(mergereturn),bbnum,lsnum,…,remove-bbnum,remove-lsnum"`,
-   `test/Makefile.common`), so the same `bbnum`/`lsnum` IDs are assigned in both
-   runs; behaviorally proven by the 22/22 PASS against the 3.4 goldens.
-   `mergereturn` parity (byte-identical IR, legacy vs new-PM) spike-verified
-   separately.
+   `test/Makefile.common`), so the same `bbnum`/`lsnum` IDs are assigned in
+   both runs; behaviorally proven by the 22/22 PASS against the 3.4 goldens.
 2. **`Entry` struct ABI** — `include/Giri/Runtime.h` untouched by this port
-   (`git diff fba2565..HEAD -- include/Giri/Runtime.h` is empty); re-checked
+   (`git diff 72258e4..HEAD -- include/Giri/Runtime.h` is empty); re-checked
    in-container: `sizeof(Entry)` = 32 on x86_64 LP64, `4096 % 32 == 0`.
-3. **Debug info** — `-g` mandatory in the test compile; `clang -g` on 14.0.0 emits
-   `.debug_info`/`.debug_line`; `SourceLineMapping` yields the 3.4-era `file:line`
-   slices across all 22 passing tests.
+3. **Debug info** — `-g` mandatory in the test compile; `clang -g` on 15.0.0
+   emits `.debug_info`/`.debug_line`; `SourceLineMapping` yields the 3.4-era
+   `file:line` slices across all 22 passing tests.
 
-**The suite measures the seq variants.** `Dockerfile` sets `TEST_PARALLELISM=seq`, so a
-suite result says nothing about a pthread variant unless run by hand. The pthread variants
-were **not** re-measured for 14.0.0 (the automated suite is the parity gate for this
-branch); their 8.0.0 findings stand as the last measurements
-(`porting/TestAudit/llvm-8.0.0/`).
+**The suite measures the seq variants.** `Dockerfile` sets
+`TEST_PARALLELISM=seq`, so a suite result says nothing about a pthread variant
+unless run by hand. The pthread variants were **not** re-measured for 15.0.0
+(the automated suite is the parity gate for this branch); their 8.0.0 findings
+stand as the last measurements (`porting/TestAudit/llvm-8.0.0/`).
 
-> The **legacy-pass-manager** port lives on the sibling branch
-> `port/llvm-14.0.0-legacypm` (working branch `agent/open-code/llvm-14-legacypm`,
-> PR #19) and also reports 22/22 there; its `AGENTS.md` copy documents the
-> 8→14 API fixes in detail. That branch keeps `-enable-new-pm=0` because the
+> The **14.0.0 new-PM** port lives on the sibling branch `port/llvm-14.0.0`
+> (working branch `agent/jcode/llvm-14-newpm-port`, head `72258e4`, PR #20)
+> and also reports 22/22 there; this branch cuts from that head and carries its
+> `AGENTS.md` baseline. The **14.0.0 legacy-pass-manager** port
+> (`port/llvm-14.0.0-legacypm`, PR #19) keeps `-enable-new-pm=0` because the
 > legacy PM still exists in 14.0.0; this branch is the forward-compatible
 > variant.
 
 ## Known residuals
 
-The legacy-PM port is functionally closed (22/22 on the honest seq suite). Inherited gaps
-(never covered by any LLVM version) are marked [inherited]; regressions (broken by the
-port) are [regression]. There are no [regression] rows.
+The port is functionally closed (22/22 on the honest seq suite, plus a 22/22
+standalone-`tracer` validation). Inherited gaps (never covered by any LLVM
+version) are marked [inherited]; regressions (broken by the port) are
+[regression]. There are no [regression] rows.
 
 | What | Status | Why acceptable / Evidence |
 |------|--------|---------------------------|
-| `opt` needs `-load` + `-load-pass-plugin` for each plugin | New-PM-specific, inherent | 14.0.0's new-PM driver discovers passes only via `-load-pass-plugin`; the plugin's `cl::opt` globals still need the plain `-load` (pre-parse dlopen). The harness loads each library twice and documents this. Inherent to 14.0.0 plugin loading, not a bug. |
-| Pthread variants not re-measured on 14.0.0 | [inherited] gap (suite scope) | `Dockerfile` pins `TEST_PARALLELISM=seq`; last pthread measurements are the 8.0.0 audit's. Out of the automated suite, same as 5.0.2/8.0.0/legacy-PM |
-| test6 (sigusr1), test7 (sigint), test22 (fp) | [inherited] gap | Have golden files but not in `auto-tests.txt`; signals tests need interactive terminal setup, test22 needs `-lm`. Same as 5.0.2/8.0.0/legacy-PM |
-| HelloWorld, histogram, linear_regression, word_count | [inherited] gap | No golden file on any LLVM version; not wired into the suite (HelloWorld's Makefile was updated to the new-PM harness so it runs by hand) |
-| `ensurePostDomFrontierComputed` — bounded per-function allocation | Replaced / [inherited] benign | The legacy lazy-wrapper hack (`new PostDominatorTreeWrapperPass`, freed by neither) is replaced: `DynamicGiri` builds the `PostDominatorTree` inline (public `Function&` ctor, spike-verified) then runs `PostDominanceFrontier::computeFrontier`; the per-function tree/frontier is still not freed — same `opt`-process-lifetime bound as the legacy port, no observable cost |
-| `signal(SIGKILL, …)` — no-op | [inherited] harmless | `runtime/Giri/Tracing.cpp`. SIGKILL cannot be caught per POSIX. Inherited from 5.0.2/8.0.0/legacy-PM |
+| `opt` needs `-load` + `-load-pass-plugin` for each plugin | New-PM-specific, inherent | 15.0.0's new-PM driver discovers passes only via `-load-pass-plugin`; the plugin's `cl::opt` globals still need the plain `-load` (pre-parse dlopen). The harness loads each library twice and documents this. Inherent to 15.0.0 plugin loading, not a bug. |
+| `opt -stats` prints nothing (vs 14.0.0's `Statistics are disabled…`) | [inherited] harmless toolchain behavior | The harness passes `-stats`, but the 15.0.0 prebuilt `opt` prints nothing to stderr for it, whereas the 14.0.0 prebuilt `opt` prints `Statistics are disabled.  Build with asserts or with -DLLVM_FORCE_ENABLE_STATS` (44× in the 14.0.0-newpm suite logs; 0× in 15.0.0). Stderr only — never pollutes the `.ll`/trace/IR files and does not change the slice. |
+| Pthread variants not re-measured on 15.0.0 | [inherited] gap (suite scope) | `Dockerfile` pins `TEST_PARALLELISM=seq`; last pthread measurements are the 8.0.0 audit's. Out of the automated suite, same as 5.0.2/8.0.0/14.0.0 |
+| test6 (sigusr1), test7 (sigint), test22 (fp) | [inherited] gap | Have golden files but not in `auto-tests.txt`; signals tests need interactive terminal setup, test22 needs `-lm`. Same as 5.0.2/8.0.0/14.0.0 |
+| HelloWorld, histogram, linear_regression, word_count | [inherited] gap | No golden file on any LLVM version; not wired into the suite (HelloWorld's Makefile was updated to the new-PM harness so it runs by hand — verified on 15.0.0: slice lines `8 10`) |
+| `Tracer` `DataLayout` self-assignment removed | Fixed / [inherited] benign root cause | The inherited line was latent under 14.0.0; 15.0.0's verifier `ParamMaxAlignment = 1<<14` check exposed it. Removed (the no-op it is); the standalone `tracer` no longer aborts (22/22). |
+| `ensurePostDomFrontierComputed` — bounded per-function allocation | Replaced / [inherited] benign | `DynamicGiri` builds the `PostDominatorTree` inline (public `Function&` ctor) then runs `PostDominanceFrontier::computeFrontiers`; the per-function tree/frontier is still not freed — same `opt`-process-lifetime bound as the 14.0.0 port, no observable cost. |
+| `signal(SIGKILL, …)` — no-op | [inherited] harmless | `runtime/Giri/Tracing.cpp`. SIGKILL cannot be caught per POSIX. Inherited from 5.0.2/8.0.0/14.0.0 |
 
 ## Containers — two kinds
 

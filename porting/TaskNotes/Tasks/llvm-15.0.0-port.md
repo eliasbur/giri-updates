@@ -131,7 +131,7 @@ surfaced before phase 2.
       (per-version `15.0.0-api-breakings.yaml` 46 entries + consolidated
       `api-breakings.yaml` 397 entries + 9.0.0–15.0.0 release-notes HTMLs;
       note: 15.0.0 keeps C++14 and the legacy PM — those are 16.0.0 mandates)
-- [ ] `AGENTS.md` branch copy updated (Current state + Known residuals)
+- [x] `AGENTS.md` branch copy updated (Current state + Known residuals)
 - [ ] PR opened into `port/llvm-15.0.0` and linked below
 
 ## Files / scope
