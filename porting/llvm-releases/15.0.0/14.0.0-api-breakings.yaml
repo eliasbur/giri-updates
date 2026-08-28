@@ -1,0 +1,802 @@
+---
+version: "14.0.0"
+sourceUrl: "https://releases.llvm.org/14.0.0/docs/ReleaseNotes.html"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-25"
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes") ---
+
+  - id: general-changes-list-redacted
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Top-level change-list bullet: content redacted as an ellipsis in the provided HTML source"
+    description: "…"
+    affectedApi:
+      - "Non-comprehensive list of changes in this release"
+    notes: "Redacted in the provided HTML source; the bullet's text is not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: llvm-ir-legacy-pass-manager-deprecated
+    category: "llvm-ir"
+    changeType: "deprecated"
+    severity: "high"
+    summary: "Using the legacy pass manager for the optimization pipeline is deprecated and will be removed after LLVM 14; only minimal maintenance effort meanwhile"
+    description: |-
+      Using the legacy pass manager for the optimization pipeline is deprecated and will be removed after LLVM 14. In the meantime, only minimal effort will be made to maintain the legacy pass manager for the optimization pipeline.
+    affectedApi:
+      - "legacy pass manager"
+      - "opt"
+    notes: "The 14.0.0-legacypm branch intentionally keeps the legacy PM (`opt -enable-new-pm=0`); the deprecation does not break this port but is the forward-compat concern motivating the separate new-PM port branch (`port/llvm-14.0.0`). (Re-states the 13.0.0 deprecation; merged with it in the consolidated file.)"
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: llvm-ir-max-integer-type-reduced
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "high"
+    summary: "Maximum allowed integer type width reduced from 2^24-1 bits to 2^23 bits"
+    description: "Max allowed integer type was reduced from 2^24-1 bits to 2^23 bits."
+    affectedApi:
+      - "LLVM IR integer type widths (up to 2^23 bits)"
+    notes: "Max IR integer width reduced to 2^23 bits; Giri’s IR uses standard widths (i8/i32/i64) and no super-wide integers, so no interaction."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: llvm-ir-max-alignment-increased
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Maximum allowed alignment increased from 2^29 to 2^32"
+    description: "Max allowed alignment was increased from 2^29 to 2^32."
+    affectedApi:
+      - "LLVM IR alignment (up to 2^32)"
+    notes: "Max alignment limit increased (purely additive); no source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to building LLVM ---
+
+  - id: building-visual-studio-2019-required
+    category: "building"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "Building LLVM with Visual Studio now requires version 2019 or later"
+    description: "Building LLVM with Visual Studio now requires version 2019 or later."
+    affectedApi:
+      - "Visual Studio 2019"
+    notes: "Build-system; the port uses a prebuilt x86_64 Linux toolchain, not Visual Studio."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to TableGen (section present, no items in source) ---
+
+  # --- Changes to the AArch64 Backend ---
+
+  - id: aarch64-armv9a-support
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "AArch64: support added for the Armv9-A, Armv9.1-A and Armv9.2-A architectures"
+    description: "Added support for the Armv9-A, Armv9.1-A and Armv9.2-A architectures."
+    affectedApi:
+      - "AArch64 target"
+      - "Armv9-A"
+      - "Armv9.1-A"
+      - "Armv9.2-A"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-tune-cpu-attribute
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "AArch64: the tune-cpu function attribute is now recognised to support the -mtune frontend flag, tuning independent of the architecture"
+    description: |-
+      The compiler now recognises the “tune-cpu” function attribute to support the use of the -mtune frontend flag. This allows certain scheduling features and optimisations to be enabled independently of the architecture. If the “tune-cpu” attribute is absent it tunes according to the “target-cpu”.
+    affectedApi:
+      - "tune-cpu"
+      - "-mtune"
+      - "target-cpu"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-coff-temp-symbol-relocation-fix
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AArch64: fixed relocations against temporary symbols (jump tables, constant pools) in large COFF object files"
+    description: "Fixed relocations against temporary symbols (e.g. in jump tables and constant pools) in large COFF object files."
+    affectedApi:
+      - "COFF object files"
+      - "relocations"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-auto-vectorization-sve-default
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "AArch64: auto-vectorization now targets SVE by default when available"
+    description: "Auto-vectorization now targets SVE by default when available."
+    affectedApi:
+      - "SVE"
+      - "auto-vectorization"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the ARM Backend ---
+
+  - id: arm-armv9a-support
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM: support added for the Armv9-A, Armv9.1-A and Armv9.2-A architectures"
+    description: "Added support for the Armv9-A, Armv9.1-A and Armv9.2-A architectures."
+    affectedApi:
+      - "ARM target"
+      - "Armv9-A"
+      - "Armv9.1-A"
+      - "Armv9.2-A"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-armv8-1-m-pacbti-m
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "ARM: support added for the Armv8.1-M PACBTI-M extension"
+    description: "Added support for the Armv8.1-M PACBTI-M extension."
+    affectedApi:
+      - "Armv8.1-M PACBTI-M"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-msvc-assembly-comment-string
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "ARM: assembly comment string for MSVC targets changed to @, freeing ; to be used as statement separator"
+    description: "Changed the assembly comment string for MSVC targets to @ (consistent with the MinGW and ELF targets), freeing up ; to be used as statement separator."
+    affectedApi:
+      - "MSVC assembly output"
+      - "; statement separator"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the MIPS Target (section body redacted in source) ---
+
+  - id: mips-changes-redacted
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "MIPS section body redacted as an ellipsis in the provided HTML source"
+    description: "During this release …"
+    affectedApi:
+      - "MIPS target"
+    notes: "Redacted in the provided HTML source; the actual MIPS changes are not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the Hexagon Target (section body redacted in source) ---
+
+  - id: hexagon-changes-redacted
+    category: "target-hexagon"
+    targetName: "hexagon"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Hexagon section body redacted as an ellipsis in the provided HTML source"
+    description: "…"
+    affectedApi:
+      - "Hexagon target"
+    notes: "Redacted in the provided HTML source; the bullet's text is not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the PowerPC Target ---
+
+  - id: powerpc-linux-xl-builtin-compat
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC Linux: a number of builtins provided for compatibility with the XL compiler"
+    description: "Provided a number of builtins for compatibility with the XL compiler."
+    affectedApi:
+      - "XL-compiler-compatible builtins"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-mma-builtins-pre-p10
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC Linux: MMA builtin types allowed in pre-P10 compilation units"
+    description: "Allow MMA builtin types in pre-P10 compilation units."
+    affectedApi:
+      - "MMA builtin types"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-linux-rop-protection-32bit
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC Linux: support added for Return Oriented Programming (ROP) protection for 32 bit"
+    description: "Add support for Return Oriented Programming (ROP) protection for 32 bit."
+    affectedApi:
+      - "ROP protection"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-inclusive-language-refactor
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "PowerPC: code refactored to use more inclusive language"
+    description: "Refactored code to use more inclusive language."
+    affectedApi:
+      - "PowerPC target source"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-linux-lld-default-linker
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "PowerPC Linux: switched to LLD as the default linker for pre-built Linux binaries"
+    description: "Switched to LLD as the default linker for pre-built Linux binaries."
+    affectedApi:
+      - "LLD"
+      - "pre-built Linux binaries"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-linux-ieee-quad-long-double
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC Linux: IEEE quad long double enabled via PPC_LINUX_DEFAULT_IEEELONGDOUBLE in cmake config"
+    description: "Enabled IEEE quad long double on Linux via PPC_LINUX_DEFAULT_IEEELONGDOUBLE in cmake config."
+    affectedApi:
+      - "PPC_LINUX_DEFAULT_IEEELONGDOUBLE"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-ibm128-double-double-type
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC Linux: new __ibm128 type for the IBM double-double format, also available as __attribute__((mode(IF)))"
+    description: "Added __ibm128 type to represent IBM double-double format, also available as __attribute__((mode(IF)))."
+    affectedApi:
+      - "__ibm128"
+      - "__attribute__((mode(IF)))"
+    notes: "Nested sub-bullet under the IEEE quad long double item in the source."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-linux-mfloat128-vsx
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC Linux: -mfloat128 can now be used in Linux subtargets with VSX enabled"
+    description: "-mfloat128 can now be used in Linux subtargets with VSX enabled."
+    affectedApi:
+      - "-mfloat128"
+      - "VSX"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-quadword-atomic-load-store
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC: quadword atomic load/store support added in codegen; not enabled by default"
+    description: "Added quadword atomic load/store support in codegen; not enabled by default."
+    affectedApi:
+      - "quadword atomic load/store"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-codegen-splat-byval-stack-lowering
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "PowerPC: codegen improvements for splat load, byval parameter, stack lowering, etc."
+    description: "Codegen improvements for splat load, byval parameter, stack lowering, etc."
+    affectedApi:
+      - "splat load"
+      - "byval parameter"
+      - "stack lowering"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-p10-scheduling-model
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC: P10 instruction scheduling model implemented"
+    description: "Implemented P10 instruction scheduling model."
+    affectedApi:
+      - "P10 scheduling model"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-p10-instruction-fusion
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC: P10 instruction fusion pairs implemented"
+    description: "Implemented P10 instruction fusion pairs."
+    affectedApi:
+      - "P10 fusion pairs"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-loop-unroll-and-jam
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "PowerPC: improved handling of #pragma clang loop unroll_and_jam"
+    description: "Improved handling of #pragma clang loop unroll_and_jam."
+    affectedApi:
+      - "#pragma clang loop unroll_and_jam"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-various-bug-fixes
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "PowerPC: various bug fixes"
+    description: "Various bug fixes."
+    affectedApi:
+      - "PowerPC target"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-variadic-complex
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC AIX: variadic (ellipsis) functions with C complex types are now supported"
+    description: "Variadic (ellipsis) functions with C complex types are now supported."
+    affectedApi:
+      - "AIX calling convention (variadic + C complex)"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-toc-data-64bit
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC AIX: toc-data support added for AIX 64-bit"
+    description: "Added toc-data support for AIX 64-bit."
+    affectedApi:
+      - "toc-data"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-toc-data-readonly-globals
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC AIX: toc-data support added for read-only globals"
+    description: "Added toc-data support for read-only globals."
+    affectedApi:
+      - "toc-data"
+      - "read-only globals"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-default-target-pwr7
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "PowerPC AIX: default target updated from pwr4 to pwr7"
+    description: "Updated default target on AIX from pwr4 to pwr7."
+    affectedApi:
+      - "pwr4"
+      - "pwr7"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-fast-isel-o0
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "PowerPC AIX: 64-bit code generation now uses fast-isel for O0"
+    description: "AIX 64-bit code generation now uses fast-isel for O0."
+    affectedApi:
+      - "fast-isel"
+      - "-O0"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-dwarf-32bit-xcoff
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "PowerPC AIX: DWARF support added for 32-bit XCOFF"
+    description: "Added DWARF support for 32-bit XCOFF."
+    affectedApi:
+      - "DWARF"
+      - "32-bit XCOFF"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the RISC-V Target ---
+
+  - id: riscv-rv64-w-instructions-sext-w-removal
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "RISC-V: codegen improvements for RV64 around addw/subw/mulw/slliw instruction selection and removal of redundant sext.w via the new RISCVSExtWRemoval pass"
+    description: "Codegen improvements for RV64 around the selection of addw/subw/mulw/slliw instructions and removal of redundant sext.w instructions (using the new RISCVSExtWRemoval pass)."
+    affectedApi:
+      - "RISCVSExtWRemoval"
+      - "addw/subw/mulw/slliw"
+      - "sext.w"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-vector-extensions-v1-0
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "RISC-V: the vector extensions were updated to version 1.0 and are no longer experimental"
+    description: "The various RISC-V vector extensions were updated to version 1.0 and are no longer experimental."
+    affectedApi:
+      - "RISC-V 'V' vector extension"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-bitmanip-extensions-v1-0
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "RISC-V: the Zba, Zbb, Zbc, and Zbs bit-manipulation extensions were updated to version 1.0 and are no longer experimental"
+    description: "The Zba, Zbb, Zbc, and Zbs bit-manipulation extensions were updated to version 1.0 and are no longer experimental."
+    affectedApi:
+      - "Zba"
+      - "Zbb"
+      - "Zbc"
+      - "Zbs"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-mc-scalar-crypto
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "RISC-V: MC layer support added for the ratified scalar cryptography extensions"
+    description: "Added MC layer support for the ratified scalar cryptography extensions."
+    affectedApi:
+      - "RISC-V scalar cryptography extensions"
+      - "MC layer"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-zfh-zfhmin-v1-0
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "RISC-V: the Zfh and Zfhmin half-precision floating point extensions were updated to version 1.0 and are no longer experimental"
+    description: "The Zfh and Zfhmin extensions for half-precision floating point were updated to version 1.0 and are no longer experimental."
+    affectedApi:
+      - "Zfh"
+      - "Zfhmin"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-insn-directive
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "RISC-V: support added for the .insn directive"
+    description: "Added support for the .insn directive."
+    affectedApi:
+      - ".insn"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-immediate-materialisation-improvements
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "RISC-V: various improvements to immediate materialisation (incl. with bit-manipulation extensions); constant pool now used for large integers"
+    description: "Various improvements to immediate materialisation, including when bit-manipulation extensions are enabled. Additionally, the constant pool is now used for large integers."
+    affectedApi:
+      - "immediate materialisation"
+      - "constant pool"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-constrained-fp-intrinsics
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "RISC-V: support added for constrained FP intrinsics for scalar types"
+    description: "Added support for constrained FP intrinsics for scalar types."
+    affectedApi:
+      - "constrained FP intrinsics"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-scofpmf-smstateen-sstc-csrs
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "added"
+    severity: "low"
+    summary: "RISC-V: support added for CSRs introduced in the Sscofpmf, Smstateen, and Sstc extensions"
+    description: "Added support for CSRs introduced in the Sscofpmf, Smstateen, and Sstc extensions."
+    affectedApi:
+      - "Sscofpmf"
+      - "Smstateen"
+      - "Sstc"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-zbproposedc-b-extensions-removed
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "removed"
+    severity: "high"
+    summary: "RISC-V: the experimental 'Zbproposedc' extension and the 'B' extension (including all bit-manipulation sub-extensions) were removed; individual 'Zb*' extensions should be used instead"
+    description: "The experimental ‘Zbproposedc’ extension was removed, as was the ‘B’ extension (including all bit-manipulation sub-extensions). Individual ‘Zb*’ extensions should be used instead."
+    affectedApi:
+      - "Zbproposedc"
+      - "B"
+      - "Zb*"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the X86 Target ---
+
+  - id: x86-avx512-fp16-support
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "X86: support for AVX512-FP16 instructions has been added"
+    description: "Support for AVX512-FP16 instructions has been added."
+    affectedApi:
+      - "AVX512-FP16"
+    notes: "Preceded in the source by the redacted text 'During this release …'."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-intel-mpx-support-removed
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "removed"
+    severity: "high"
+    summary: "X86: incomplete support for Intel MPX removed (D111517)"
+    description: "Removed incomplete support for Intel MPX. (D111517)"
+    affectedApi:
+      - "Intel MPX"
+      - "D111517"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the AMDGPU Target (section body redacted in source) ---
+
+  - id: amdgpu-changes-redacted
+    category: "target-amdgpu"
+    targetName: "amdgpu"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AMDGPU section body redacted as an ellipsis in the provided HTML source"
+    description: "During this release …"
+    affectedApi:
+      - "AMDGPU target"
+    notes: "Redacted in the provided HTML source; the actual AMDGPU changes are not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the AVR Target (section body redacted in source) ---
+
+  - id: avr-changes-redacted
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AVR section body redacted as an ellipsis in the provided HTML source"
+    description: "During this release …"
+    affectedApi:
+      - "AVR target"
+    notes: "Redacted in the provided HTML source; the actual AVR changes are not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the WebAssembly Target (section body redacted in source) ---
+
+  - id: webassembly-changes-redacted
+    category: "target-webassembly"
+    targetName: "webassembly"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "WebAssembly section body redacted as an ellipsis in the provided HTML source"
+    description: "During this release …"
+    affectedApi:
+      - "WebAssembly target"
+    notes: "Redacted in the provided HTML source; the actual WebAssembly changes are not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the Windows Target ---
+
+  - id: windows-pdata-section-references
+    category: "target-windows"
+    targetName: "windows"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Windows: .pdata sections now refer to the code they describe differently, to avoid conflicting unwind info if weak symbols are overridden"
+    description: "Changed how the .pdata sections refer to the code they’re describing, to avoid conflicting unwind info if weak symbols are overridden."
+    affectedApi:
+      - ".pdata"
+      - "unwind info"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: windows-128bit-int-float-conversion-fix
+    category: "target-windows"
+    targetName: "windows"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Windows x86_64: fixed code generation for calling support routines converting 128 bit integers from/to floats"
+    description: "Fixed code generation for calling support routines for converting 128 bit integers from/to floats on x86_64."
+    affectedApi:
+      - "128-bit integer/float conversion support routines"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: windows-path-separator-cmake-option
+    category: "target-windows"
+    targetName: "windows"
+    changeType: "added"
+    severity: "low"
+    summary: "Windows: preferred path separator form configurable via LLVM_WINDOWS_PREFER_FORWARD_SLASH CMake option; defaults to true in MinGW builds"
+    description: "The preferred path separator form (backslashes or forward slashes) can be configured in Windows builds of LLVM now, with the LLVM_WINDOWS_PREFER_FORWARD_SLASH CMake option. This defaults to true in MinGW builds of LLVM."
+    affectedApi:
+      - "LLVM_WINDOWS_PREFER_FORWARD_SLASH"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: windows-coff-alias-symbol-types
+    category: "target-windows"
+    targetName: "windows"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Windows: proper COFF symbol types set for function aliases (e.g. Itanium C++ constructors) so GNU ld exports them as functions, not data, when linking a DLL"
+    description: "Set proper COFF symbol types for function aliases (e.g. for Itanium C++ constructors), making sure that GNU ld exports all of them correctly as functions, not data, when linking a DLL."
+    affectedApi:
+      - "COFF symbol types"
+      - "function aliases"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: windows-temporary-file-handling-fix
+    category: "target-windows"
+    targetName: "windows"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Windows: handling of temporary files on uncommon file systems (network mounts, ramdisks) is fixed"
+    description: "Handling of temporary files on more uncommon file systems (network mounts, ramdisks) on Windows is fixed now (which previously either errored out or left stray files behind)."
+    affectedApi:
+      - "temporary file handling"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the C API ---
+
+  - id: c-api-llvm-set-inst-debug-location-deprecated
+    category: "c-api"
+    changeType: "deprecated"
+    severity: "high"
+    summary: "LLVMSetInstDebugLocation deprecated in favor of the more general LLVMAddMetadataToInst"
+    description: "LLVMSetInstDebugLocation has been deprecated in favor of the more general LLVMAddMetadataToInst."
+    affectedApi:
+      - "LLVMSetInstDebugLocation"
+      - "LLVMAddMetadataToInst"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: c-api-llvm-c-dll-i386-msvc-build-fix
+    category: "c-api"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed building LLVM-C.dll for i386 targets with MSVC (broken since the LLVM 8.0.0 release)"
+    description: "Fixed building LLVM-C.dll for i386 targets with MSVC, which had been broken since the LLVM 8.0.0 release."
+    affectedApi:
+      - "LLVM-C.dll"
+      - "MSVC"
+    notes: "LLVM C API; Giri is C++ and does not link against the C API. No interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Go bindings (section present, no items in source) ---

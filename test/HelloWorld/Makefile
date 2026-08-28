@@ -13,7 +13,7 @@ CXX = clang++
 GIRI_LIB_DIR = $(GIRI_DIR)/lib
 GIRI_BIN_DIR = $(GIRI_DIR)/bin
 
-# New pass manager harness (LLVM 14.0.0): each Giri library is loaded twice —
+# New pass manager harness (LLVM 15.0.0): each Giri library is loaded twice —
 # -load registers the cl::opt globals (-trace-file, -slice-file, ...) before
 # opt parses the command line, -load-pass-plugin registers the -passes
 # pipeline names after. mergereturn (a function pass) is wrapped in a
@@ -44,7 +44,7 @@ $(NAME).trace: $(NAME).trace.exe
 	- ./$< $(INPUT)
 
 $(NAME).trace.exe : $(NAME).trace.s
-	$(CXX) -fno-strict-aliasing $+ -o $@ $(LDFLAGS) -L$(GIRI_LIB_DIR) -lrtgiri
+	$(CXX) -fno-strict-aliasing -no-pie $+ -o $@ $(LDFLAGS) -L$(GIRI_LIB_DIR) -lrtgiri
 
 $(NAME).trace.s : $(NAME).trace.bc
 	llc -asm-verbose=false -O0 $< -o $@

@@ -1,0 +1,35 @@
+### NEGATIVE CONTROL: missing-trace must not match the golden (LLVM 15.0.0 new-PM) ###
+### 2026-08-28T19:31:38Z  in /giri/test/UnitTests/test1 (extlibcalls) ###
+### The golden is ans-inst.txt; the harness diffs the .slice.loc (line numbers) against it. ###
+
+=== baseline: normal instrument+run -> .slice.loc == 4-line golden 9 12 13 18 ===
+  golden ans-inst.txt:
+    9
+    12
+    13
+    18
+  produced .slice.loc:
+    9
+    12
+    13
+    18
+  baseline diff rc: 0  (0 => matches golden)
+
+=== remove the trace file, keep the .bc, re-run the dgiri slice ===
+  EXACT COMMAND (identical -passes to the harness dgiri rule, test/Makefile.common line 71):
+    opt -load /giri/build/lib/libgiri.so -load /giri/build/lib/libdgutility.so -load-pass-plugin /giri/build/lib/libgiri.so -load-pass-plugin /giri/build/lib/libdgutility.so -passes="function(mergereturn),bbnum,lsnum,dgiri,remove-bbnum,remove-lsnum" -trace-file=extlibcalls.trace -slice-file=extlibcalls.slice -stats extlibcalls.all.bc -o /dev/null
+  trace present now? ls: cannot access 'extlibcalls.trace': No such file or directory
+    #11 0x0000562c34c4c423 llvm::runPassPipeline(llvm::StringRef, llvm::Module&, llvm::TargetMachine*, llvm::TargetLibraryInfoImpl*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::ToolOutputFile*, llvm::StringRef, llvm::ArrayRef<llvm::StringRef>, llvm::ArrayRef<llvm::PassPlugin>, llvm::opt_tool::OutputKind, llvm::opt_tool::VerifierKind, bool, bool, bool, bool, bool, bool) (/usr/local/llvm/bin/opt+0xa01423)
+    #12 0x0000562c34c5d3d6 main (/usr/local/llvm/bin/opt+0xa123d6)
+    #13 0x00007f23c6a2a083 __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24083)
+    #14 0x0000562c34c4530e _start (/usr/local/llvm/bin/opt+0x9fa30e)
+  opt rc=139
+=== slice artifact after crash (must be ABSENT => no false golden match) ===
+  slice ABSENT
+  slice.loc ABSENT (nothing to diff against the golden)
+
+=== positive control: restore the real trace, re-run through honest harness ===
+    	-stats  extlibcalls.all.bc -o /dev/null
+    diff extlibcalls.slice.loc ans-inst.txt
+  re-run diff rc=0  (0 => slice == golden)
+### NEGATIVE CONTROL DONE 2026-08-28T19:31:38Z ###

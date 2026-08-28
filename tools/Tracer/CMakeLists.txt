@@ -1,4 +1,4 @@
-add_executable(tracer Tracer.cpp)
+add_executable(tracer Tracer.cpp llvm_std_shim.cpp)
 
 target_include_directories(tracer PRIVATE
   ${CMAKE_SOURCE_DIR}/include
@@ -15,7 +15,7 @@ set_target_properties(tracer PROPERTIES
 
 target_link_libraries(tracer giri dgutility)
 
-# The prebuilt LLVM 14.0.0 CMake package does not set the LLVM_COMPONENT_LIBS
+# The prebuilt LLVM 15.0.0 CMake package does not set the LLVM_COMPONENT_LIBS
 # global property (only an in-tree LLVM build does), so
 # llvm_map_components_to_libnames(TRACER_LLVM all) expands to an empty list
 # and the executable fails to link with undefined LLVM references. Query the

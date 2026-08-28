@@ -72,4 +72,22 @@ case $VERSION in
 		rm -f clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
 		mv clang+llvm-14.0.0-x86_64-linux-gnu-ubuntu-18.04 $LLVM_HOME
 		;;
+		"15.0.0")
+			# Use prebuilt release tarball — no build from source needed.
+			# NOTE: from LLVM 10.0.0 onward, prebuilt binaries live on the
+			# GitHub Releases of llvm/llvm-project (tag llvmorg-15.0.0). 15.0.0
+			# ships exactly ONE x86_64-linux prebuilt: the rhel-8.4 tarball
+			# (verified against the GitHub API) — there is no ubuntu-18.04 or
+			# ubuntu-20.04 asset. rhel-8.4 is glibc 2.28, so the Dockerfile
+			# base is ubuntu:20.04 (glibc 2.31); the spike confirmed the
+			# binaries load with 0 unsatisfied glibc symbols. The 15.0.0
+			# prebuilt is C++14 (per `llvm-config --cxxflags`); 20.04's gcc 9.4
+			# covers that. Fallback if the tarball route ever breaks: build
+			# 15.0.0 from source (llvm-project monorepo tarball, also on the
+			# same GitHub release).
+			wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.0/clang+llvm-15.0.0-x86_64-linux-gnu-rhel-8.4.tar.xz
+			tar xf clang+llvm-15.0.0-x86_64-linux-gnu-rhel-8.4.tar.xz
+			rm -f clang+llvm-15.0.0-x86_64-linux-gnu-rhel-8.4.tar.xz
+			mv clang+llvm-15.0.0-x86_64-linux-gnu-rhel-8.4 $LLVM_HOME
+			;;
 esac

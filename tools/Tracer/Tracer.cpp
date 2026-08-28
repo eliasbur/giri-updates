@@ -126,7 +126,24 @@ int main(int argc, char **argv) {
     MAM.registerPass([] { return dg::QueryLSNumbersPass(); });
     MAM.registerPass([] { return giri::DynamicGiri(); });
 
-    M->setDataLayout(M->getDataLayout());
+    // The module's DataLayout comes from the parsed bitcode (the frontend
+    // emits it); no re-setting is needed. Do NOT write
+    // M->setDataLayout(M->getDataLayout()) here: it is a *self-assignment*.
+    // getDataLayout() returns `const DataLayout &` and setDataLayout takes
+    // `const DataLayout &`, so `DL = Other` binds Other to DL itself;
+    // DataLayout::operator= (hand-written, byte-identical in 14.0.0 and
+    // 15.0.0) does `clear()` first and then copies member-by-member from the
+    // now-cleared source, which destroys the parsed alignment/pointer tables
+    // (measured: ABI(i32) 4 -> 65536). This is a pre-existing defect in this
+    // line, inherited from the 14.0.0 head, that was *latent* under 14.0.0:
+    // the opt-driven suite never executes this line and does not verify by
+    // default. LLVM 15.0.0 added a verifier check (Verifier.cpp:
+    // `ParamMaxAlignment = 1 << 14`, "Incorrect alignment of … to called
+    // function!") that rejects a call argument whose ABI alignment exceeds
+    // 2^14; the corrupted layout reports absurd alignments, so the trailing
+    // VerifierPass now fails on every pointer-argument call and aborts the
+    // tool. Removing the line fixes the root cause (no corruption to
+    // verify away) and is byte-identical in behavior to the 14.0.0 path.
 
     // Number all basic blocks and instructions.
     MPM.addPass(dg::BasicBlockNumberPass());
