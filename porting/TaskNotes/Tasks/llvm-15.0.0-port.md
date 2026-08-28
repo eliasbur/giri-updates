@@ -260,6 +260,11 @@ Commits on `72258e4` (chronological):
   without a genuinely written+read trace. Restoring the trace reproduces the
   4-line golden match (exit 0). This mirrors the 14.0.0-newpm negative
   control (`9a2a29e`).
+- `e80419b` + `b179406` **doc tweaks** (post-PR): tightened the link-shim
+  wording (a 3-line *function body*, not a 3-line file) in SUMMARY/AGENTS.md/
+  task note; committed the negative-control raw transcript
+  (`_cold_acceptance/negative-control.log`) and completed this progress log so
+  every commit on the branch has an entry.
 - `opt -stats` stderr difference: 15.0.0 prebuilt `opt` prints nothing for
   `-stats`; 14.0.0 prebuilt `opt` prints
   `Statistics are disabled.  Build with asserts or with -DLLVM_FORCE_ENABLE_STATS`
