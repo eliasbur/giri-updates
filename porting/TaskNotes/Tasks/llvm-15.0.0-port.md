@@ -1,6 +1,6 @@
 ---
 title: Port Giri to LLVM 15.0.0 (new pass manager; new PM is the default, legacy PM still available)
-status: open
+status: done
 priority: high           # low | medium | high
 repo: giriupdates        # required; must match a GITHUB_<KEY>_TOKEN or GITLAB_<KEY>_TOKEN
 contexts: []
@@ -10,6 +10,8 @@ tags:
 timeEstimate: 0          # minutes
 dateCreated: 2026-08-27
 # dateModified / completedDate are added automatically by `driver.py finish`
+dateModified: 2026-08-28T19:13:09.908+02:00
+completedDate: 2026-08-28
 ---
 ## Goal
 
@@ -250,6 +252,6 @@ rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
 ## Handoff
 
 - branch `agent/jcode/llvm-15.0.0-port`
-- PR: <auto-written by driver.py finish>
+- PR: giriupdates #21 https://github.com/eliasbur/giri-updates/pull/21
 Refs: `porting/AgentGuide.md`, `porting/HowItWorks.md`, `llvm-14-newpm-port.md`,
 `porting/TestAudit/llvm-14.0.0-newpm/SUMMARY.md`
