@@ -16,9 +16,12 @@ three invariants hold: numbering determinism, `Entry` ABI
 
 Evidence lives alongside this file: the suite's raw per-test stage logs under
 `_test_logs/*.log` (per-test build+run+slice logs, `lib-stage.log`,
-`suite_final.log`, and the tally in `suite_final_table.txt`), and the
+`suite_final.log`, and the tally in `suite_final_table.txt`), the
 standalone-tracer validation under `_tool_validation/`
-(`full_tool_validation.py`, `full-tool-validation.txt`). The 22 per-test
+(`full_tool_validation.py`, `full-tool-validation.txt`), and the
+cold-build/negative-control acceptance under `_cold_acceptance/` (a
+from-scratch build at HEAD re-running the suite and the standalone-tracer
+validation 22/22, plus a missing-trace negative control). The 22 per-test
 reports (`UnitTests-testN.md` / `<bench>-seq.md`) each carry the golden name
 and line count, the input, the criterion actually used, the diff status, and
 the captured stage-by-stage output.
@@ -94,6 +97,29 @@ taken at the harness's implicit criterion.
 0 FAIL`). This is the path that previously aborted in the 15.0.0 container
 with a `DataLayout::ParamMaxAlignment too small` verifier error; it now passes
 cleanly because the tracer no longer self-assigns its `DataLayout`.
+
+## Cold-build + negative-control acceptance
+
+`_cold_acceptance/` re-establishes the result from a **clean** configure+build
+of the final committed source (the suite 22/22 above came from an incremental
+build state, though functionally identical at HEAD):
+
+- **Cold from-scratch build at HEAD** — `/giri/build` wiped, then
+  `source /giri/utils/build.sh`. Result (`cold-build-suite.log`): build.sh exit
+  0, all **22 tests PASS**, five artifacts in `build/{lib,bin}`.
+- **Standalone `tracer` from the cold build** —
+  `cold-standalone-tracer.log`: **22 PASS / 0 FAIL** over all 22 cases,
+  `prtrace` OK on every trace.
+- **Negative control (missing trace ⇒ no match).** In test1, after a normal
+  instrument+run (4-line slice == golden `9 12 13 18`), the trace file was
+  removed and the `dgiri` slice re-run: `opt` exits **139 (SIGSEGV)** in the
+  `DynamicGiri`/`TraceFile` path and **no `.slice` is produced**, so there is
+  nothing to match the golden against. The `(fd > 0)` assert at
+  `lib/Giri/TraceFile.cpp:52` is compiled out in the Release build, so a
+  missing trace is a silent segfault (not a catchable assert) on the prebuilt
+  Release toolchain. Restoring the trace and re-running through the honest
+  harness reproduces the 4-line golden match (exit 0). A golden match is
+  therefore only reachable with a genuinely written+read trace.
 
 ## Root-cause fixes specific to 15.0.0 (new-PM port)
 

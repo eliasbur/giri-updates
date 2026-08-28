@@ -1,0 +1,311 @@
+### COLD ACCEPTANCE: 2026-08-28T17:46:31Z ###
+### Wiping /giri/build for a from-scratch build ###
+### cmake + make + make -C test (build.sh) ###
+CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- The C compiler identification is GNU 9.4.0
+-- The CXX compiler identification is GNU 9.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found LLVM 15.0.0
+-- Linker detection: GNU ld
+-- Performing Test C_SUPPORTS_FPIC
+-- Performing Test C_SUPPORTS_FPIC - Success
+-- Performing Test CXX_SUPPORTS_FPIC
+-- Performing Test CXX_SUPPORTS_FPIC - Success
+-- Building with -fPIC
+-- Performing Test C_SUPPORTS_FNO_SEMANTIC_INTERPOSITION
+-- Performing Test C_SUPPORTS_FNO_SEMANTIC_INTERPOSITION - Success
+-- Performing Test CXX_SUPPORTS_FNO_SEMANTIC_INTERPOSITION
+-- Performing Test CXX_SUPPORTS_FNO_SEMANTIC_INTERPOSITION - Success
+-- Performing Test SUPPORTS_FVISIBILITY_INLINES_HIDDEN_FLAG
+-- Performing Test SUPPORTS_FVISIBILITY_INLINES_HIDDEN_FLAG - Success
+CMake Warning (dev) at /usr/local/llvm/lib/cmake/llvm/HandleLLVMOptions.cmake:449 (option):
+  Policy CMP0077 is not set: option() honors normal variables.  Run "cmake
+  --help-policy CMP0077" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+  For compatibility with older versions of CMake, option is clearing the
+  normal variable 'LLVM_ENABLE_WARNINGS'.
+Call Stack (most recent call first):
+  CMakeLists.txt:9 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Performing Test C_SUPPORTS_WERROR_DATE_TIME
+-- Performing Test C_SUPPORTS_WERROR_DATE_TIME - Success
+-- Performing Test CXX_SUPPORTS_WERROR_DATE_TIME
+-- Performing Test CXX_SUPPORTS_WERROR_DATE_TIME - Success
+-- Performing Test C_SUPPORTS_WERROR_UNGUARDED_AVAILABILITY_NEW
+-- Performing Test C_SUPPORTS_WERROR_UNGUARDED_AVAILABILITY_NEW - Failed
+-- Performing Test CXX_SUPPORTS_WERROR_UNGUARDED_AVAILABILITY_NEW
+-- Performing Test CXX_SUPPORTS_WERROR_UNGUARDED_AVAILABILITY_NEW - Failed
+-- Performing Test CXX_SUPPORTS_MISSING_FIELD_INITIALIZERS_FLAG
+-- Performing Test CXX_SUPPORTS_MISSING_FIELD_INITIALIZERS_FLAG - Success
+-- Performing Test C_SUPPORTS_IMPLICIT_FALLTHROUGH_FLAG
+-- Performing Test C_SUPPORTS_IMPLICIT_FALLTHROUGH_FLAG - Success
+-- Performing Test CXX_SUPPORTS_IMPLICIT_FALLTHROUGH_FLAG
+-- Performing Test CXX_SUPPORTS_IMPLICIT_FALLTHROUGH_FLAG - Success
+-- Performing Test C_SUPPORTS_COVERED_SWITCH_DEFAULT_FLAG
+-- Performing Test C_SUPPORTS_COVERED_SWITCH_DEFAULT_FLAG - Failed
+-- Performing Test CXX_SUPPORTS_COVERED_SWITCH_DEFAULT_FLAG
+-- Performing Test CXX_SUPPORTS_COVERED_SWITCH_DEFAULT_FLAG - Failed
+-- Performing Test CXX_SUPPORTS_CLASS_MEMACCESS_FLAG
+-- Performing Test CXX_SUPPORTS_CLASS_MEMACCESS_FLAG - Success
+-- Performing Test CXX_SUPPORTS_REDUNDANT_MOVE_FLAG
+-- Performing Test CXX_SUPPORTS_REDUNDANT_MOVE_FLAG - Success
+-- Performing Test CXX_SUPPORTS_PESSIMIZING_MOVE_FLAG
+-- Performing Test CXX_SUPPORTS_PESSIMIZING_MOVE_FLAG - Success
+-- Performing Test CXX_SUPPORTS_NOEXCEPT_TYPE_FLAG
+-- Performing Test CXX_SUPPORTS_NOEXCEPT_TYPE_FLAG - Success
+-- Performing Test CXX_WONT_WARN_ON_FINAL_NONVIRTUALDTOR
+-- Performing Test CXX_WONT_WARN_ON_FINAL_NONVIRTUALDTOR - Failed
+-- Performing Test CXX_SUPPORTS_SUGGEST_OVERRIDE_FLAG
+-- Performing Test CXX_SUPPORTS_SUGGEST_OVERRIDE_FLAG - Success
+-- Performing Test CXX_WSUGGEST_OVERRIDE_ALLOWS_ONLY_FINAL
+-- Performing Test CXX_WSUGGEST_OVERRIDE_ALLOWS_ONLY_FINAL - Success
+-- Performing Test C_WCOMMENT_ALLOWS_LINE_WRAP
+-- Performing Test C_WCOMMENT_ALLOWS_LINE_WRAP - Failed
+-- Performing Test C_SUPPORTS_STRING_CONVERSION_FLAG
+-- Performing Test C_SUPPORTS_STRING_CONVERSION_FLAG - Failed
+-- Performing Test CXX_SUPPORTS_STRING_CONVERSION_FLAG
+-- Performing Test CXX_SUPPORTS_STRING_CONVERSION_FLAG - Failed
+-- Performing Test C_SUPPORTS_MISLEADING_INDENTATION_FLAG
+-- Performing Test C_SUPPORTS_MISLEADING_INDENTATION_FLAG - Success
+-- Performing Test CXX_SUPPORTS_MISLEADING_INDENTATION_FLAG
+-- Performing Test CXX_SUPPORTS_MISLEADING_INDENTATION_FLAG - Success
+-- Performing Test C_SUPPORTS_FNO_FUNCTION_SECTIONS
+-- Performing Test C_SUPPORTS_FNO_FUNCTION_SECTIONS - Success
+-- Performing Test C_SUPPORTS_FFUNCTION_SECTIONS
+-- Performing Test C_SUPPORTS_FFUNCTION_SECTIONS - Success
+-- Performing Test CXX_SUPPORTS_FFUNCTION_SECTIONS
+-- Performing Test CXX_SUPPORTS_FFUNCTION_SECTIONS - Success
+-- Performing Test C_SUPPORTS_FDATA_SECTIONS
+-- Performing Test C_SUPPORTS_FDATA_SECTIONS - Success
+-- Performing Test CXX_SUPPORTS_FDATA_SECTIONS
+-- Performing Test CXX_SUPPORTS_FDATA_SECTIONS - Success
+CMake Warning (dev) at /usr/local/llvm/lib/cmake/llvm/HandleLLVMOptions.cmake:1000 (option):
+  Policy CMP0077 is not set: option() honors normal variables.  Run "cmake
+  --help-policy CMP0077" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+  For compatibility with older versions of CMake, option is clearing the
+  normal variable 'LLVM_ENABLE_EH'.
+Call Stack (most recent call first):
+  CMakeLists.txt:9 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at /usr/local/llvm/lib/cmake/llvm/HandleLLVMOptions.cmake:1001 (option):
+  Policy CMP0077 is not set: option() honors normal variables.  Run "cmake
+  --help-policy CMP0077" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+  For compatibility with older versions of CMake, option is clearing the
+  normal variable 'LLVM_ENABLE_RTTI'.
+Call Stack (most recent call first):
+  CMakeLists.txt:9 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at /usr/local/share/cmake-3.31/Modules/CMakeDependentOption.cmake:75 (option):
+  Policy CMP0077 is not set: option() honors normal variables.  Run "cmake
+  --help-policy CMP0077" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+  For compatibility with older versions of CMake, option is clearing the
+  normal variable 'LLVM_EXPORT_SYMBOLS_FOR_PLUGINS'.
+Call Stack (most recent call first):
+  /usr/local/llvm/lib/cmake/llvm/HandleLLVMOptions.cmake:1157 (CMAKE_DEPENDENT_OPTION)
+  CMakeLists.txt:9 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Looking for os_signpost_interval_begin
+-- Looking for os_signpost_interval_begin - not found
+-- Configuring done (4.1s)
+-- Generating done (0.1s)
+-- Build files have been written to: /giri/build
+[ 10%] Building CXX object tools/PrintTrace/CMakeFiles/prtrace.dir/PrintTrace.cpp.o
+[ 10%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/BasicBlockNumbering.cpp.o
+[ 20%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/LoadStoreNumbering.cpp.o
+[ 20%] Building CXX object runtime/Giri/CMakeFiles/rtgiri.dir/Tracing.cpp.o
+[ 30%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/PostDominatorFrontier.cpp.o
+[ 30%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/SourceLineMapping.cpp.o
+[ 40%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/CountSrcLines.cpp.o
+[ 40%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/UtilityPassPlugin.cpp.o
+In file included from /usr/local/llvm/include/llvm/IR/Dominators.h:36,
+                 from /usr/local/llvm/include/llvm/Analysis/PostDominators.h:17,
+                 from /giri/include/Utility/PostDominanceFrontier.h:33,
+                 from /giri/lib/Utility/PostDominatorFrontier.cpp:20:
+/usr/local/llvm/include/llvm/Support/GenericDomTreeConstruction.h:49: warning: "DEBUG_TYPE" redefined
+   49 | #define DEBUG_TYPE "dom-tree-builder"
+      | 
+/giri/lib/Utility/PostDominatorFrontier.cpp:18: note: this is the location of the previous definition
+   18 | #define DEBUG_TYPE "giriutil"
+      | 
+/giri/runtime/Giri/Tracing.cpp: In member function 'void EntryCache::mapCache()':
+/giri/runtime/Giri/Tracing.cpp:152:8: warning: ignoring return value of 'ssize_t write(int, const void*, size_t)', declared with attribute warn_unused_result [-Wunused-result]
+  152 |   write(fd, buf, 1);
+      |   ~~~~~^~~~~~~~~~~~
+/giri/runtime/Giri/Tracing.cpp: In member function 'void EntryCache::closeCacheFile()':
+/giri/runtime/Giri/Tracing.cpp:229:12: warning: ignoring return value of 'int ftruncate(int, __off_t)', declared with attribute warn_unused_result [-Wunused-result]
+  229 |   ftruncate(fd, len + fileOffset);
+      |   ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+[ 45%] Linking CXX static library ../../lib/librtgiri.a
+[ 45%] Built target rtgiri
+In file included from /giri/lib/Utility/SourceLineMapping.cpp:3:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:25,
+                 from /giri/lib/Utility/LoadStoreNumbering.cpp:1:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:25,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Utility/CountSrcLines.h:21,
+                 from /giri/lib/Utility/UtilityPassPlugin.cpp:29:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:25,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Utility/CountSrcLines.h:21,
+                 from /giri/lib/Utility/CountSrcLines.cpp:17:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:25,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/tools/PrintTrace/PrintTrace.cpp:15:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+[ 50%] Linking CXX executable ../../bin/prtrace
+[ 50%] Built target prtrace
+[ 55%] Linking CXX shared library ../libdgutility.so
+[ 55%] Built target dgutility
+[ 60%] Building CXX object lib/Giri/CMakeFiles/giri.dir/Giri.cpp.o
+[ 65%] Building CXX object lib/Giri/CMakeFiles/giri.dir/TracingNoGiri.cpp.o
+[ 70%] Building CXX object lib/Giri/CMakeFiles/giri.dir/TraceFile.cpp.o
+[ 75%] Building CXX object lib/Giri/CMakeFiles/giri.dir/TestPass.cpp.o
+[ 80%] Building CXX object lib/Giri/CMakeFiles/giri.dir/GiriPassPlugin.cpp.o
+In file included from /giri/include/Utility/LoadStoreNumbering.h:25,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/lib/Giri/TraceFile.cpp:15:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:25,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:31,
+                 from /giri/lib/Giri/GiriPassPlugin.cpp:22:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:25,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:31,
+                 from /giri/lib/Giri/TestPass.cpp:19:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:25,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:31,
+                 from /giri/lib/Giri/Giri.cpp:24:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:25,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:31,
+                 from /giri/lib/Giri/TracingNoGiri.cpp:19:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+/giri/lib/Giri/TraceFile.cpp: In constructor 'giri::TraceFile::TraceFile(std::string, const dg::QueryBasicBlockNumbers*, const dg::QueryLoadStoreNumbers*)':
+/giri/lib/Giri/TraceFile.cpp:55:7: warning: unused variable 'ret' [-Wunused-variable]
+   55 |   int ret = fstat(fd, &finfo);
+      |       ^~~
+/giri/lib/Giri/TraceFile.cpp: In member function 'void giri::TraceFile::findAllStoresForLoad(giri::DynValue&, giri::TraceFile::Worklist_t&, long int, Entry)':
+/giri/lib/Giri/TraceFile.cpp:615:18: warning: unused variable 'LI' [-Wunused-variable]
+  615 |     Instruction *LI = dyn_cast<Instruction>(DV.getValue());
+      |                  ^~
+[ 85%] Linking CXX shared library ../libgiri.so
+[ 85%] Built target giri
+[ 95%] Building CXX object tools/Tracer/CMakeFiles/tracer.dir/llvm_std_shim.cpp.o
+[ 95%] Building CXX object tools/Tracer/CMakeFiles/tracer.dir/Tracer.cpp.o
+In file included from /giri/include/Utility/LoadStoreNumbering.h:25,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:31,
+                 from /giri/tools/Tracer/Tracer.cpp:22:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+[100%] Linking CXX executable ../../bin/tracer
+[100%] Built target tracer
+make: Entering directory '/giri/test'
+Building the Giri...
+Running the test cases...
+[37mUnitTests/test1     [34m[PASS][0m
+[37mUnitTests/test2     [34m[PASS][0m
+[37mUnitTests/test3     [34m[PASS][0m
+[37mUnitTests/test4     [34m[PASS][0m
+[37mUnitTests/test5     [34m[PASS][0m
+[37mUnitTests/test8     [34m[PASS][0m
+[37mUnitTests/test9     [34m[PASS][0m
+[37mUnitTests/test10    [34m[PASS][0m
+[37mUnitTests/test11    [34m[PASS][0m
+[37mUnitTests/test12    [34m[PASS][0m
+[37mUnitTests/test13    [34m[PASS][0m
+[37mUnitTests/test14    [34m[PASS][0m
+[37mUnitTests/test15    [34m[PASS][0m
+[37mUnitTests/test16    [34m[PASS][0m
+[37mUnitTests/test17    [34m[PASS][0m
+[37mUnitTests/test18    [34m[PASS][0m
+[37mUnitTests/test19    [34m[PASS][0m
+[37mUnitTests/test20    [34m[PASS][0m
+[37mUnitTests/test21    [34m[PASS][0m
+[37mmatrix_multiply     [34m[PASS][0m
+[37mpca                 [34m[PASS][0m
+[37mkmeans              [34m[PASS][0m
+make: Leaving directory '/giri/test'
+### build.sh exit: 0 ###
+
+### artifacts in build/{lib,bin} ###
+  lib/Giri
+  lib/Utility
+  lib/libdgutility.so
+  lib/libgiri.so
+  lib/librtgiri.a
+  bin/prtrace
+  bin/tracer
+
+### standalone tracer whole-result validation ###
+python3: can't open file '/giri/porting/TestAudit/llvm-15.0.0/_tool_validation/full_tool_validation.py': [Errno 2] No such file or directory
+### COLD ACCEPTANCE DONE rc=0 2026-08-28T17:47:12Z ###

@@ -236,13 +236,25 @@ Commits on `72258e4` (chronological):
   PM is actually gone). **The task-note's two opening premises — "legacy PM is
   gone in 15" and "LLVM 15 requires C++17" — were wrong and have been
   corrected here; do not propagate them into AGENTS.md or the change data.**
+- **Cold-build + negative-control acceptance** (follow-up, 2026-08-28,
+  `_cold_acceptance/`): a **from-scratch** build of the committed source at
+  HEAD (`/giri/build` wiped, `source utils/build.sh`) → build.sh exit 0,
+  **22/22 PASS**; the standalone `tracer` re-run from the cold build →
+  **22/22**. Negative control: with the test1 trace file *removed*, the
+  `dgiri` slice aborts (opt rc 139, SIGSEGV in the `DynamicGiri`/`TraceFile`
+  path; the `(fd > 0)` assert at `TraceFile.cpp:52` is compiled out in
+  Release) and **no `.slice` is produced**, so a golden match is impossible
+  without a genuinely written+read trace. Restoring the trace reproduces the
+  4-line golden match (exit 0). This mirrors the 14.0.0-newpm negative
+  control (`9a2a29e`).
 - `opt -stats` stderr difference: 15.0.0 prebuilt `opt` prints nothing for
   `-stats`; 14.0.0 prebuilt `opt` prints
   `Statistics are disabled.  Build with asserts or with -DLLVM_FORCE_ENABLE_STATS`
   (44× in the 14.0.0-newpm suite logs, 0× in 15.0.0). Harmless (stderr only).
 
-**Remaining:** update the `AGENTS.md` branch copy (15.0.0 narrative, corrected
-premises), push, open the PR into `port/llvm-15.0.0`, `driver.py finish`.
+**Remaining:** none — `AGENTS.md` updated, branch pushed, PR #21 open into
+`port/llvm-15.0.0`, `driver.py finish` run (status `done`). Cold-build +
+negative-control acceptance added as a follow-up (see `_cold_acceptance/`).
 
 **Container:** `giri15` (image `giri-llvm-15`; ubuntu:20.04 + prebuilt
 rhel-8.4 LLVM/Clang 15.0.0 at `/usr/local/llvm`). Rebuild/test inside it:
