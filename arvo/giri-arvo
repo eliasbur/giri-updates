@@ -1,0 +1,341 @@
+#!/bin/bash
+# giri-arvo -- run the whole Giri pipeline against an ARVO container, unattended.
+#
+#   giri-arvo <container> [options]
+#
+# Drives the nine stages described in AUTOMATION.md from the host: probes the
+# container's toolchain, installs Giri and the wrappers, rebuilds the target so
+# that whole-program bitcode falls out of ARVO's own build, instruments, traces,
+# picks a criterion from the sanitizer report, and slices.  Every stage has a
+# gate; the point of the driver is that a stage which cannot be trusted stops
+# the run and says why, rather than handing the next stage something unusable.
+#
+# This build of the pipeline targets the LLVM 5 port only (see "toolchain gate").
+#
+# Options:
+#   --poc PATH             input to trace, inside the container (default /tmp/poc)
+#   --fuzzer NAME          fuzz target (default: whatever /bin/arvo runs)
+#   --criterion SPEC       file.c:LINE or function:INDEX; skips ASan-driven choice
+#   --out DIR              host directory for the artifacts (default ./giri-arvo-<container>)
+#   --source-ref REF       git ref of Giri to install (default HEAD)
+#   --env VAR=VALUE        extra environment for the target build (repeatable)
+#   --bc-include REGEX     only trace bitcode whose path matches
+#   --bc-exclude REGEX     drop bitcode whose path matches
+#   --build-sh-sed EXPR    edit $SRC/build.sh for the build, then restore it.
+#                          The no-edit rule is the default; this is the opt-out,
+#                          for builds that link hundreds of targets to reach one.
+#   --max-candidates N     criteria to try before giving up (default 8)
+#   --trace-timeout SECS   kill the traced run after this long (default 600)
+#   --skip-giri-build      keep the Giri build already in the container
+#   --skip-target-build    keep the target build already in the container
+#   --keep-going           do not stop at the first failing verification gate
+set -uo pipefail
+
+die()  { printf '\n\033[31mgiri-arvo: %s\033[0m\n' "$*" >&2; exit 1; }
+warn() { printf '\033[33mgiri-arvo: %s\033[0m\n' "$*" >&2; }
+step() { printf '\n\033[1m==> [%s] %s\033[0m\n' "$1" "$2"; }
+gate() { printf '    \033[32mgate ok\033[0m  %s\n' "$*"; }
+
+CONTAINER="${1:-}"; shift 2>/dev/null
+[ -n "$CONTAINER" ] || die "usage: giri-arvo <container> [options]  (see --help in the header)"
+
+POC=/tmp/poc
+FUZZER=""; CRITERION=""; OUTDIR=""; REF="HEAD"
+BC_INCLUDE=""; BC_EXCLUDE=""; BUILD_SH_SED=""
+MAXCAND=8; TRACE_TIMEOUT=600
+SKIP_GIRI_BUILD=0; SKIP_TARGET_BUILD=0; KEEP_GOING=0
+EXTRA_ENV=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --poc)             POC="$2"; shift 2 ;;
+    --fuzzer)          FUZZER="$2"; shift 2 ;;
+    --criterion)       CRITERION="$2"; shift 2 ;;
+    --out)             OUTDIR="$2"; shift 2 ;;
+    --source-ref)      REF="$2"; shift 2 ;;
+    --env)             EXTRA_ENV+=("$2"); shift 2 ;;
+    --bc-include)      BC_INCLUDE="$2"; shift 2 ;;
+    --bc-exclude)      BC_EXCLUDE="$2"; shift 2 ;;
+    --build-sh-sed)    BUILD_SH_SED="$2"; shift 2 ;;
+    --max-candidates)  MAXCAND="$2"; shift 2 ;;
+    --trace-timeout)   TRACE_TIMEOUT="$2"; shift 2 ;;
+    --skip-giri-build)   SKIP_GIRI_BUILD=1; shift ;;
+    --skip-target-build) SKIP_TARGET_BUILD=1; shift ;;
+    --keep-going)      KEEP_GOING=1; shift ;;
+    -h|--help)         sed -n '2,30p' "$0"; exit 0 ;;
+    *) die "unknown option $1" ;;
+  esac
+done
+
+OUTDIR="${OUTDIR:-./giri-arvo-$CONTAINER}"
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Quote for the single-quoted shell snippets below.
+q() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
+dex()  { docker exec "$CONTAINER" bash -c "$1"; }
+dexi() { docker exec -i "$CONTAINER" bash -c "$1"; }
+fail_gate() { if [ "$KEEP_GOING" = "1" ]; then warn "gate failed: $*"; else die "$*"; fi; }
+
+docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null | grep -q true \
+  || die "container $CONTAINER is not running"
+
+################################################################################
+step 0/9 "toolchain gate"
+################################################################################
+# ARVO pins whatever toolchain OSS-Fuzz used at the time, so this is a branch,
+# not a constant: the sample container has clang 5.0.0, its neighbour has 8.0.0.
+# Giri's passes link against one LLVM's static libraries and read one bitcode
+# format, so this has to be settled before anything else is built.
+LLVMVER="$(dex 'llvm-config --version' 2>/dev/null | tr -d '\r')"
+[ -n "$LLVMVER" ] || die "no llvm-config in $CONTAINER -- is this an ARVO container?"
+echo "    container LLVM: $LLVMVER"
+case "$LLVMVER" in
+  5.*) gate "LLVM 5 matches this port (port/llvm-5.0.2)" ;;
+  *)   die "this pipeline is the LLVM 5 port; the container has $LLVMVER.
+
+  Newer container LLVM: keep the native build on the container's clang and set
+  GIRI_BC_CC/GIRI_BC_CXX to a clang matching a port, so the project still builds
+  with the toolchain it expects while the bitcode stays readable by Giri's
+  passes.  Sources that only compile with the newer clang drop out and are
+  logged to \$GIRI_BC_DIR/failed.log.
+
+  Otherwise: port Giri to $LLVMVER first -- that is what the port/llvm-* branches
+  are for." ;;
+esac
+
+################################################################################
+step 1/9 "target and sanitizer report"
+################################################################################
+if [ -z "$FUZZER" ]; then
+  FUZZER="$(dex "grep -oE '/out/[A-Za-z0-9_.+-]+ ' /bin/arvo | head -1 | sed 's|/out/||; s| *\$||'")"
+  [ -n "$FUZZER" ] || die "could not read the fuzz target out of /bin/arvo; pass --fuzzer"
+fi
+echo "    fuzz target: $FUZZER"
+dex "test -f $(q "$POC")" || die "no PoC at $POC in the container"
+
+# Capture the report now, from ARVO's own sanitized binary in /out, before the
+# Giri build redirects OUT.  This is the only thing that knows which instruction
+# to slice from.
+if [ -z "$CRITERION" ]; then
+  dex "cd /tmp && /out/$(q "$FUZZER") $(q "$POC") > /giri-asan.txt 2>&1; true"
+  if dex "grep -qE 'ERROR: (Address|Leak)Sanitizer|runtime error:|WARNING: MemorySanitizer' /giri-asan.txt"; then
+    dex "grep -m1 -E 'ERROR: |runtime error:' /giri-asan.txt" | sed 's/^/    /'
+    gate "sanitizer report captured (/giri-asan.txt)"
+  else
+    fail_gate "the container's own binary did not reproduce a sanitizer error on $POC.
+  Without a report there is nothing to derive a criterion from; pass --criterion."
+  fi
+else
+  echo "    criterion given: $CRITERION (skipping the report)"
+fi
+
+################################################################################
+step 2/9 "install Giri and the wrappers"
+################################################################################
+if [ "$SKIP_GIRI_BUILD" = "0" ]; then
+  if git -C "$REPO" rev-parse --git-dir >/dev/null 2>&1; then
+    git -C "$REPO" diff --quiet "$REF" -- . 2>/dev/null \
+      || warn "working tree differs from $REF; installing $REF, not what is on disk"
+    dex 'rm -rf /giri-src && mkdir -p /giri-src'
+    git -C "$REPO" archive --format=tar "$REF" | dexi 'tar -x -C /giri-src' \
+      || die "could not copy the Giri source into the container"
+  else
+    dex 'rm -rf /giri-src && mkdir -p /giri-src'
+    docker cp "$REPO/." "$CONTAINER":/giri-src || die "docker cp of the Giri source failed"
+  fi
+fi
+
+# The wrappers have to be laid out the way giri-env.sh expects: giri-cc installed
+# under both compiler names, compile_giri on PATH so ARVO's `compile` can source
+# it, and the driver where compile_giri looks for it.
+dex '
+set -e
+mkdir -p /giri/bin
+cp /giri-src/arvo/giri-cc          /giri/bin/giri-clang
+cp /giri-src/arvo/giri-cc          /giri/bin/giri-clang++
+cp /giri-src/arvo/giri-extract-bc  /giri/bin/
+cp /giri-src/arvo/giri-instrument  /giri/bin/
+cp /giri-src/arvo/giri-criterion   /giri/bin/
+cp /giri-src/arvo/giri-slice       /giri/bin/
+cp /giri-src/arvo/giri-trace       /giri/bin/
+cp /giri-src/arvo/giri-build-runtime /giri/bin/
+cp /giri-src/arvo/compile_giri     /giri/bin/
+cp /giri-src/arvo/giri-env.sh      /giri/env.sh
+cp /giri-src/arvo/standalone_driver.c /giri/standalone_driver.c
+chmod +x /giri/bin/*
+' || die "installing the wrappers failed"
+gate "wrappers installed in /giri/bin"
+
+################################################################################
+step 3/9 "build Giri"
+################################################################################
+if [ "$SKIP_GIRI_BUILD" = "0" ]; then
+  # ARVO's CFLAGS/CXXFLAGS carry -stdlib=libc++ and the sanitizer flags.  Giri's
+  # passes link against LLVM's static libraries, which are libstdc++; letting the
+  # target's flags leak in here produces a pass that will not load.
+  dex '
+    set -e
+    cd /giri-src && mkdir -p build && cd build
+    env -u CFLAGS -u CXXFLAGS -u CXXFLAGS_EXTRA -u CC -u CXX -u LDFLAGS \
+        cmake -DCMAKE_BUILD_TYPE=Release .. > /giri/giri-build.log 2>&1
+    env -u CFLAGS -u CXXFLAGS -u CXXFLAGS_EXTRA -u CC -u CXX -u LDFLAGS \
+        make -j$(nproc) >> /giri/giri-build.log 2>&1
+  ' || { dex 'tail -30 /giri/giri-build.log'; die "Giri build failed (full log: /giri/giri-build.log in the container)"; }
+fi
+dex 'opt -load /giri-src/build/lib/libdgutility.so -load /giri-src/build/lib/libgiri.so \
+     -dgiri --help > /dev/null 2>&1' \
+  || fail_gate "Giri's passes do not load into this container's opt"
+gate "-dgiri loads"
+
+# The runtime has no LLVM dependency and must match the target's C++ library,
+# not LLVM's, so it is the one piece built with ARVO's own flags.
+dex 'source /giri/env.sh && giri-build-runtime' >/dev/null 2>&1 \
+  || die "giri-build-runtime failed"
+gate "librtgiri.a built against the target's C++ stdlib"
+
+################################################################################
+step 4/9 "build the target with bitcode capture"
+################################################################################
+BUILD_ENV=""
+for e in ${EXTRA_ENV+"${EXTRA_ENV[@]}"}; do BUILD_ENV="$BUILD_ENV export ${e%%=*}=$(q "${e#*=}");"; done
+[ -n "$BC_INCLUDE" ] && BUILD_ENV="$BUILD_ENV export GIRI_BC_INCLUDE=$(q "$BC_INCLUDE");"
+[ -n "$BC_EXCLUDE" ] && BUILD_ENV="$BUILD_ENV export GIRI_BC_EXCLUDE=$(q "$BC_EXCLUDE");"
+
+if [ "$SKIP_TARGET_BUILD" = "0" ]; then
+  # $SRC/build.sh is not edited by default.  When a build links hundreds of
+  # targets to produce the one being sliced, --build-sh-sed is the opt-out; the
+  # original is restored whatever happens.
+  if [ -n "$BUILD_SH_SED" ]; then
+    warn "editing \$SRC/build.sh (--build-sh-sed); it will be restored afterwards"
+    dex "cp -n \"\$SRC/build.sh\" \"\$SRC/build.sh.giri-orig\" && sed -i $(q "$BUILD_SH_SED") \"\$SRC/build.sh\"" \
+      || die "--build-sh-sed failed to apply"
+    dex 'diff "$SRC/build.sh.giri-orig" "$SRC/build.sh"' | sed 's/^/    /'
+  fi
+
+  dex "rm -rf /giri/bc /giri/out /giri/work; mkdir -p /giri/bc /giri/out /giri/work"
+  echo "    building (this is the long stage) ..."
+  dex "
+    set -o pipefail
+    source /giri/env.sh
+    $BUILD_ENV
+    compile > /giri/target-build.log 2>&1
+  "; rc=$?
+  if [ -n "$BUILD_SH_SED" ]; then
+    dex 'cp "$SRC/build.sh.giri-orig" "$SRC/build.sh" && rm -f "$SRC/build.sh.giri-orig"' \
+      && echo "    \$SRC/build.sh restored"
+  fi
+  [ $rc -eq 0 ] || { dex 'tail -40 /giri/target-build.log'; die "the target build failed (full log: /giri/target-build.log in the container)"; }
+fi
+
+FAILED="$(dex 'wc -l < /giri/bc/failed.log 2>/dev/null || echo 0' | tr -d ' \r')"
+LINKS="$(dex 'ls /giri/bc/links/*.linkcmd 2>/dev/null | wc -l' | tr -d ' \r')"
+echo "    recorded link lines: $LINKS;  TUs whose bitcode copy failed: $FAILED"
+[ "${FAILED:-0}" -eq 0 ] || warn "$FAILED translation units are missing from the bitcode
+  (see /giri/bc/failed.log).  They still link natively, they just are not traced;
+  their stores reach the slice as lost loads."
+dex "test -x /giri/out/$(q "$FUZZER")" \
+  || { dex 'ls -la /giri/out'; die "the build did not produce /giri/out/$FUZZER"; }
+gate "/giri/out/$FUZZER built through the wrappers"
+
+BASE="/giri/work/$FUZZER/$FUZZER"
+
+################################################################################
+step 5/9 "whole-program bitcode + instrumentation + relink"
+################################################################################
+dex "
+  source /giri/env.sh
+  $BUILD_ENV
+  giri-instrument /giri/out/$(q "$FUZZER")
+" 2>&1 | sed 's/^/    /' || die "giri-instrument failed"
+
+dex "test -s $(q "$BASE.all.bc")" || fail_gate "no whole-program bitcode at $BASE.all.bc.
+  A count of 0 modules means the target was not built through giri-cc."
+dex "test -x $(q "$BASE.trace.exe")" || fail_gate "relink produced no $BASE.trace.exe"
+gate "traced binary linked"
+
+################################################################################
+step 6/9 "traced run"
+################################################################################
+dex "GIRI_TRACE_TIMEOUT=$(q "$TRACE_TIMEOUT") /giri/bin/giri-trace $(q "$BASE") $(q "$POC")" 2>&1 | sed 's/^/    /'
+rc=${PIPESTATUS[0]}
+case $rc in
+  0) gate "trace complete and terminated" ;;
+  2) die "the traced run terminated abnormally -- see $BASE.trace.err in the container.
+  The trace it left is unusable; slicing against it would read past the mapped file." ;;
+  3) die "the trace is truncated or unterminated -- see the diagnosis above." ;;
+  *) die "giri-trace failed (exit $rc)" ;;
+esac
+
+################################################################################
+step 7/9 "criterion"
+################################################################################
+CANDS=()
+if [ -n "$CRITERION" ]; then
+  CANDS=("$CRITERION")
+  echo "    using the criterion given on the command line"
+else
+  mapfile -t CANDS < <(dex "
+    source /giri/env.sh
+    GIRI_BUILD=/giri-src/build giri-criterion $(q "$BASE.all.bc") \
+      --asan /giri-asan.txt --plain --limit $(q "$MAXCAND")
+  ")
+  [ ${#CANDS[@]} -gt 0 ] || die "could not derive a criterion from the sanitizer report.
+  Run giri-criterion in the container by hand to see the candidates, then pass
+  the right one as --criterion."
+  dex "
+    source /giri/env.sh
+    GIRI_BUILD=/giri-src/build giri-criterion $(q "$BASE.all.bc") \
+      --asan /giri-asan.txt --limit $(q "$MAXCAND")
+  " 2>&1 | sed 's/^/    /'
+fi
+
+################################################################################
+step 8/9 "slice"
+################################################################################
+# Ranking is a preference; whether the criterion executed is settled here.  Giri
+# reports a criterion whose basic block is absent from the trace, giri-slice
+# turns that into exit 4, and the next candidate gets its turn.
+CHOSEN=""
+for c in "${CANDS[@]}"; do
+  [ -n "$c" ] || continue
+  echo "    trying $c"
+  dex "
+    source /giri/env.sh
+    GIRI_BUILD=/giri-src/build giri-slice $(q "$BASE") $(q "$c")
+  " 2>&1 | sed 's/^/      /'
+  rc=${PIPESTATUS[0]}
+  if [ $rc -eq 0 ]; then CHOSEN="$c"; break; fi
+  if [ $rc -eq 4 ]; then echo "      (never executed; next candidate)"; continue; fi
+  die "giri-slice failed on $c (exit $rc)"
+done
+[ -n "$CHOSEN" ] || die "none of the ${#CANDS[@]} candidate criteria executed in this run.
+  Either the PoC does not reach that line under the unsanitized build, or the
+  line is spelled differently in the debug metadata.  Raise --max-candidates,
+  or list them by hand with giri-criterion."
+gate "sliced from $CHOSEN"
+
+################################################################################
+step 9/9 "collect"
+################################################################################
+mkdir -p "$OUTDIR"
+for f in .slice.loc .criterion .trace.err .slice.err; do
+  docker cp "$CONTAINER:$BASE$f" "$OUTDIR/" 2>/dev/null
+done
+docker cp "$CONTAINER:/giri-asan.txt" "$OUTDIR/asan-report.txt" 2>/dev/null
+
+LOC="$OUTDIR/$(basename "$BASE").slice.loc"
+{
+  echo "container   : $CONTAINER"
+  echo "fuzz target : $FUZZER"
+  echo "PoC         : $POC"
+  echo "criterion   : $CHOSEN"
+  echo "trace       : $(dex "stat -c %s $(q "$BASE.trace")") bytes, \
+$(( $(dex "stat -c %s $(q "$BASE.trace")") / 32 )) records"
+  echo "module      : $(dex "stat -c %s $(q "$BASE.all.bc")") bytes"
+  echo "slice       : $(dex "stat -c %s $(q "$BASE.slice")") bytes"
+  echo
+  echo "distinct source lines per file:"
+  [ -f "$LOC" ] && awk -F: '{print $1}' "$LOC" | sort | uniq -c | sort -rn
+} | tee "$OUTDIR/summary.txt"
+
+printf '\n\033[1m==> artifacts in %s\033[0m\n' "$OUTDIR"
