@@ -59,19 +59,23 @@ is landing it.
 
 ## Definition of done
 
-- [ ] `arvo/` is committed, with the four patches landed as commits and the patch files removed.
-- [ ] Test suite re-measured on this branch after the patches land; result recorded here and in
-      `porting/TestAudit/llvm-5.0.2/SUMMARY.md`.
-- [ ] `.giri_link` section stamped by `giri-cc` and read by `giri-instrument`; a rename no longer
-      needs `GIRI_LINKCMD`.
-- [ ] `giri-trace` exists and enforces both trace gates (no `[GIRI] Abnormal termination`; last
-      32-byte record is `ENType`).
-- [ ] Giri reports an unexecuted criterion explicitly; `giri-slice` surfaces it as a distinct
-      status.
-- [ ] Criterion selection is automatic from the ASan report, with ranked fallback candidates.
-- [ ] `giri-arvo` drives stages 0-9 unattended against a named container.
-- [ ] Full clean end-to-end run on `arvo-42473917-vul` reproduces the documented slice.
-- [ ] `arvo/AUTOMATION.md` and `arvo/README.md` updated to describe what is now automated.
+- [x] `arvo/` is committed (`a3035ba`), the four patches are commits `98a6889` `f322b02` `5ed4833` `d75123d`, patch files removed.
+- [x] Suite re-measured before *and* after the patches: **22 PASS / 0 FAIL** both times. Recorded
+      in `porting/TestAudit/llvm-5.0.2/SUMMARY.md` (`3737a58`) and `AGENTS.md` (`8676494`).
+- [x] `.giri_link` stamped and read (`f85d08a`). Demonstrated on the real build: the binary linked
+      as `tools/target_dec_sami_fuzzer` and moved to `$OUT/ffmpeg_AV_CODEC_ID_SAMI_fuzzer` still
+      resolved to `target_dec_sami_fuzzer-72f0b52d.linkcmd`, with 112 links recorded and no
+      `GIRI_LINKCMD`.
+- [x] `giri-trace` exists and enforces three gates (`f1933b2`, stderr race fixed in `e029b7a`).
+- [x] `[GIRI] criterion never executed` (`92e7c3d`), `giri-slice` exit 4 (`c3ef58b`). Verified on
+      test2's provably untaken branch.
+- [x] Automatic from the report (`c3ef58b`). On the sample bug it ranked `ff_htmlmarkup_to_ass:571`
+      first of 8 — the instruction the previous agent chose by hand.
+- [x] `giri-arvo` (`51d6b85`, `a85ad75`, `381aaa4`).
+- [x] Full clean run: `/giri` moved aside, Giri built from the branch, ARVO's `compile` re-run,
+      instrument → trace → criterion → slice. 91 TUs, 899,276-record terminated trace, 284 source
+      lines. The `.slice.loc` is **byte-identical** to the previous run (`md5 578c3d5f…`).
+- [x] Both updated (`381aaa4`), plus `RESULTS-sample-container.md` with the automated run.
 - [ ] PR opened into `port/llvm-5.0.2` and linked below.
 
 ## Files / scope
@@ -102,6 +106,8 @@ is landing it.
 - 2026-08-31 12-16 `c3ef58b` — `giri-criterion --asan` derives function, file, line, column and the intercepted callee from the report and ranks candidates; `--plain` feeds a driver. `giri-slice` exits 4 on the miss marker. TODO 7/10 done; next: the driver.
 - 2026-08-31 12-20 `51d6b85` — `giri-arvo`: stages 0-9 against a named container from the host, gate after each. `$SRC/build.sh` not edited by default; `--build-sh-sed` is the opt-out and restores the file. TODO 8/10 done; next: the full end-to-end run.
 - 2026-08-31 12-41 `a85ad75` — Stage 4 renames `/giri/{bc,out,work}` to `/giri/prev-<timestamp>` instead of deleting them. Found by the first end-to-end run: it deleted the previous agent's build and then could not rebuild, because ARVO's `build.sh` consumes its alsa tarball with `bzip2 -f -d` and dies on a second `compile`. The archive was restored from the image to recover. This is a general property of ARVO containers and is now documented. TODO 8/10 done; next: re-run end to end.
+
+- 2026-08-31 14-05 `381aaa4` — Full end-to-end run reproduced the documented slice. `.giri_link` resolved the link line after the rename with no `GIRI_LINKCMD`; the criterion ranked first of 8 from the ASan report; trace 899,276 records terminated; `.slice.loc` byte-identical to the previous hand-driven run (`md5 578c3d5f`). README, AUTOMATION and RESULTS rewritten around the driver, including the `compile`-runs-once property. TODO 10/10 done; next: open the PR.
 
 ## Handoff
 
