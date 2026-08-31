@@ -90,6 +90,19 @@ is landing it.
 
 ## Progress log
 
+- 2026-08-31 12-06 `e0abf4b` — Opened the task: the five blockers as AUTOMATION.md states them, plus the four decisions taken with the researcher. TODO 0/10 done; next: land the four patches as commits.
+- 2026-08-31 12-06 `98a6889` — Landed patch 0001 (tracing pass quadratic in function size; `-trace-lock-names` now off by default). TODO 1/10 done; next: patches 0002-0004.
+- 2026-08-31 12-06 `f322b02` — Landed patch 0002 (runtime static-destruction order; BBStack/FNStack on the heap). TODO 1/10 done; next: patches 0003-0004.
+- 2026-08-31 12-06 `5ed4833` — Landed patch 0003 (`findPreviousID` unsigned wrap). TODO 1/10 done; next: patch 0004.
+- 2026-08-31 12-06 `d75123d` — Landed patch 0004 (`-slice-terse`, default off). All four patch files deleted; pipeline stage 2 no longer exists. TODO 2/10 done; next: measure the suite.
+- 2026-08-31 12-11 `a3035ba` — Committed `arvo/` exactly as inherited, so the automation work reads as its own diff. Suite measured on `giri:5.0.2` before and after the four patches: **22 PASS / 0 FAIL both times**. Note this differs from AGENTS.md's recorded 21/1 — `ec0e6b7` had already re-based the `matrix_multiply` criterion before this task started, so the patches held the baseline rather than changing it. TODO 3/10 done; next: `.giri_link`.
+- 2026-08-31 12-11 `f85d08a` — `.giri_link` section: `giri-cc` stamps the link-record path into the link output, `giri-instrument` reads it back through a four-step lookup. Records keyed by a digest of (dir, compiler, argv) instead of basename. Verified `objcopy --add-section` leaves a linked executable runnable and the section survives copy and rename. TODO 4/10 done; next: `giri-trace`.
+- 2026-08-31 12-11 `f1933b2` — `giri-trace`: runs the binary, gates on the `[GIRI] Abnormal termination` marker, on trace size % 32, and on the last record being `ENType` (0x45). Distinct exit codes 2/3; deletes a stale trace first. TODO 5/10 done; next: the criterion miss gate.
+- 2026-08-31 12-16 `92e7c3d` — `getLastDynValue()` takes a `bool *Executed`; entry 0 is now examined rather than asserted about; all three criterion paths report `[GIRI] criterion never executed`. Verified on test2, whose else-branch provably never runs: `main:19` slices 12 values silently, `main:22` emits the marker and yields 2. Suite still 22 PASS / 0 FAIL. TODO 6/10 done; next: criterion ranking.
+- 2026-08-31 12-16 `c3ef58b` — `giri-criterion --asan` derives function, file, line, column and the intercepted callee from the report and ranks candidates; `--plain` feeds a driver. `giri-slice` exits 4 on the miss marker. TODO 7/10 done; next: the driver.
+- 2026-08-31 12-20 `51d6b85` — `giri-arvo`: stages 0-9 against a named container from the host, gate after each. `$SRC/build.sh` not edited by default; `--build-sh-sed` is the opt-out and restores the file. TODO 8/10 done; next: the full end-to-end run.
+- 2026-08-31 12-41 `a85ad75` — Stage 4 renames `/giri/{bc,out,work}` to `/giri/prev-<timestamp>` instead of deleting them. Found by the first end-to-end run: it deleted the previous agent's build and then could not rebuild, because ARVO's `build.sh` consumes its alsa tarball with `bzip2 -f -d` and dies on a second `compile`. The archive was restored from the image to recover. This is a general property of ARVO containers and is now documented. TODO 8/10 done; next: re-run end to end.
+
 ## Handoff
 
 - branch `agent/llvm-5-arvo-automation`
