@@ -54,6 +54,14 @@ StartOfSliceInst("criterion-inst",
 static cl::opt<bool>
 TraceCD("trace-cd", cl::desc("Trace control dependence"), cl::init(true));
 
+static cl::opt<bool>
+TerseSlice("slice-terse",
+           cl::desc("Omit LLVM IR text from the slice file. Value::print() "
+                    "rescans the module's types on every call, which dominates "
+                    "runtime on large modules; the Source Line Info output, and "
+                    "so the .slice.loc digest, is byte-identical either way"),
+           cl::init(false));
+
 STATISTIC(NumDynValues, "Number of Dynamic Values in Slice");
 STATISTIC(NumDynSources, "Number of Dynamic Sources Queried");
 STATISTIC(NumDynValsSkipped, "Number of Dynamic Values Skipped");
@@ -186,7 +194,16 @@ errs() << "Error opening the slice output file: " << SliceFilename
   SliceFile << "\n----------------------------------------------------------\n";
   for (std::set<Value *>::iterator i = Slice.begin(); i != Slice.end(); ++i) {
     Value *V = *i;
-    V->print(SliceFile);
+    if (TerseSlice) {
+      if (Instruction *I = dyn_cast<Instruction>(V))
+        SliceFile << I->getOpcodeName() << " [ "
+                  << I->getParent()->getParent()->getName().str() << " ]< "
+                  << lsNumPass->getID(I) << " >";
+      else
+        SliceFile << V->getName().str();
+    } else {
+      V->print(SliceFile);
+    }
     SliceFile << "\n";
     if (Instruction *I = dyn_cast<Instruction>(V))
       SliceFile << "Source Line Info: "
@@ -202,7 +219,10 @@ errs() << "Error opening the slice output file: " << SliceFilename
        i != DynSlice.end();
        ++i) {
     DynValue DV = *i;
-    DV.print(SliceFile, lsNumPass);
+    if (TerseSlice)
+      DV.printTerse(SliceFile, lsNumPass);
+    else
+      DV.print(SliceFile, lsNumPass);
     if (Instruction *I = dyn_cast<Instruction>(i->getValue()))
       SliceFile << "Source Line Info: "
                 << SourceLineMappingPass::locateSrcInfo(I)
