@@ -26,11 +26,24 @@ rm -f "$BASE.slice"
 # value (see patch 0004).  Set GIRI_SLICE_TERSE=0 for the original format.
 TERSE="-slice-terse"; [ "${GIRI_SLICE_TERSE:-1}" = "0" ] && TERSE=""
 
+ERR="$BASE.slice.err"
+rc=0
 opt -load "$GIRI_BUILD/lib/libdgutility.so" -load "$GIRI_BUILD/lib/libgiri.so" \
     -mergereturn -bbnum -lsnum \
     -dgiri -trace-file="$BASE.trace" -slice-file="$BASE.slice" "$FLAG" $TERSE \
     -remove-bbnum -remove-lsnum -stats \
-    "$BASE.all.bc" -o /dev/null
+    "$BASE.all.bc" -o /dev/null 2>"$ERR" || rc=$?
+cat "$ERR" >&2
+[ $rc -eq 0 ] || exit $rc
+
+# A criterion whose basic block never appears in the trace anchors nothing, so
+# the slice comes out near-empty.  Giri reports that case explicitly rather than
+# leaving "the slice looks small" as the only evidence; exit 4 so a caller can
+# move on to the next candidate without parsing anything.
+if grep -q '\[GIRI\] criterion never executed' "$ERR"; then
+  echo "==> criterion $CRIT never executed in this run; try another candidate" >&2
+  exit 4
+fi
 
 sed -n 's/^Source Line Info: //p' "$BASE.slice" |  grep -Ev '^(NIL)?$' | sort -u > "$BASE.slice.loc"
 echo "==> slice: $BASE.slice   ($(wc -l < "$BASE.slice.loc") distinct source lines in $BASE.slice.loc)"
