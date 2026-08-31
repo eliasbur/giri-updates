@@ -300,7 +300,12 @@ unsigned long TraceFile::findPreviousID(Function *fun,
 
   unsigned long index = start_index;
   signed nesting = 0;
-  do {
+  // Walk backwards without ever decrementing past zero: start_index can legally
+  // be 0 (getLastDynValue() returns index 0 when the value never appears in the
+  // trace), and `do { ... --index; } while (index != 0)` would wrap to ULONG_MAX
+  // and index far outside the mapped trace.  The sibling overload above is
+  // already written this way; this also makes entry 0 itself get examined.
+  while (true) {
     assert(nesting >= 0);
 
     if (trace[index].type == type &&
@@ -326,8 +331,10 @@ unsigned long TraceFile::findPreviousID(Function *fun,
         trace[index].address == funAddr)
       --nesting;
 
+    if (index == 0)
+      break;
     --index;
-  } while (index != 0);
+  }
 
   return maxIndex;
 }
