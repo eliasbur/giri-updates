@@ -1,6 +1,6 @@
 ---
 title: Make Giri run unattended on ARVO containers for the LLVM 5 port.
-status: open
+status: done
 priority: high
 repo: giriupdates
 contexts: []
@@ -9,6 +9,8 @@ tags:
   - task
 timeEstimate: 0
 dateCreated: 2026-08-31
+dateModified: 2026-08-31
+completedDate: 2026-08-31
 ---
 
 ## Goal
@@ -76,7 +78,7 @@ is landing it.
       instrument → trace → criterion → slice. 91 TUs, 899,276-record terminated trace, 284 source
       lines. The `.slice.loc` is **byte-identical** to the previous run (`md5 578c3d5f…`).
 - [x] Both updated (`381aaa4`), plus `RESULTS-sample-container.md` with the automated run.
-- [ ] PR opened into `port/llvm-5.0.2` and linked below. **Blocked: no working credential.**
+- [x] PR opened into `port/llvm-5.0.2` and linked below.
 
 ## Files / scope
 
@@ -111,18 +113,7 @@ is landing it.
 
 ## Handoff
 
-**The branch is not pushed.** Both credentials available on this machine are
-rejected by GitHub with `Bad credentials` (HTTP 401): the PAT embedded in
-`origin`'s URL, and `GITHUB_GIRIUPDATES_TOKEN` in
-`.devcontainer/open-code/.env`. Nothing about the work is blocked on this — 16
-commits sit on the local branch. To finish:
-
-```
-git push -u origin agent/llvm-5-arvo-automation
-```
-
-then open the PR into `port/llvm-5.0.2` (the `TARGET_BRANCH` in that `.env`).
-
 - branch `agent/llvm-5-arvo-automation`
+- PR: giri-updates #22 https://github.com/eliasbur/giri-updates/pull/22
 Refs: `arvo/AUTOMATION.md`, `arvo/README.md`, `arvo/RESULTS-sample-container.md`,
 `porting/AgentGuide.md`
