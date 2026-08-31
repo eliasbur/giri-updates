@@ -212,7 +212,19 @@ if [ "$SKIP_TARGET_BUILD" = "0" ]; then
     dex 'diff "$SRC/build.sh.giri-orig" "$SRC/build.sh"' | sed 's/^/    /'
   fi
 
-  dex "rm -rf /giri/bc /giri/out /giri/work; mkdir -p /giri/bc /giri/out /giri/work"
+  # Move the previous generation aside rather than deleting it.  ARVO's build.sh
+  # is not idempotent -- 42473917's unpacks its alsa tarball with `bzip2 -f -d`,
+  # which consumes the archive, so a second `compile` in the same container dies
+  # in its sixth line.  A driver that deletes first and discovers that afterwards
+  # has destroyed a result nothing can reproduce.  A rename costs nothing and is
+  # one command to undo.
+  PREV="/giri/prev-$(date +%Y%m%d-%H%M%S)"
+  if dex 'test -d /giri/bc -o -d /giri/out -o -d /giri/work'; then
+    dex "mkdir -p $(q "$PREV") && for d in bc out work; do
+           [ -e /giri/\$d ] && mv /giri/\$d $(q "$PREV")/\$d; done; true"
+    echo "    previous generation moved to $PREV (restore: mv $PREV/* /giri/)"
+  fi
+  dex "mkdir -p /giri/bc /giri/out /giri/work"
   echo "    building (this is the long stage) ..."
   dex "
     set -o pipefail
@@ -224,7 +236,16 @@ if [ "$SKIP_TARGET_BUILD" = "0" ]; then
     dex 'cp "$SRC/build.sh.giri-orig" "$SRC/build.sh" && rm -f "$SRC/build.sh.giri-orig"' \
       && echo "    \$SRC/build.sh restored"
   fi
-  [ $rc -eq 0 ] || { dex 'tail -40 /giri/target-build.log'; die "the target build failed (full log: /giri/target-build.log in the container)"; }
+  if [ $rc -ne 0 ]; then
+    dex 'tail -40 /giri/target-build.log'
+    warn "ARVO's build.sh is not always re-runnable: unpack steps that consume
+  their archive (bzip2 -f -d) fail on a second compile in the same container.
+  If that is what happened, restore the archive from the image:
+      cid=\$(docker create <image>); docker cp \$cid:/src/<archive> - | \
+        docker cp - $CONTAINER:/src/; docker rm \$cid"
+    [ -n "${PREV:-}" ] && warn "the previous generation is still at $PREV in the container"
+    die "the target build failed (full log: /giri/target-build.log in the container)"
+  fi
 fi
 
 FAILED="$(dex 'wc -l < /giri/bc/failed.log 2>/dev/null || echo 0' | tr -d ' \r')"
