@@ -76,7 +76,7 @@ is landing it.
       instrument → trace → criterion → slice. 91 TUs, 899,276-record terminated trace, 284 source
       lines. The `.slice.loc` is **byte-identical** to the previous run (`md5 578c3d5f…`).
 - [x] Both updated (`381aaa4`), plus `RESULTS-sample-container.md` with the automated run.
-- [ ] PR opened into `port/llvm-5.0.2` and linked below.
+- [ ] PR opened into `port/llvm-5.0.2` and linked below. **Blocked: no working credential.**
 
 ## Files / scope
 
@@ -110,6 +110,18 @@ is landing it.
 - 2026-08-31 14-05 `381aaa4` — Full end-to-end run reproduced the documented slice. `.giri_link` resolved the link line after the rename with no `GIRI_LINKCMD`; the criterion ranked first of 8 from the ASan report; trace 899,276 records terminated; `.slice.loc` byte-identical to the previous hand-driven run (`md5 578c3d5f`). README, AUTOMATION and RESULTS rewritten around the driver, including the `compile`-runs-once property. TODO 10/10 done; next: open the PR.
 
 ## Handoff
+
+**The branch is not pushed.** Both credentials available on this machine are
+rejected by GitHub with `Bad credentials` (HTTP 401): the PAT embedded in
+`origin`'s URL, and `GITHUB_GIRIUPDATES_TOKEN` in
+`.devcontainer/open-code/.env`. Nothing about the work is blocked on this — 16
+commits sit on the local branch. To finish:
+
+```
+git push -u origin agent/llvm-5-arvo-automation
+```
+
+then open the PR into `port/llvm-5.0.2` (the `TARGET_BRANCH` in that `.env`).
 
 - branch `agent/llvm-5-arvo-automation`
 Refs: `arvo/AUTOMATION.md`, `arvo/README.md`, `arvo/RESULTS-sample-container.md`,
