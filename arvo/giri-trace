@@ -1,0 +1,114 @@
+#!/bin/bash
+# giri-trace <workdir/NAME> <input> [extra args...]
+#
+# Stage 7: run the instrumented binary once and decide whether the trace it left
+# behind is usable.  Nothing else in the pipeline checks this, and the failure it
+# guards against is not subtle: a process that dies before finish() runs leaves a
+# trace with no ENType terminator, still at its full sparse size, and Giri's
+# trace scans have no bound check -- the slicer segfaults on such a file instead
+# of reporting anything.  Diagnose it here, where the cause is still visible.
+#
+# Exit codes are the driver's contract:
+#   0  trace is complete and usable
+#   1  usage / missing binary
+#   2  the traced run terminated abnormally (runtime's own marker)
+#   3  the trace is truncated, unterminated, or misaligned
+#
+# Env:
+#   GIRI_TRACE_TIMEOUT   seconds before the run is killed (default 600; 0 = none)
+#   GIRI_TRACE_STDIN     file to feed on stdin (default /dev/null)
+set -u
+BASE="${1:-}"; shift || true
+INPUT="${1:-}"; shift || true
+[ -n "$BASE" ] || { echo "usage: giri-trace <workdir/NAME> <input> [args...]" >&2; exit 1; }
+
+EXE="$BASE.trace.exe"
+TRACE="$BASE.trace"
+ERR="$BASE.trace.err"
+TIMEOUT="${GIRI_TRACE_TIMEOUT:-600}"
+
+[ -x "$EXE" ] || { echo "giri-trace: no traced binary at $EXE -- run giri-instrument first" >&2; exit 1; }
+
+# A stale trace from an earlier run is worse than none: the slicer would happily
+# consume it and answer a question about a different execution.
+rm -f "$TRACE" "$ERR"
+
+RUN=("$EXE")
+[ -n "$INPUT" ] && RUN+=("$INPUT")
+[ $# -gt 0 ] && RUN+=("$@")
+
+echo "==> [1/2] run: ${RUN[*]}"
+start=$(date +%s)
+if [ "$TIMEOUT" != "0" ] && command -v timeout >/dev/null 2>&1; then
+  timeout -s KILL "$TIMEOUT" "${RUN[@]}" < "${GIRI_TRACE_STDIN:-/dev/null}" 2> >(tee "$ERR" >&2)
+else
+  "${RUN[@]}" < "${GIRI_TRACE_STDIN:-/dev/null}" 2> >(tee "$ERR" >&2)
+fi
+rc=$?
+elapsed=$(( $(date +%s) - start ))
+echo "    exit $rc after ${elapsed}s"
+
+if [ $rc -eq 137 ]; then
+  echo "giri-trace: killed after ${TIMEOUT}s (GIRI_TRACE_TIMEOUT).  A killed run" >&2
+  echo "  never reaches finish(), so the trace it left is unusable." >&2
+  exit 2
+fi
+
+# The runtime installs handlers for the fatal signals and its handler ends in
+# exit(signum), so a crashed traced program exits with a small status and
+# 128+n never appears -- the exit code alone cannot tell a crash from main()
+# returning that value.  The marker is the only reliable signal.
+if grep -q '\[GIRI\] Abnormal termination' "$ERR" 2>/dev/null; then
+  echo "giri-trace: the traced run terminated abnormally:" >&2
+  grep '\[GIRI\] Abnormal termination' "$ERR" >&2
+  exit 2
+fi
+
+echo "==> [2/2] trace gates"
+if [ ! -s "$TRACE" ]; then
+  echo "giri-trace: no trace at $TRACE.  The instrumented module's global" >&2
+  echo "  constructor never ran -- is main() inside the traced bitcode?" >&2
+  exit 3
+fi
+
+SIZE=$(stat -c %s "$TRACE")
+if [ $(( SIZE % 32 )) -ne 0 ]; then
+  echo "giri-trace: trace is $SIZE bytes, not a multiple of sizeof(Entry)=32." >&2
+  echo "  The run was cut short before the final truncate." >&2
+  exit 3
+fi
+
+# RecordType is `enum class RecordType : unsigned`, so the type occupies the
+# first 4 bytes of each 32-byte record, little-endian: byte 0 is the character.
+LAST=$(od -An -tx1 -j $(( SIZE - 32 )) -N 1 "$TRACE" | tr -d ' \n')
+if [ "$LAST" != "45" ]; then
+  echo "giri-trace: last record type is 0x$LAST, expected 0x45 ('E', ENType)." >&2
+  echo "  finish() never flushed the end record, so the trace is truncated;" >&2
+  echo "  slicing against it would walk off the end of the mapped file." >&2
+  exit 3
+fi
+
+RECORDS=$(( SIZE / 32 ))
+echo "    $RECORDS records, $SIZE bytes, terminated"
+
+# A histogram is not a gate -- it is what tells you at a glance whether the run
+# did the work you expected, e.g. no load records means nothing was traced.
+if command -v python3 >/dev/null 2>&1; then
+  python3 - "$TRACE" <<'PY'
+import collections, sys
+names = {ord('B'): "basic block", ord('L'): "load", ord('S'): "store",
+         ord('C'): "call", ord('R'): "return", ord('E'): "end",
+         ord('P'): "select"}
+h = collections.Counter()
+with open(sys.argv[1], "rb") as f:
+    while True:
+        b = f.read(32 * 65536)
+        if not b:
+            break
+        h.update(b[i] for i in range(0, len(b), 32))
+for t, n in sorted(h.items(), key=lambda kv: -kv[1]):
+    print("    %10d  %s" % (n, names.get(t, "unknown (0x%02x)" % t)))
+PY
+fi
+echo "==> trace ok: $TRACE"
+exit 0
