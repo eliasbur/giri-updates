@@ -74,7 +74,20 @@ struct BBRecord {
   BBRecord(unsigned id, unsigned char *address) :
     id(id), address(address) {}
 };
-static std::unordered_map<pthread_t, std::stack<BBRecord>> BBStack;
+/// finish() is registered with atexit() from recordInit(), which runs out of the
+/// instrumented module's global constructor.  When the instrumented objects are
+/// linked ahead of librtgiri (they always are -- they define main), that ctor
+/// runs before this translation unit's statics are constructed, which sequences
+/// the atexit handler *before* their destructors: closeCacheFile() would then
+/// walk a destroyed container.  Allocating them on the heap and never freeing
+/// them makes the flush safe whatever the initialisation order turns out to be;
+/// the leak is bounded by process lifetime.
+typedef std::unordered_map<pthread_t, std::stack<BBRecord> > BBStackTy;
+static BBStackTy &getBBStack() {
+  static BBStackTy *S = new BBStackTy();
+  return *S;
+}
+#define BBStack (getBBStack())
 
 // A stack containing basic blocks currently being executed
 struct FunRecord {
@@ -84,7 +97,12 @@ struct FunRecord {
   FunRecord(unsigned id, unsigned char *fnAddress) :
     id(id), fnAddress(fnAddress) {}
 };
-static std::unordered_map<pthread_t, std::stack<FunRecord>> FNStack;
+typedef std::unordered_map<pthread_t, std::stack<FunRecord> > FNStackTy;
+static FNStackTy &getFNStack() {
+  static FNStackTy *S = new FNStackTy();
+  return *S;
+}
+#define FNStack (getFNStack())
 
 //===----------------------------------------------------------------------===//
 //                        Trace Entry Cache
