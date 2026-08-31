@@ -1,0 +1,15 @@
+#!/bin/bash
+# Build Giri's tracing runtime against the same C++ standard library the target
+# links with.  The runtime is a single self-contained file with no LLVM
+# dependency, so unlike Giri's passes -- which must match the libstdc++ that
+# LLVM's static libraries were built against -- it has to be compiled with the
+# project's own CXXFLAGS.  ARVO's carry -stdlib=libc++, and a binary cannot
+# resolve both standard libraries at once.
+set -eu
+SRC="${GIRI_SRC:-/giri-src}"
+OUTDIR="${GIRI_ROOT:-/giri}/lib"; mkdir -p "$OUTDIR"
+${GIRI_REAL_CXX:-clang++} ${CXXFLAGS:-} -std=c++11 -O2 -fPIC -c "$SRC/runtime/Giri/Tracing.cpp" \
+    -I"$SRC/include" -I"$SRC/include/Giri" -o "$OUTDIR/Tracing.o"
+rm -f "$OUTDIR/librtgiri.a"
+ar rcs "$OUTDIR/librtgiri.a" "$OUTDIR/Tracing.o"
+echo "==> $OUTDIR/librtgiri.a"

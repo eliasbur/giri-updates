@@ -1,0 +1,97 @@
+#!/bin/bash
+# giri-cc -- transparent bitcode-capturing compiler wrapper for ARVO/OSS-Fuzz builds.
+#
+# Drop-in replacement for $CC / $CXX. It always runs the real compiler with the
+# original arguments (so the project's build and its configure tests behave
+# exactly as they normally do), and *additionally* emits an unoptimised,
+# debug-annotated LLVM bitcode copy of every translation unit. The path of that
+# bitcode file is recorded in an .llvm_bc section of the object file, so it
+# propagates through static archives into the final link -- the same trick wllvm
+# uses. `giri-extract-bc` then reads the section back out of the linked binary.
+#
+# Env:
+#   GIRI_REAL_CC / GIRI_REAL_CXX  real compilers (default: clang / clang++)
+#   GIRI_BC_CC  / GIRI_BC_CXX     compiler used for the bitcode copy only.
+#                                 Defaults to the real one.  Point these at a
+#                                 clang matching the LLVM that Giri was built
+#                                 against when the container's own clang is a
+#                                 different version -- the native build keeps
+#                                 using the container's compiler and still
+#                                 succeeds, while the bitcode stays readable by
+#                                 Giri's passes.
+#   GIRI_BC_DIR                   where link command lines are recorded
+#   GIRI_BC_OPT                   optimisation level for the bitcode (default -O0)
+set -u
+
+case "$(basename "$0")" in
+  *++|*cxx|*CC) REAL="${GIRI_REAL_CXX:-clang++}"; BCCC="${GIRI_BC_CXX:-$REAL}" ;;
+  *)            REAL="${GIRI_REAL_CC:-clang}";    BCCC="${GIRI_BC_CC:-$REAL}"  ;;
+esac
+BC_DIR="${GIRI_BC_DIR:-/giri/bc}"
+BC_OPT="${GIRI_BC_OPT:--O0}"
+
+# 1. The real compilation, untouched. Its exit status is ours.
+"$REAL" "$@"
+rc=$?
+[ $rc -ne 0 ] && exit $rc
+
+# 2. Classify the invocation.
+compile_only=0; output=""; srcs=(); prev=""
+for a in "$@"; do
+  case "$prev" in -o) output="$a"; prev=""; continue ;; esac
+  case "$a" in
+    -c)  compile_only=1 ;;
+    -o)  prev="-o"; continue ;;
+    -E|-M|-MM|--version|-print-*|-dumpmachine) exit 0 ;;
+    *.c|*.cc|*.cpp|*.cxx|*.C|*.c++|*.m|*.mm) srcs+=("$a") ;;
+  esac
+  prev=""
+done
+
+# A link step: record the command line so it can be replayed against the
+# Giri-instrumented object later.
+if [ $compile_only -eq 0 ]; then
+  if [ -n "$output" ] && [ ${#srcs[@]} -eq 0 ]; then
+    mkdir -p "$BC_DIR/links" 2>/dev/null
+    { printf '%s\n' "$REAL"; printf '%s\n' "$@"; } \
+      > "$BC_DIR/links/$(basename "$output").linkcmd" 2>/dev/null
+    printf '%s\n' "$PWD" > "$BC_DIR/links/$(basename "$output").linkdir" 2>/dev/null
+  fi
+  exit 0
+fi
+[ ${#srcs[@]} -eq 1 ] || exit 0          # only single-source -c invocations
+[ -n "$output" ] || output="$(basename "${srcs[0]}")"; output="${output%.*}.o"
+[ -f "$output" ] || exit 0
+
+# 3. Rebuild the same TU as bitcode: no sanitizers, no optimisation, full -g.
+bc="$(cd "$(dirname "$output")" && pwd)/.$(basename "$output").bc"
+bcargs=(); prev=""
+for a in "$@"; do
+  case "$prev" in -o) prev=""; continue ;; esac
+  case "$a" in
+    -o) prev="-o"; continue ;;
+    -c|-flto|-flto=*|-emit-llvm) continue ;;
+    -fsanitize=*|-fsanitize-*|-fno-sanitize=*|-fprofile-*|-fcoverage-*) continue ;;
+    -O|-O[0-3sz]|-Ofast|-Og) continue ;;
+    -g|-g[0-9]|-gline-tables-only|-gmlt) continue ;;
+    -Werror|-Werror=*) continue ;;
+  esac
+  prev=""; bcargs+=("$a")
+done
+if ! "$BCCC" "${bcargs[@]}" $BC_OPT -g -fno-inline -c -emit-llvm -o "$bc" \
+        2>"$bc.err"; then
+  # A TU that will not compile at -O0 (ffmpeg's asm constraints are the usual
+  # cause) simply stays out of the bitcode: the native object from the archive
+  # covers it at link time, it just will not be traced or sliced.  Record it so
+  # the coverage gap is visible rather than silent.
+  mkdir -p "$BC_DIR" 2>/dev/null
+  printf '%s\t%s\n' "$PWD" "${srcs[0]}" >> "$BC_DIR/failed.log"
+  rm -f "$bc" "$bc.err"
+  exit 0
+fi
+rm -f "$bc.err"
+
+# 4. Stamp the bitcode path into the object so it survives archiving and linking.
+printf '%s\n' "$bc" > "$bc.path"
+objcopy --add-section .llvm_bc="$bc.path" "$output" 2>/dev/null
+exit 0

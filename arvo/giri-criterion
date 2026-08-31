@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+"""giri-criterion <module.bc> <file:line> -- list slicing criteria for a source line.
+
+Giri's -criterion-loc keeps the *last* instruction in module order whose DebugLoc
+matches.  For a loop header that is the latch inside the loop body -- a block
+that may never have executed -- and a criterion that never executed makes
+getLastDynValue() return index 0, which the slicer cannot handle.
+
+This prints every candidate as `function:index`, the form -criterion-inst takes,
+so you can name an instruction that did execute.  Indices come from Giri's own
+-srcline-mapping pass (Utility/SourceLineMapping.cpp numbers with the same
+inst_iterator walk that -criterion-inst uses), so they always agree with it.
+"""
+import os, re, subprocess, sys, tempfile
+
+def main():
+    if len(sys.argv) != 3:
+        sys.exit(__doc__)
+    bc, spec = sys.argv[1], sys.argv[2]
+    if ':' not in spec:
+        sys.exit("criterion must be file:line")
+    want_file, want_line = spec.rsplit(':', 1)
+    int(want_line)
+
+    giri_lib = os.environ.get("GIRI_BUILD", "/giri-src/build") + "/lib"
+    tmp = tempfile.mkdtemp()
+
+    # Step 1 -- debug metadata says which functions mention the line at all.
+    ll = os.path.join(tmp, "m.ll")
+    subprocess.check_call(["llvm-dis", bc, "-o", ll])
+    md, mdre = {}, re.compile(r"^!(\d+) = (.*)$")
+    with open(ll, errors="replace") as f:
+        for line in f:
+            m = mdre.match(line)
+            if m:
+                md[int(m.group(1))] = m.group(2)
+
+    def filename_of(node):
+        seen = set()
+        while node is not None and node not in seen:
+            seen.add(node)
+            t = md.get(node, "")
+            m = re.search(r"\bfile: !(\d+)", t)
+            if m:
+                fm = re.search(r'filename: "([^"]*)"', md.get(int(m.group(1)), ""))
+                return fm.group(1) if fm else None
+            m = re.search(r"\bscope: !(\d+)", t)
+            node = int(m.group(1)) if m else None
+        return None
+
+    cache, targets = {}, set()
+    for i, t in md.items():
+        m = re.match(r"!DILocation\(line: %s, .*?scope: !(\d+)" % want_line, t)
+        if not m:
+            continue
+        scope = int(m.group(1))
+        if scope not in cache:
+            cache[scope] = filename_of(scope)
+        if cache[scope] == want_file:
+            targets.add(i)
+    if not targets:
+        sys.exit("no DILocation for %s -- check the exact spelling of the file with:\n"
+                 "  llvm-dis %s -o - | grep -o 'filename: \"[^\"]*\"' | sort -u | grep <basename>"
+                 % (spec, bc))
+
+    funcs, cur, dbgre = [], None, re.compile(r"!dbg !(\d+)")
+    with open(ll, errors="replace") as f:
+        for line in f:
+            if line.startswith("define "):
+                m = re.search(r"@([A-Za-z0-9_.$]+)\(", line)
+                cur = m.group(1) if m else None
+            elif cur and any(int(m.group(1)) in targets for m in dbgre.finditer(line)):
+                if cur not in funcs:
+                    funcs.append(cur)
+
+    # Step 2 -- ask Giri itself for the instruction numbering in those functions.
+    suffix = "%s:%s" % (want_file, want_line)
+    total = 0
+    for fn in funcs:
+        out = os.path.join(tmp, fn + ".map")
+        subprocess.check_call(
+            ["opt", "-load", giri_lib + "/libdgutility.so", "-mergereturn",
+             "-srcline-mapping", "-mapping-function=" + fn,
+             "-mapping-output=" + out, bc, "-o", os.devnull],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        hits = []
+        for line in open(out, errors="replace"):
+            m = re.match(r"^(\d+):\s+(.*?): (\S*)$", line.rstrip("\n"))
+            if m and m.group(3).endswith(suffix):
+                hits.append((int(m.group(1)), m.group(2)))
+        if not hits:
+            continue
+        print("%s -- %d instruction(s) at %s" % (fn, len(hits), suffix))
+        for idx, text in hits:
+            print("  %s:%-6d %s" % (fn, idx, text[:110]))
+        print()
+        total += len(hits)
+
+    if not total:
+        sys.exit("debug metadata mentions %s but -srcline-mapping found no "
+                 "instruction for it" % spec)
+    print("Pass one of these to giri-slice, e.g.:  giri-slice <base> %s:%d"
+          % (funcs[0], hits[0][0]))
+
+main()

@@ -1,0 +1,42 @@
+#!/bin/bash
+# giri-extract-bc <binary> <output.bc>
+#
+# Env:
+#   GIRI_BC_INCLUDE   only link bitcode whose path matches this egrep pattern
+#   GIRI_BC_EXCLUDE   drop bitcode whose path matches this egrep pattern
+#
+# Narrowing the module is the main lever against trace size and pass runtime:
+# whatever you leave out still links from the native archives, it just is not
+# traced, so its effects reach the slice as untracked loads instead.
+#
+# Reads the .llvm_bc section that giri-cc stamped into every object file, and
+# llvm-links the referenced bitcode files into one whole-program module.  The
+# section survives archiving and linking by concatenation, so what comes out is
+# exactly the set of translation units the linker actually pulled in.
+set -eu
+BIN="$1"; OUT="$2"
+LIST="$(mktemp)"; trap 'rm -f "$LIST"' EXIT
+
+# The section is non-alloc, so `objcopy -O binary` skips it; --dump-section is
+# the reliable reader (binutils >= 2.25), with a readelf fallback for older ones.
+objcopy --dump-section .llvm_bc="$LIST" "$BIN" 2>/dev/null || \
+  readelf -x .llvm_bc "$BIN" 2>/dev/null \
+    | sed -n 's/^  0x[0-9a-f]* \(.\{35\}\) .*/\1/p' \
+    | tr -d " " | tr -d "\n" \
+    | sed 's/\(..\)/\\x\1/g' | xargs -0 printf > "$LIST" 2>/dev/null || true
+if [ ! -s "$LIST" ]; then
+  echo "giri-extract-bc: no .llvm_bc section in $BIN -- was it built with giri-cc?" >&2
+  exit 1
+fi
+
+keep() { if [ -n "${GIRI_BC_INCLUDE:-}" ]; then grep -E "$GIRI_BC_INCLUDE" || true; else cat; fi; }
+drop() { if [ -n "${GIRI_BC_EXCLUDE:-}" ]; then grep -Ev "$GIRI_BC_EXCLUDE" || true; else cat; fi; }
+mapfile -t BCS < <(tr -d '\0' < "$LIST" | sed '/^$/d' | sort -u | keep | drop)
+missing=0
+KEEP=()
+for b in "${BCS[@]}"; do
+  if [ -f "$b" ]; then KEEP+=("$b"); else missing=$((missing+1)); fi
+done
+echo "giri-extract-bc: ${#KEEP[@]} bitcode modules (${missing} missing)" >&2
+llvm-link "${KEEP[@]}" -o "$OUT"
+echo "giri-extract-bc: wrote $OUT" >&2

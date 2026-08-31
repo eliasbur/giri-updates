@@ -1,0 +1,36 @@
+#!/bin/bash
+# giri-slice <workdir/NAME> <criterion>
+#   criterion is either  "file.c:LINE"  or  "function:INSTRUCTION-INDEX"
+#
+# Assumes <workdir/NAME>.trace.exe has already been run and produced
+# <workdir/NAME>.trace.
+set -eu
+BASE="$1"; CRIT="$2"
+GIRI_BUILD="${GIRI_BUILD:-/giri-src/build}"
+CRITFILE="$BASE.criterion"
+
+case "$CRIT" in
+  *.c:*|*.cc:*|*.cpp:*|*.h:*)
+      echo "${CRIT%:*} ${CRIT##*:}" > "$CRITFILE"; FLAG="-criterion-loc=$CRITFILE" ;;
+  *:*) echo "${CRIT%:*} ${CRIT##*:}" > "$CRITFILE"; FLAG="-criterion-inst=$CRITFILE" ;;
+  *)  echo "criterion must be file.c:LINE or function:INDEX" >&2; exit 1 ;;
+esac
+
+# Giri opens the slice file with F_Append so that a criterion file holding
+# several criteria accumulates; start each invocation from a clean file.
+rm -f "$BASE.slice"
+
+[ -s "$BASE.trace" ] || { echo "no trace at $BASE.trace -- run $BASE.trace.exe first" >&2; exit 1; }
+
+# Terse output by default: the full IR text costs a whole-module type scan per
+# value (see patch 0004).  Set GIRI_SLICE_TERSE=0 for the original format.
+TERSE="-slice-terse"; [ "${GIRI_SLICE_TERSE:-1}" = "0" ] && TERSE=""
+
+opt -load "$GIRI_BUILD/lib/libdgutility.so" -load "$GIRI_BUILD/lib/libgiri.so" \
+    -mergereturn -bbnum -lsnum \
+    -dgiri -trace-file="$BASE.trace" -slice-file="$BASE.slice" "$FLAG" $TERSE \
+    -remove-bbnum -remove-lsnum -stats \
+    "$BASE.all.bc" -o /dev/null
+
+sed -n 's/^Source Line Info: //p' "$BASE.slice" |  grep -Ev '^(NIL)?$' | sort -u > "$BASE.slice.loc"
+echo "==> slice: $BASE.slice   ($(wc -l < "$BASE.slice.loc") distinct source lines in $BASE.slice.loc)"
