@@ -58,7 +58,7 @@ STATISTIC(NumExtFuns, "Number of special external calls processed, e.g. memcpy")
 static inline Function *getOrInsertF(Module &M,
                                        StringRef Name,
                                        Type *RetTy,
-                                       ArrayRef<Type *> Args = None) {
+                                       ArrayRef<Type *> Args = {})
   FunctionType *FTy = FunctionType::get(RetTy, Args, false);
   return cast<Function>(M.getOrInsertFunction(Name, FTy).getCallee());
 }

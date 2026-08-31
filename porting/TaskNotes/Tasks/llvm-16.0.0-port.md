@@ -57,19 +57,25 @@ fix are already done and inherited. What this port changes on top:
    - CMake: 16.0.0 wants ≥ 3.20 (soft in 16.x, hard in 17.x); the port keeps
      the pinned 3.31.12 binary and the 3.5 project floor (both already
      satisfy it). `find_package(LLVM 16.0 REQUIRED CONFIG)` (was 15.0).
-2. **Opaque pointers (the substantive delta of this port).**
-   - 16.0.0's clang emits **opaque-pointer IR only**: the 15.0.0 harness's
-     `-Xclang -no-opaque-pointers` flag is gone (probed: clang 16 accepts
-     neither it nor `-mllvm -opaque-pointers=0`; IR comes out as `ptr`).
-     The harness `CFLAGS` line carrying it must therefore be **removed**
-     (harness file, permitted), with the rationale comment replaced by the
-     16.0.0 root cause.
+2. **Opaque pointers (the substantive delta of this port — RESOLVED,
+     corrected 2026-08-31 15-00, the spike finding was wrong).**
+   - ~~16.0.0's clang emits opaque-pointer IR only and the harness's
+     `-Xclang -no-opaque-pointers` flag is gone~~ **DISPROVEN on this exact
+     prebuilt (16.0.0 ubuntu-18.04 asset):** the flag is the *passthrough* form
+     (forwarded to cc1) and clang 16 honors it. Measured: with the flag the IR
+     is *typed* (`i32*`, `i32**`); without it clang 16 emits *opaque* `ptr`.
+     The flag is therefore **load-bearing** (removing it re-introduces the
+     kmeans golden drift the 15.0.0 port measured) and **stays** in
+     `test/Makefile.common` unchanged — no harness edit is needed for 16.0.0,
+     so `git diff 63b02e2..HEAD -- test/` is empty.
    - **Golden-reachability question (empirical gate).** The 3.4-era goldens
      were recorded under typed-pointer IR; the 15.0.0 port measured an
      opaque-IR drift once (kmeans line set 61/240/279 vs golden 222/276),
-     which is why it pinned typed emit. Whether the 16.0.0 toolchain
-     (opaque IR, new Clang 16 codegen for `-O0`, new `opt` passes) still
-     reproduces all 22 line sets is decided by the honest seq suite run —
+     which is why it pinned typed emit. RESOLVED: because the harness flag keeps the IR *typed* (see above),
+     the 16.0.0 toolchain (new Clang 16 codegen for `-O0`, new `opt` passes)
+     reproduces all 22 line sets — the honest `TEST_PARALLELISM=seq` run
+     (2026-08-31 14-41) passed 22/22 with no golden edit. — was originally:
+     decided by the honest seq suite run —
      the goldens and criterion files are **not modifiable**. Any failing
      test is root-caused per-test and documented in
      `porting/TestAudit/llvm-16.0.0/`; the expectation is that most tests
@@ -135,8 +141,10 @@ fix are already done and inherited. What this port changes on top:
 - `CMakeLists.txt` (`find_package(LLVM 16.0)`)
 - `lib/Giri/`, `lib/Utility/` (15→16 C++ API fixes only; pass logic
   byte-identical)
-- `test/Makefile.common`, `test/HelloWorld/Makefile` (harness only; remove
-  the gone `-Xclang -no-opaque-pointers`, keep `-no-pie`/`-g`/`-Wno-error=…`)
+- `test/Makefile.common`, `test/HelloWorld/Makefile` (harness only; KEEP
+  `-Xclang -no-opaque-pointers` — the s1 "inert" spike note was wrong, see the
+  progress-log correction — plus `-no-pie`/`-g`/`-Wno-error=…`; no harness
+  change turned out to be needed for 16.0.0)
 - `porting/TaskNotes/Tasks/llvm-16.0.0-port.md` (this file)
 - `porting/TestAudit/llvm-16.0.0/`, `porting/llvm-releases/16.0.0/`,
   `AGENTS.md` (branch copy)
@@ -160,6 +168,35 @@ fix are already done and inherited. What this port changes on top:
   but inert, IR comes out `ptr`), `-load`/`-load-pass-plugin`/`-passes`
   plugin mechanism intact, `--enable-new-pm` survives only as a migration aid.
   TODO 1/9 done; next: toolchain wiring commit.  (continued) **Toolchain wiring** (this commit): `utils/install_llvm.sh` gained a `"16.0.0"` case (ubuntu-18.04 GitHub-Releases asset, 966,785,280 bytes; the 18.04 base image is required because the prebuilt links libtinfo.so.5, absent from 20.04; GLIBCXX_3.4.21 <= 18.04's 3.4.25 so no shim); `Dockerfile` rewritten (FROM ubuntu:18.04, CMake 3.31.12 pin retained — the 16.0.0 prebuilt's LLVMConfigVersion.cmake sets no CMake floor, the project's 3.5 floor is the binding constraint, and 3.31.12 satisfies 16.0.0's soft 3.20 requirement); `CMakeLists.txt` `find_package(LLVM 15.0 -> 16.0)`.
+  - 2026-08-31 14-57 **Build fixes (s4) + s1 correction.** Three root-caused
+    fixes to build Giri's new-PM passes/tools against 16.0.0: (1) `CMakeLists.txt`
+    now sets `CMAKE_CXX_STANDARD 17` + `CMAKE_CXX_STANDARD_REQUIRED ON` — 16.0.0
+    headers use C++17 (`std::is_integral_v` in `llvm/ADT/bit.h`) and the prebuilt's
+    CMake config exports no `LLVM_OPTIMIZED_CXX_FLAGS`, so without this the
+    project compiled with the host gcc's `gnu++14` default and failed; (2)
+    `lib/Giri/TracingNoGiri.cpp` `getOrInsertF` default arg `ArrayRef<Type *>
+    Args = None` -> `= {}` (the 3.4 `None` sentinel was removed in modern LLVM;
+    the sole default-using call site `giriCtor` is a zero-arg fn, so `{}` is
+    behavior-identical); (3) `tools/Tracer/CMakeLists.txt` now probes the
+    `llvm-config --libfiles all` static libs at configure time and compiles
+    `llvm_std_shim.cpp` **only when** one actually references
+    `std::__throw_bad_array_new_length` — the 16.0.0 prebuilt's static libs
+    reference it 0x (the 15.0.0 rhel-8.4 libLLVMAnalysis.a/libLLVMBitWriter.a
+    did), so the shim TU is skipped; hard-coding it on would fail because
+    18.04's libstdc++ lacks the `_GLIBCXX_NODISCARD` macro. Build is green
+    (rc=0, all 5 artifacts: libgiri.so/libdgutility.so/librtgiri.a in build/lib,
+    tracer/prtrace in build/bin) and the honest `TEST_PARALLELISM=seq` suite
+    passes **22/22** against the pristine 3.4 goldens. **CORRECTION to the s1
+    entry above:** the spike's claim that `-Xclang -no-opaque-pointers` is
+    "accepted but inert, IR comes out ptr" was **wrong on this exact prebuilt**.
+    The 16.0.0 ubuntu-18.04 clang honors the harness's `-Xclang
+    -no-opaque-pointers` passthrough form and it is **load-bearing**: with it
+    the IR is *typed* (`i32*`, `i32**`) — matching the 3.4 goldens and why the
+    suite passes 22/22; without it clang 16 emits *opaque* `ptr` and the kmeans
+    golden would drift (the very drift the 15.0.0 port measured). The flag
+    therefore stays in `test/Makefile.common`; no harness change was needed for
+    16.0.0, so `git diff 63b02e2..HEAD -- test/` is empty (stronger than the
+    DoD's "limited to 2 harness files").
 
 ## Handoff
 
