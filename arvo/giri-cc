@@ -49,13 +49,30 @@ for a in "$@"; do
 done
 
 # A link step: record the command line so it can be replayed against the
-# Giri-instrumented object later.
+# Giri-instrumented object later, and stamp the record's path into the binary.
+#
+# The record is keyed by a digest of the link itself rather than by the output
+# basename, because two links can produce the same basename in different
+# directories and the second would overwrite the first one's record.  The
+# .giri_link section is what makes the record findable afterwards: build systems
+# routinely rename or move the binary once it is linked (ffmpeg moves
+# tools/target_dec_sami_fuzzer to $OUT/ffmpeg_<codec>_fuzzer), and a section
+# travels inside the file, so it survives that.  Same trick as .llvm_bc, one
+# level up.
 if [ $compile_only -eq 0 ]; then
   if [ -n "$output" ] && [ ${#srcs[@]} -eq 0 ]; then
-    mkdir -p "$BC_DIR/links" 2>/dev/null
-    { printf '%s\n' "$REAL"; printf '%s\n' "$@"; } \
-      > "$BC_DIR/links/$(basename "$output").linkcmd" 2>/dev/null
-    printf '%s\n' "$PWD" > "$BC_DIR/links/$(basename "$output").linkdir" 2>/dev/null
+    mkdir -p "$BC_DIR/links/by-name" 2>/dev/null
+    id="$(basename "$output")-$({ printf '%s\0' "$PWD" "$REAL" "$@"; } \
+          | md5sum | cut -c1-8)"
+    rec="$BC_DIR/links/$id"
+    { printf '%s\n' "$REAL"; printf '%s\n' "$@"; } > "$rec.linkcmd" 2>/dev/null
+    printf '%s\n' "$PWD" > "$rec.linkdir" 2>/dev/null
+    printf '%s\n' "$rec.linkcmd" > "$rec.linkpath" 2>/dev/null
+    objcopy --add-section .giri_link="$rec.linkpath" "$output" 2>/dev/null
+    # Basename alias, for a binary that reached us without the section (built
+    # by a rule that bypassed this wrapper, or stripped of non-alloc sections).
+    ln -sfn "../$id.linkcmd" "$BC_DIR/links/by-name/$(basename "$output").linkcmd" 2>/dev/null
+    ln -sfn "../$id.linkdir" "$BC_DIR/links/by-name/$(basename "$output").linkdir" 2>/dev/null
   fi
   exit 0
 fi
