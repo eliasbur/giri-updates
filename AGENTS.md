@@ -10,8 +10,9 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 
 `port/llvm-5.0.2` has an honest harness: per-test exit-status opt-in
 (`EXPECTED_EXIT`/`EXIT_UNCHECKED` in `test/Makefile.common`) plus crash detection at the trace
-stage. The suite reports **21 PASS / 1 FAIL**, last measured at `4cd2451`; the single failure is
-`matrix_multiply-seq`. For the full history of suite results across the port, see
+stage. The suite reports **22 PASS / 0 FAIL**, last measured at `92e7c3d`. It reported
+21 PASS / 1 FAIL up to `4cd2451`; `ec0e6b7` re-based the `matrix_multiply` criterion onto the
+current trace and closed that standing failure. The paragraphs below describe why it stood. For the full history of suite results across the port, see
 `porting/TestAudit/llvm-5.0.2/SUMMARY.md` → "Suite results across the port".
 
 Its segfault is fixed: `PostDominanceFrontier::calculate` held a reference into `Frontiers`
@@ -85,7 +86,10 @@ delivering: removed fabricated "signal handlers reinstall" row from register, an
 per-test verdict table with commit and current-result columns, added suite-results reconciliation
 section to SUMMARY.md, and cleaned verification artifacts from test/.
 
-**No task is open.** Every note in `porting/TaskNotes/Tasks/` is `status: done`. The reasons a future
+**One task is open: `llvm-5-arvo-automation`** — running Giri unattended on ARVO containers for
+dynamic slicing. It landed the four scale fixes that real programs need (see below), added the
+`criterion never executed` report, and built the driver in `arvo/`. Every other note in
+`porting/TaskNotes/Tasks/` is `status: done`. The reasons a future
 agent might reopen work — and the items deferred by decision — are the `## Known residuals` table
 below; there is no hidden backlog elsewhere. A head-agent review after
 `llvm-5-closeout-corrections` corrected two more register rows (`properlyDominates`, which had been
@@ -112,7 +116,8 @@ marked [inherited]; regressions (broken by the port) are [regression].
 
 | What | Status | Why acceptable / Evidence |
 |------|--------|---------------------------|
-| `matrix_multiply-seq` — 1 FAIL | Acceptable standing failure | Criterion drift: LLVM 3.4's `matrix_mult:285` is 5.0.2's `matrix_mult:292` (+7 offset within output-printing loop). 16 extra lines are traceable data-dependence from the drift. Verdict: `FAIL-EXPECTED`. Evidence: `llvm-5-criterion-drift-sweep` (`df93296`); AGENTS.md Current state |
+| `matrix_multiply-seq` — 1 FAIL | Resolved by `ec0e6b7` — no longer a residual | Was an acceptable standing failure from criterion drift: LLVM 3.4's `matrix_mult:285` is 5.0.2's `matrix_mult:292` (+7 offset within output-printing loop). `ec0e6b7` ("Adapt matrix_mulit inst criterion to new trace") moved the test's criterion to 292 and the test passes. The analysis is still worth reading; the row stays so the `FAIL-EXPECTED` verdict is not re-derived. Evidence: `llvm-5-criterion-drift-sweep` (`df93296`); suite table in `porting/TestAudit/llvm-5.0.2/SUMMARY.md` |
+| Giri models a fixed set of libc functions | [inherited] gap | `lib/Giri/TracingNoGiri.cpp:218` models `llvm.memset/memcpy/memmove`, `strcpy`, `strcat`, `strlen`, `calloc`, `sprintf`, `sscanf`, `fscanf` and no others. A direct call to `memcpy` rather than the intrinsic, and `realloc`, are not modelled — their effects reach a slice as lost loads. Surfaced by the ARVO work, where `realloc` is how `av_bprint` grows the buffer the sample bug overflows. See `arvo/README.md` "Limits to expect" |
 | `kmeans-pthread` — cannot run | [inherited] gap | Asserts on hosts where `sysconf(_SC_NPROCESSORS_ONLN)` exceeds 100. Container reports 256 CPUs; harness now catches the abort at trace stage. A cpuset-restricted run (`--cpuset-cpus=0-3`) would be needed but is unavailable on the current Ubuntu 14.04 container runtime. Harness correctly reports `[FAIL]` with `[GIRI] Abnormal termination` marker |
 | `kmeans-seq` — 2-line golden | Verified not degenerate | Sweep of indices 114–126 in `main` found index **120** (`call @dump_matrix`, `kmeans-seq.c:276`) as the only one reproducing `[222, 276]`. Golden did not drift unlike `matrix_mult`. Evidence: `llvm-5-final-defects` (`e194151`) |
 | No pthread suite coverage | [inherited] gap | `Dockerfile:5` pins `TEST_PARALLELISM=seq`. `matrix_multiply-pthread` and `pca-pthread` checked once by hand in `llvm-5-matrix-multiply-verdict` — both clean. Not ongoing coverage; one-off measurement at that commit |
@@ -193,4 +198,7 @@ Three invariants must be preserved during any port. Read the canonical descripti
 - **How Giri works:** `porting/HowItWorks.md` — deep dive into the tracing/slicing pipeline + invariants
 - **LLVM API changes:** `porting/llvm-releases/<version>/api-breakings.yaml` — structured API deltas
 - **Task notes:** `porting/TaskNotes/Tasks/` — agentic task notes for the `handle-task` skill
+- **ARVO containers:** `arvo/README.md` (why each piece exists, and the limits),
+  `arvo/AUTOMATION.md` (the pipeline as a driver runs it), `arvo/RESULTS-sample-container.md`
+  (the measured slice). `arvo/giri-arvo <container>` runs the whole thing
 - **Task template:** `porting/TaskNotes/Tasks/.task-template.md` — OBS frontmatter schema for new tasks

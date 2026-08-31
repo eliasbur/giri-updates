@@ -1,0 +1,288 @@
+#!/usr/bin/env python3
+"""giri-criterion -- turn a source location, or an ASan report, into slicing criteria.
+
+    giri-criterion <module.bc> <file:line> [options]
+    giri-criterion <module.bc> --asan <report> [options]
+
+Giri's -criterion-loc keeps the *last* instruction in module order whose DebugLoc
+matches.  For a loop header that is the latch inside the loop body -- a block that
+may never have executed -- so this prints candidates as `function:index`, the form
+-criterion-inst takes.  Indices come from Giri's own -srcline-mapping pass
+(Utility/SourceLineMapping.cpp numbers with the same inst_iterator walk that
+-criterion-inst uses), so they always agree with it.
+
+With --asan the whole criterion is derived from the sanitizer report, and the
+candidates come out ranked.  Three signals in the report do the ranking, in
+decreasing order of how much they pin the instruction down:
+
+  * frame #0, when it is a sanitizer interceptor, names the libc function the
+    faulting instruction *calls* -- `__interceptor_strncmp` means the criterion
+    is a `call @strncmp`, which is normally unique on the line;
+  * the first frame inside the project gives file, line, function *and column*,
+    and columns survive into the bitcode as !DILocation(column: N);
+  * the opcode class breaks what is left, memory operations ahead of control
+    flow, because a sanitizer only ever blames a memory operation.
+
+Ranking is a preference, not a proof.  Whether the chosen instruction actually
+executed is settled by running the slice: Giri reports
+`[GIRI] criterion never executed` on a criterion whose basic block is not in the
+trace, and the caller moves to the next candidate.
+
+Options:
+  --function NAME  restrict to this function (--asan sets it)
+  --column N       prefer instructions at this column (--asan sets it)
+  --callee NAME    prefer a call to this function (--asan sets it)
+  --plain          print `function:index`, one per line, best first
+  --limit N        print at most N candidates
+"""
+import os, re, subprocess, sys, tempfile
+
+# Paths whose frames are the sanitizer's own machinery rather than the project.
+RUNTIME_RE = re.compile(
+    r"compiler-rt|sanitizer_common|/libfuzzer/|libFuzzer|^\?\?$")
+RUNTIME_FN_RE = re.compile(r"^(__interceptor|__asan|__msan|__ubsan|__sanitizer|fuzzer::)")
+FRAME_RE = re.compile(r"^\s*#(\d+)\s+0x[0-9a-fA-F]+\s+in\s+(\S+)\s+(.*?)\s*$")
+
+# Memory operations first: a sanitizer only ever blames one of those.  Control
+# flow last: -criterion-loc's habit of landing on a loop latch is the failure
+# this whole script exists to avoid.
+OPCODE_RANK = {
+    "call": 0, "invoke": 0, "load": 1, "store": 1,
+    "getelementptr": 3, "phi": 5, "br": 6, "switch": 6, "indirectbr": 6, "ret": 6,
+}
+DEFAULT_RANK = 2
+
+
+def parse_asan(path):
+    """Pull (function, file, line, column, intercepted-callee) out of a report."""
+    text = open(path, errors="replace").read()
+    lines = text.splitlines()
+
+    start = next((i for i, l in enumerate(lines)
+                  if "ERROR: AddressSanitizer" in l or "ERROR: LeakSanitizer" in l
+                  or "runtime error:" in l or "WARNING: MemorySanitizer" in l), None)
+    if start is None:
+        sys.exit("giri-criterion: no sanitizer error found in %s" % path)
+
+    # The error stack is the first run of #N frames after the ERROR line; the
+    # allocation stack that may follow describes a different instruction.
+    frames, seen = [], False
+    for l in lines[start:]:
+        m = FRAME_RE.match(l)
+        if m:
+            seen = True
+            frames.append((m.group(2), m.group(3)))
+        elif seen:
+            break
+    if not frames:
+        sys.exit("giri-criterion: no stack frames under the error in %s" % path)
+
+    callee = None
+    m = re.match(r"^__interceptor_([A-Za-z0-9_]+)", frames[0][0])
+    if m:
+        callee = m.group(1)
+
+    for fn, loc in frames:
+        if RUNTIME_FN_RE.match(fn) or RUNTIME_RE.search(loc):
+            continue
+        m = re.match(r"^(.*?):(\d+)(?::(\d+))?$", loc)
+        if not m:
+            continue
+        return fn, m.group(1), int(m.group(2)), \
+            (int(m.group(3)) if m.group(3) else None), callee
+
+    sys.exit("giri-criterion: every frame in %s is sanitizer or fuzzer runtime;\n"
+             "  pass the criterion explicitly as <file:line>" % path)
+
+
+def disassemble(bc):
+    """llvm-dis the module once and keep the .ll: a retry should not pay again."""
+    ll = bc + ".ll"
+    if not (os.path.exists(ll) and os.path.getmtime(ll) >= os.path.getmtime(bc)):
+        try:
+            subprocess.check_call(["llvm-dis", bc, "-o", ll])
+        except (OSError, subprocess.CalledProcessError):
+            fd, ll = tempfile.mkstemp(suffix=".ll")
+            os.close(fd)
+            subprocess.check_call(["llvm-dis", bc, "-o", ll])
+    return ll
+
+
+def read_metadata(ll):
+    md, mdre = {}, re.compile(r"^!(\d+) = (.*)$")
+    with open(ll, errors="replace") as f:
+        for line in f:
+            m = mdre.match(line)
+            if m:
+                md[int(m.group(1))] = m.group(2)
+    return md
+
+
+def path_of(md, node):
+    """Resolve a scope to the source path -- directory + filename, the same
+    spelling SourceLineMapping emits, so both forms can be matched."""
+    seen = set()
+    while node is not None and node not in seen:
+        seen.add(node)
+        t = md.get(node, "")
+        m = re.search(r"\bfile: !(\d+)", t)
+        if m:
+            f = md.get(int(m.group(1)), "")
+            fn = re.search(r'filename: "([^"]*)"', f)
+            d = re.search(r'directory: "([^"]*)"', f)
+            if not fn:
+                return None, None
+            return fn.group(1), (d.group(1) + "/" + fn.group(1)) if d else fn.group(1)
+        m = re.search(r"\bscope: !(\d+)", t)
+        node = int(m.group(1)) if m else None
+    return None, None
+
+
+def matches(want, rel, full):
+    """The report says /src/ffmpeg/libavcodec/htmlsubtitles.c; the module may
+    hold either that or the relative libavcodec/htmlsubtitles.c."""
+    if not rel:
+        return False
+    want = want.replace("//", "/")
+    for cand in (rel, full):
+        if not cand:
+            continue
+        cand = cand.replace("//", "/")
+        if cand == want or cand.endswith("/" + want) or want.endswith("/" + cand):
+            return True
+    return False
+
+
+def main():
+    argv = sys.argv[1:]
+    if not argv:
+        sys.exit(__doc__)
+    bc, argv = argv[0], argv[1:]
+
+    spec = asan = want_func = want_col = want_callee = None
+    plain, limit = False, None
+    i = 0
+    while i < len(argv):
+        a = argv[i]
+        if a == "--asan":       i += 1; asan = argv[i]
+        elif a == "--function": i += 1; want_func = argv[i]
+        elif a == "--column":   i += 1; want_col = int(argv[i])
+        elif a == "--callee":   i += 1; want_callee = argv[i]
+        elif a == "--limit":    i += 1; limit = int(argv[i])
+        elif a == "--plain":    plain = True
+        elif a.startswith("-"): sys.exit("unknown option %s\n%s" % (a, __doc__))
+        else:                   spec = a
+        i += 1
+
+    if asan:
+        want_func, want_file, want_line, col, callee = parse_asan(asan)
+        if want_col is None:
+            want_col = col
+        if want_callee is None:
+            want_callee = callee
+        if not plain:
+            print("ASan report: %s at %s:%d%s%s"
+                  % (want_func, want_file, want_line,
+                     ":%d" % want_col if want_col else "",
+                     ", intercepted %s()" % want_callee if want_callee else ""))
+    elif spec and ":" in spec:
+        want_file, want_line = spec.rsplit(":", 1)
+        want_line = int(want_line)
+    else:
+        sys.exit("criterion must be file:line, or use --asan <report>\n" + __doc__)
+
+    giri_lib = os.environ.get("GIRI_BUILD", "/giri-src/build") + "/lib"
+    ll = disassemble(bc)
+    md = read_metadata(ll)
+
+    # Step 1 -- which !DILocation nodes are the line we want, and which
+    # functions mention them at all.  Also remember each node's column.
+    cache, targets = {}, {}
+    locre = re.compile(r"^!DILocation\(line: %d(?:, column: (\d+))?, .*?scope: !(\d+)"
+                       % want_line)
+    for n, t in md.items():
+        m = locre.match(t)
+        if not m:
+            continue
+        scope = int(m.group(2))
+        if scope not in cache:
+            cache[scope] = path_of(md, scope)
+        if matches(want_file, *cache[scope]):
+            targets[n] = int(m.group(1)) if m.group(1) else None
+    if not targets:
+        sys.exit("no DILocation for %s:%d -- check the exact spelling with:\n"
+                 "  llvm-dis %s -o - | grep -o 'filename: \"[^\"]*\"' | sort -u"
+                 % (want_file, want_line, bc))
+
+    funcs, cur, dbgre = [], None, re.compile(r"!dbg !(\d+)")
+    with open(ll, errors="replace") as f:
+        for line in f:
+            if line.startswith("define "):
+                m = re.search(r"@([A-Za-z0-9_.$]+)\(", line)
+                cur = m.group(1) if m else None
+            elif cur and any(int(m.group(1)) in targets for m in dbgre.finditer(line)):
+                if cur not in funcs:
+                    funcs.append(cur)
+    if want_func and want_func in funcs:
+        funcs = [want_func]          # the report named it; do not scan the rest
+
+    # Step 2 -- ask Giri itself for the instruction numbering in those functions.
+    suffix = ":%d" % want_line
+    cands = []
+    for fn in funcs:
+        with tempfile.NamedTemporaryFile(suffix=".map", delete=False) as t:
+            out = t.name
+        subprocess.check_call(
+            ["opt", "-load", giri_lib + "/libdgutility.so", "-mergereturn",
+             "-srcline-mapping", "-mapping-function=" + fn,
+             "-mapping-output=" + out, bc, "-o", os.devnull],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        for line in open(out, errors="replace"):
+            m = re.match(r"^(\d+):\s+(.*?): (\S*)$", line.rstrip("\n"))
+            if not m or not m.group(3).endswith(suffix):
+                continue
+            loc = m.group(3)[:-len(suffix)]
+            if not matches(want_file, loc, loc):
+                continue
+            cands.append((fn, int(m.group(1)), m.group(2)))
+        os.unlink(out)
+
+    if not cands:
+        sys.exit("debug metadata mentions %s:%d but -srcline-mapping found no "
+                 "instruction for it" % (want_file, want_line))
+
+    # Step 3 -- rank.
+    def key(c):
+        fn, idx, text = c
+        body = text.split("= ", 1)[1] if re.match(r"^\s*%\S+ = ", text) else text
+        opcode = body.strip().split(" ", 1)[0]
+        calls = None
+        if opcode in ("call", "invoke"):
+            m = re.search(r"@([A-Za-z0-9_.$]+)\(", body)
+            calls = m.group(1) if m else None
+        m = dbgre.search(text)
+        col = targets.get(int(m.group(1))) if m else None
+        return (0 if (want_callee and calls == want_callee) else 1,
+                0 if (want_col is not None and col == want_col) else 1,
+                OPCODE_RANK.get(opcode, DEFAULT_RANK),
+                idx)
+
+    cands.sort(key=key)
+    if limit:
+        cands = cands[:limit]
+
+    if plain:
+        for fn, idx, _ in cands:
+            print("%s:%d" % (fn, idx))
+        return
+
+    print("%d candidate(s) at %s:%d, best first"
+          % (len(cands), want_file, want_line))
+    for fn, idx, text in cands:
+        print("  %s:%-6d %s" % (fn, idx, text.strip()[:110]))
+    print()
+    print("Pass one to giri-slice, e.g.:  giri-slice <base> %s:%d"
+          % (cands[0][0], cands[0][1]))
+
+
+main()

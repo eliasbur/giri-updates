@@ -66,7 +66,10 @@ TraceFile::TraceFile(string Filename,
   DEBUG(dbgs() << "TraceFile " << Filename << " successfully initialized.\n");
 }
 
-DynValue *TraceFile::getLastDynValue(Value  *V) {
+DynValue *TraceFile::getLastDynValue(Value  *V, bool *Executed) {
+  if (Executed)
+    *Executed = true;
+
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == nullptr)
     return new DynValue(V, 0);
@@ -79,9 +82,17 @@ DynValue *TraceFile::getLastDynValue(Value  *V) {
       return new DynValue(I, index);
   }
 
-  assert(trace[0].type == RecordType::BBType && trace[0].id == id &&
-         "Cannot find instruction in trace!\n");
+  // The loop above walks backwards and stops at 1, so entry 0 still has to be
+  // examined rather than assumed.
+  if (trace[0].type == RecordType::BBType && trace[0].id == id)
+    return new DynValue(I, 0);
 
+  // The basic block never appears in the trace: this value did not execute in
+  // the recorded run, and nothing anchors a slice at it.  The old code asserted
+  // here and returned index 0 anyway, which callers could not tell apart from
+  // finding the block at index 0.
+  if (Executed)
+    *Executed = false;
   return new DynValue(I, 0);
 }
 
@@ -300,7 +311,12 @@ unsigned long TraceFile::findPreviousID(Function *fun,
 
   unsigned long index = start_index;
   signed nesting = 0;
-  do {
+  // Walk backwards without ever decrementing past zero: start_index can legally
+  // be 0 (getLastDynValue() returns index 0 when the value never appears in the
+  // trace), and `do { ... --index; } while (index != 0)` would wrap to ULONG_MAX
+  // and index far outside the mapped trace.  The sibling overload above is
+  // already written this way; this also makes entry 0 itself get examined.
+  while (true) {
     assert(nesting >= 0);
 
     if (trace[index].type == type &&
@@ -326,8 +342,10 @@ unsigned long TraceFile::findPreviousID(Function *fun,
         trace[index].address == funAddr)
       --nesting;
 
+    if (index == 0)
+      break;
     --index;
-  } while (index != 0);
+  }
 
   return maxIndex;
 }

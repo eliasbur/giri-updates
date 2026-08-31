@@ -1,0 +1,104 @@
+#!/bin/bash
+# giri-instrument <fuzzer-binary> [outdir]
+#
+# Turns an ARVO fuzz target that was built through giri-cc into a Giri-traced
+# executable:  gather whole-program bitcode -> run the -trace-giri pass ->
+# codegen -> relink using the very link line the original build used, with the
+# instrumented object standing in for every translation unit it absorbed.
+set -eu
+BIN="$1"
+OUT="${2:-${GIRI_ROOT:-/giri}/work/$(basename "$BIN")}"
+GIRI_BUILD="${GIRI_BUILD:-/giri-src/build}"
+# The runtime comes from giri-build-runtime when it exists (built against the
+# target's C++ standard library); otherwise from Giri's own build tree.
+RT_DIR="${GIRI_RT_DIR:-${GIRI_ROOT:-/giri}/lib}"
+[ -f "$RT_DIR/librtgiri.a" ] || RT_DIR="$GIRI_BUILD/lib"
+BC_DIR="${GIRI_BC_DIR:-/giri/bc}"
+NAME="$(basename "$BIN")"
+mkdir -p "$OUT"
+
+echo "==> [1/4] whole-program bitcode"
+giri-extract-bc "$BIN" "$OUT/$NAME.all.bc"
+
+echo "==> [2/4] -trace-giri instrumentation"
+opt -load "$GIRI_BUILD/lib/libdgutility.so" -load "$GIRI_BUILD/lib/libgiri.so" \
+    -mergereturn -bbnum -lsnum \
+    -trace-giri -trace-file="$OUT/$NAME.trace" \
+    -remove-bbnum -remove-lsnum \
+    "$OUT/$NAME.all.bc" -o "$OUT/$NAME.trace.bc"
+
+echo "==> [3/4] codegen"
+llc -asm-verbose=false -O0 "$OUT/$NAME.trace.bc" -o "$OUT/$NAME.trace.s"
+"${GIRI_REAL_CXX:-clang++}" -c "$OUT/$NAME.trace.s" -o "$OUT/$NAME.trace.o"
+
+echo "==> [4/4] relink"
+# Which link line built this binary, in decreasing order of reliability:
+#   1. what the caller said;
+#   2. the .giri_link section giri-cc stamped into the link output -- it travels
+#      inside the file, so it is still right after the build renamed or moved
+#      the binary, which is precisely when a name lookup fails;
+#   3. the basename alias, for a binary that never got the section;
+#   4. the sole recorded link line, if the build only ever linked once.
+CMD="${GIRI_LINKCMD:-}"
+CMD_SRC="GIRI_LINKCMD"
+if [ -z "$CMD" ]; then
+  LP="$(mktemp)"
+  if objcopy --dump-section .giri_link="$LP" "$BIN" 2>/dev/null && [ -s "$LP" ]; then
+    CMD="$(tr -d '\0' < "$LP" | sed -n '1p')"
+    CMD_SRC=".giri_link section"
+  fi
+  rm -f "$LP"
+fi
+if [ -z "$CMD" ] || [ ! -f "$CMD" ]; then
+  CMD="$BC_DIR/links/by-name/$NAME.linkcmd"
+  CMD_SRC="basename alias"
+fi
+if [ ! -f "$CMD" ]; then
+  mapfile -t CANDS < <(ls "$BC_DIR"/links/*.linkcmd 2>/dev/null)
+  if [ ${#CANDS[@]} -eq 1 ]; then
+    CMD="${CANDS[0]}"
+    CMD_SRC="sole recorded link"
+  else
+    echo "no recorded link line for $NAME, and no .giri_link section in it." >&2
+    echo "Set GIRI_LINKCMD to one of:" >&2
+    printf '  %s\n' "${CANDS[@]}" >&2
+    exit 1
+  fi
+fi
+echo "    link line: $CMD  (via $CMD_SRC)"
+LINKDIR="$(cat "${CMD%.linkcmd}.linkdir")"
+
+# Objects whose bitcode we absorbed must leave the link line, or the linker sees
+# every symbol twice.  Archives stay: they still supply the assembly-only and
+# non-bitcode members.
+ABSORBED="$OUT/.absorbed"
+SECT="$(mktemp)"; trap 'rm -f "$SECT"' EXIT
+objcopy --dump-section .llvm_bc="$SECT" "$BIN" 2>/dev/null || true
+sed -e 's|/\.\([^/]*\)\.bc$|/\1|' -e '/^$/d' "$SECT" | sort -u > "$ABSORBED"
+
+mapfile -t ARGS < <(tail -n +2 "$CMD")
+REAL="$(head -n1 "$CMD")"
+NEW=(); prev=""
+for a in "${ARGS[@]}"; do
+  case "$prev" in -o) prev=""; continue ;; esac
+  case "$a" in
+    -o) prev="-o"; continue ;;
+    # Projects that hardcode sanitizers in their own build system (ffmpeg's
+    # --enable-ossfuzz does) put them on the link line where clearing OSS-Fuzz's
+    # env vars cannot reach.  They only ever served the native objects we are
+    # replacing, and ASan's interceptors would abort the run at the very
+    # instruction we want to slice from, before the trace is finalised.
+    -fsanitize=*|-fsanitize-*|-fno-sanitize=*|-fprofile-*) continue ;;
+    *.o)
+       abs="$a"; case "$abs" in /*) ;; *) abs="$LINKDIR/$a" ;; esac
+       abs="$(readlink -f "$abs" 2>/dev/null || echo "$abs")"
+       grep -qxF "$abs" "$ABSORBED" && continue ;;
+  esac
+  prev=""; NEW+=("$a")
+done
+
+set -x
+cd "$LINKDIR" && "$REAL" "$OUT/$NAME.trace.o" "${NEW[@]}" \
+    -L"$RT_DIR" -lrtgiri -o "$OUT/$NAME.trace.exe"
+set +x
+echo "==> traced binary: $OUT/$NAME.trace.exe   (trace file: $OUT/$NAME.trace)"

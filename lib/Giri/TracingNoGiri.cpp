@@ -55,6 +55,18 @@ char TracingNoGiri::ID = 0;
 static RegisterPass<TracingNoGiri>
 X("trace-giri", "Instrument code to trace basic block execution");
 
+// recordLock()/recordUnlock() pass their argument to a DEBUG() that is compiled
+// out unless the runtime is built with tracing debug output.  Materialising it
+// costs an Instruction::print() -- which builds a SlotTracker over the whole
+// enclosing function -- plus a fresh GlobalVariable, for every instrumented
+// load, store, call and basic block.  That is quadratic in function size and
+// dominates the pass on any real program, so it is off by default.
+static cl::opt<bool>
+LockNames("trace-lock-names",
+          cl::desc("Emit printed instruction text as recordLock/recordUnlock "
+                   "arguments (debug only; quadratic in function size)"),
+          cl::init(false));
+
 static inline Function *getOrInsertF(Module &M,
                                        StringRef Name,
                                        Type *RetTy,
@@ -117,12 +129,16 @@ void TracingNoGiri::createCtor(Module &M) {
 }
 
 void TracingNoGiri::instrumentLock(Instruction *I) {
-  std::string s;
-  raw_string_ostream rso(s);
-  I->print(rso);
-  Constant *Name = stringToGV(rso.str(),
-                              I->getParent()->getParent()->getParent());
-  Name = ConstantExpr::getZExtOrBitCast(Name, VoidPtrType);
+  Constant *Name;
+  if (LockNames) {
+    std::string s;
+    raw_string_ostream rso(s);
+    I->print(rso);
+    Name = stringToGV(rso.str(), I->getParent()->getParent()->getParent());
+    Name = ConstantExpr::getZExtOrBitCast(Name, VoidPtrType);
+  } else {
+    Name = ConstantPointerNull::get(cast<PointerType>(VoidPtrType));
+  }
   {
     std::vector<Value*> lockArgs;
     lockArgs.push_back(Name);
@@ -131,12 +147,16 @@ void TracingNoGiri::instrumentLock(Instruction *I) {
 }
 
 void TracingNoGiri::instrumentUnlock(Instruction *I) {
-  std::string s;
-  raw_string_ostream rso(s);
-  I->print(rso);
-  Constant *Name = stringToGV(rso.str(),
-                              I->getParent()->getParent()->getParent());
-  Name = ConstantExpr::getZExtOrBitCast(Name, VoidPtrType);
+  Constant *Name;
+  if (LockNames) {
+    std::string s;
+    raw_string_ostream rso(s);
+    I->print(rso);
+    Name = stringToGV(rso.str(), I->getParent()->getParent()->getParent());
+    Name = ConstantExpr::getZExtOrBitCast(Name, VoidPtrType);
+  } else {
+    Name = ConstantPointerNull::get(cast<PointerType>(VoidPtrType));
+  }
   {
     std::vector<Value*> unlockArgs;
     unlockArgs.push_back(Name);

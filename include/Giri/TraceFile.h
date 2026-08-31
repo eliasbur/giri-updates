@@ -64,6 +64,21 @@ public:
   DynValue *getParent(void) const { return parent; }
   void setParent(DynValue *p) { parent = p; }
 
+  /// Compact form carrying everything the slice digest needs, without the
+  /// LLVM IR text.  Value::print() constructs an AssemblyWriter per call and
+  /// its init() runs TypeFinder::run() over the whole module, so printing a
+  /// large slice costs one whole-module type scan per value.  Sharing a
+  /// ModuleSlotTracker does not help: the tracker shares slot numbering, not
+  /// the type table, and LLVM exposes no way to share the latter.
+  void printTerse(raw_ostream &out, const QueryLoadStoreNumbers *lsNumPass) {
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      out << I->getOpcodeName()
+          << "( [ " << I->getParent()->getParent()->getName().str() << " ]"
+          << "< " << lsNumPass->getID(I) << " > ) " << index << "\n";
+    else
+      out << V->getName().str() << "( ) " << index << "\n";
+  }
+
   void print(raw_ostream &out, const QueryLoadStoreNumbers *lsNumPass) {
     V->print(out);
     out << "( ";
@@ -162,7 +177,16 @@ public:
 
   /// Given an LLVM instruction, return a DynValue object that describes
   /// the last dynamic execution of the instruction within the trace.
-  DynValue *getLastDynValue(Value *I);
+  ///
+  /// \param[in]  I        - the value to look for.
+  /// \param[out] Executed - if non-null, set to false when the value's basic
+  ///                        block never appears in the trace.  Index 0 is a
+  ///                        legitimate answer, so it cannot itself carry the
+  ///                        "not found" meaning; without this flag a criterion
+  ///                        that never executed is indistinguishable from one
+  ///                        that executed first, and shows up only as an
+  ///                        unexpectedly small slice.
+  DynValue *getLastDynValue(Value *I, bool *Executed = nullptr);
 
   /// Given a dynamic instance of a value, find all other dynamic values
   /// instances that were used as inputs to this value.

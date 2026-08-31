@@ -1,0 +1,11 @@
+#!/bin/bash -eu
+# OSS-Fuzz "fuzzing engine" that isn't one: instead of libFuzzer's driver, it
+# installs a main() that replays a single input file.  ARVO's /usr/local/bin/compile
+# sources compile_${FUZZING_ENGINE}, so `FUZZING_ENGINE=giri compile` swaps the
+# engine for the whole build without touching the project's build.sh.
+echo -n "Building Giri standalone driver into $LIB_FUZZING_ENGINE ..."
+mkdir -p "$WORK/giri-driver"
+rm -f "$LIB_FUZZING_ENGINE"
+$CC $CFLAGS -O1 -c "${GIRI_DRIVER:-/giri/standalone_driver.c}" -o "$WORK/giri-driver/driver.o"
+ar r "$LIB_FUZZING_ENGINE" "$WORK/giri-driver/driver.o"
+echo " done."

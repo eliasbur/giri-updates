@@ -111,7 +111,7 @@ Of the 10 root-cause-A tests, 8 (test3, test5, test8–12, test17) were in the o
 
 ## Suite results across the port
 
-Six suite runs have been recorded during the `port/llvm-5.0.2` port. The last row is the current result.
+Nine suite runs have been recorded during the `port/llvm-5.0.2` port. The last row is the current result.
 
 | Result | Commit | Harness |
 |--------|--------|---------|
@@ -120,9 +120,21 @@ Six suite runs have been recorded during the `port/llvm-5.0.2` port. The last ro
 | 7 PASS / 15 FAIL | `2fb3b6d` | honest, before the exit-status opt-in |
 | 21 PASS / 1 FAIL | `5fbca9d` | honest, with `EXPECTED_EXIT` (per-test breakdown at [llvm-5-harness-fallout.md](../../TaskNotes/Tasks/llvm-5-harness-fallout.md)) |
 | 21 PASS / 1 FAIL | `e194151` | honest + crash detection |
-| 21 PASS / 1 FAIL | `4cd2451` | honest + crash detection, `*.trace.err` recipe — **current** |
+| 21 PASS / 1 FAIL | `4cd2451` | honest + crash detection, `*.trace.err` recipe |
+| 22 PASS / 0 FAIL | `e0abf4b` | unchanged harness, after `ec0e6b7` re-based the `matrix_multiply` criterion |
+| 22 PASS / 0 FAIL | `d75123d` | after the four ARVO scale fixes landed (`llvm-5-arvo-automation`) |
+| 22 PASS / 0 FAIL | `92e7c3d` | after the `criterion never executed` report — **current** |
 
-The single standing failure in every post-fix run is `matrix_multiply-seq` (`FAIL-EXPECTED`, criterion drift). `kmeans-pthread` crashes on the container's 256-CPU host and is caught by the harness's `[GIRI] Abnormal termination` marker; it is not in the automated suite (`Dockerfile:5` pins `TEST_PARALLELISM=seq`).
+The last three rows are one measurement each on `giri:5.0.2`, run with the source
+mounted at `/giri`. The first of them is the pre-change baseline, measured for the
+express purpose of telling apart "the patches held the result" from "the patches
+changed it": `ec0e6b7` ("Adapt matrix_mulit inst criterion to new trace") had
+already resolved the standing `matrix_multiply-seq` failure before
+`llvm-5-arvo-automation` began, so the 21/1 → 22/0 step belongs to that commit,
+not to the four fixes.
+
+Until `ec0e6b7`, the single standing failure in every post-fix run was
+`matrix_multiply-seq` (`FAIL-EXPECTED`, criterion drift). `kmeans-pthread` crashes on the container's 256-CPU host and is caught by the harness's `[GIRI] Abnormal termination` marker; it is not in the automated suite (`Dockerfile:5` pins `TEST_PARALLELISM=seq`).
 
 ## Unresolved questions
 

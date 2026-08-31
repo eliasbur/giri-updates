@@ -54,6 +54,14 @@ StartOfSliceInst("criterion-inst",
 static cl::opt<bool>
 TraceCD("trace-cd", cl::desc("Trace control dependence"), cl::init(true));
 
+static cl::opt<bool>
+TerseSlice("slice-terse",
+           cl::desc("Omit LLVM IR text from the slice file. Value::print() "
+                    "rescans the module's types on every call, which dominates "
+                    "runtime on large modules; the Source Line Info output, and "
+                    "so the .slice.loc digest, is byte-identical either way"),
+           cl::init(false));
+
 STATISTIC(NumDynValues, "Number of Dynamic Values in Slice");
 STATISTIC(NumDynSources, "Number of Dynamic Sources Queried");
 STATISTIC(NumDynValsSkipped, "Number of Dynamic Values Skipped");
@@ -186,7 +194,16 @@ errs() << "Error opening the slice output file: " << SliceFilename
   SliceFile << "\n----------------------------------------------------------\n";
   for (std::set<Value *>::iterator i = Slice.begin(); i != Slice.end(); ++i) {
     Value *V = *i;
-    V->print(SliceFile);
+    if (TerseSlice) {
+      if (Instruction *I = dyn_cast<Instruction>(V))
+        SliceFile << I->getOpcodeName() << " [ "
+                  << I->getParent()->getParent()->getName().str() << " ]< "
+                  << lsNumPass->getID(I) << " >";
+      else
+        SliceFile << V->getName().str();
+    } else {
+      V->print(SliceFile);
+    }
     SliceFile << "\n";
     if (Instruction *I = dyn_cast<Instruction>(V))
       SliceFile << "Source Line Info: "
@@ -202,7 +219,10 @@ errs() << "Error opening the slice output file: " << SliceFilename
        i != DynSlice.end();
        ++i) {
     DynValue DV = *i;
-    DV.print(SliceFile, lsNumPass);
+    if (TerseSlice)
+      DV.printTerse(SliceFile, lsNumPass);
+    else
+      DV.print(SliceFile, lsNumPass);
     if (Instruction *I = dyn_cast<Instruction>(i->getValue()))
       SliceFile << "Source Line Info: "
                 << SourceLineMappingPass::locateSrcInfo(I)
@@ -212,11 +232,12 @@ errs() << "Error opening the slice output file: " << SliceFilename
   SliceFile.close();
 }
 
-void DynamicGiri::getBackwardsSlice(Instruction *I,
+bool DynamicGiri::getBackwardsSlice(Instruction *I,
                                      std::set<Value *> &Slice,
                                      std::unordered_set<DynValue > &DynSlice,
                                      std::set<DynValue *> &DataFlowGraph) {
-  DynValue *DI = Trace->getLastDynValue(I);
+  bool Executed = true;
+  DynValue *DI = Trace->getLastDynValue(I, &Executed);
   findSlice(*DI, DynSlice, DataFlowGraph);
 
   std::unordered_set<DynValue>::iterator i = DynSlice.begin();
@@ -224,6 +245,20 @@ void DynamicGiri::getBackwardsSlice(Instruction *I,
     Slice.insert(i->getValue());
     ++i;
   }
+
+  return Executed;
+}
+
+/// Report a criterion that is in the module but not in the trace.  The marker
+/// is machine-readable on purpose: it is the only reliable way for a driver to
+/// tell "this criterion never ran, try the next candidate" from "this really is
+/// the whole slice".  Inferring it from slice size guesses in both directions.
+static void reportUnexecutedCriterion(const std::string &Spec,
+                                      Instruction *Criterion) {
+  errs() << "[GIRI] criterion never executed: " << Spec << " ("
+         << SourceLineMappingPass::locateSrcInfo(Criterion)
+         << ").  Its basic block does not appear in the trace, so the slice "
+            "below is empty for want of an anchor.\n";
 }
 
 bool DynamicGiri::runOnModule(Module &M) {
@@ -268,7 +303,9 @@ bool DynamicGiri::runOnModule(Module &M) {
         std::set<Value *> Slice;
         std::unordered_set<DynValue> DynSlice;
         std::set<DynValue *> DataFlowGraph;
-        getBackwardsSlice(Criterion, Slice, DynSlice, DataFlowGraph);
+        if (!getBackwardsSlice(Criterion, Slice, DynSlice, DataFlowGraph))
+          reportUnexecutedCriterion(StartFilename + ":" + std::to_string(StartLoc),
+                                    Criterion);
         printBackwardsSlice(Criterion, Slice, DynSlice, DataFlowGraph);
       } else
         errs() << "Didin't find the starting instruction to slice.\n";
@@ -293,6 +330,7 @@ bool DynamicGiri::runOnModule(Module &M) {
 
       Function *Func = M.getFunction(StartFunction);
       assert(Func);
+      std::string Spec = StartFunction + ":" + std::to_string(StartInst);
       Instruction *Criterion = nullptr;
       for (inst_iterator I = inst_begin(Func), E = inst_end(Func); I != E; ++I)
         if (--StartInst == 0) {
@@ -306,7 +344,8 @@ bool DynamicGiri::runOnModule(Module &M) {
         std::set<Value *> Slice;
         std::unordered_set<DynValue> DynSlice;
         std::set<DynValue *> DataFlowGraph;
-        getBackwardsSlice(Criterion, Slice, DynSlice, DataFlowGraph);
+        if (!getBackwardsSlice(Criterion, Slice, DynSlice, DataFlowGraph))
+          reportUnexecutedCriterion(Spec, Criterion);
         printBackwardsSlice(Criterion, Slice, DynSlice, DataFlowGraph);
       } else
         errs() << "Didin't find the starting instruction to slice.\n";
@@ -325,7 +364,8 @@ bool DynamicGiri::runOnModule(Module &M) {
         std::set<Value *> Slice;
         std::unordered_set<DynValue> DynSlice;
         std::set<DynValue *> DataFlowGraph;
-        getBackwardsSlice(&*I, Slice, DynSlice, DataFlowGraph);
+        if (!getBackwardsSlice(&*I, Slice, DynSlice, DataFlowGraph))
+          reportUnexecutedCriterion("main:ret", &*I);
         printBackwardsSlice(&*I, Slice, DynSlice, DataFlowGraph);
         break;
       }
