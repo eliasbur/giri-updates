@@ -11,8 +11,9 @@ Everything here hangs off env hooks ARVO/OSS-Fuzz already provides (`$CC`,
 `$CXX`, `$FUZZING_ENGINE`, `$SANITIZER_FLAGS_*`).  **`$SRC/build.sh` is never
 edited.**
 
-Validated end to end on `arvo-vscode:42473917-vul` (ffmpeg SAMI decoder,
-heap-buffer-overflow at `libavcodec/htmlsubtitles.c:174`).
+Validated end to end on `arvo-42473917-vul` (image `arvo-vscode:42473917-vul`):
+the ffmpeg SAMI decoder, heap-buffer-overflow at
+`libavcodec/htmlsubtitles.c:174`.
 
 ## Why each piece exists
 
@@ -27,13 +28,39 @@ heap-buffer-overflow at `libavcodec/htmlsubtitles.c:174`).
 
 ## Recipe
 
+One command, from the host:
+
+```bash
+giri-arvo arvo-42473917-vul --out ./slice
+
+# ffmpeg links ~400 codecs to produce the one being sliced; this is the opt-out
+# from the no-edit rule, and $SRC/build.sh is restored afterwards either way.
+giri-arvo arvo-42473917-vul --out ./slice \
+  --build-sh-sed 's/for c in $CONDITIONALS/for c in ${GIRI_CODECS:-$CONDITIONALS}/' \
+  --env GIRI_CODECS=SAMI
+```
+
+[`giri-arvo`](giri-arvo) probes the toolchain, captures the sanitizer report
+from the container's own binary, installs Giri from a git ref, builds it, runs
+ARVO's `compile` under the wrappers, instruments, traces, derives a criterion
+from the report and slices — gating after every stage.  See
+[AUTOMATION.md](AUTOMATION.md).
+
+By hand, the same thing:
+
 ```bash
 # --- once per container -----------------------------------------------------
 docker cp <giri-source>/. <container>:/giri-src
-docker cp arvo/. <container>:/giri/          # these scripts, into /giri/bin
-docker exec <container> bash -lc '
-  cd /giri-src && for p in /giri/000*.patch; do patch -p1 < "$p"; done
-  mkdir -p build && cd build &&
+docker exec <container> bash -c '
+  mkdir -p /giri/bin
+  cp /giri-src/arvo/giri-cc /giri/bin/giri-clang
+  cp /giri-src/arvo/giri-cc /giri/bin/giri-clang++
+  cp /giri-src/arvo/giri-{extract-bc,instrument,criterion,slice,trace,build-runtime} /giri/bin/
+  cp /giri-src/arvo/compile_giri /giri/bin/
+  cp /giri-src/arvo/giri-env.sh /giri/env.sh
+  cp /giri-src/arvo/standalone_driver.c /giri/
+  chmod +x /giri/bin/*
+  cd /giri-src && mkdir -p build && cd build &&
   env -u CFLAGS -u CXXFLAGS -u CXXFLAGS_EXTRA -u CC -u CXX \
       cmake -DCMAKE_BUILD_TYPE=Release .. && make -j$(nproc)'
 
@@ -44,8 +71,8 @@ compile                          # ARVO's own compile, NOT `arvo compile`
 
 # --- instrument, trace, slice -----------------------------------------------
 giri-instrument $OUT/<fuzzer>
-/giri/work/<fuzzer>/<fuzzer>.trace.exe /tmp/poc
-giri-criterion /giri/work/<fuzzer>/<fuzzer>.all.bc 'libavcodec/htmlsubtitles.c:174'
+giri-trace     /giri/work/<fuzzer>/<fuzzer> /tmp/poc
+giri-criterion /giri/work/<fuzzer>/<fuzzer>.all.bc --asan /giri-asan.txt
 giri-slice     /giri/work/<fuzzer>/<fuzzer> ff_htmlmarkup_to_ass:571
 ```
 
@@ -53,12 +80,21 @@ Run `compile` directly, not `arvo compile`: `/bin/arvo` re-exports
 `FUZZING_ENGINE=libfuzzer`, `SANITIZER=address` and friends at the top, undoing
 `env.sh`.
 
-`giri-instrument` looks up the recorded link line by the binary's basename.
-Build systems often rename the binary afterwards (ffmpeg's `build.sh` moves
-`tools/target_dec_sami_fuzzer` to `$OUT/ffmpeg_AV_CODEC_ID_SAMI_fuzzer`), in
-which case it lists the candidates — pass the right one as `GIRI_LINKCMD`.
+**`compile` runs once per container.**  ARVO's `build.sh` is not idempotent —
+42473917's sixth line is `bzip2 -f -d alsa-lib-*`, which consumes the archive —
+so a second run dies before it reaches ffmpeg.  Restore what it consumed from
+the image, or start a fresh container.  `giri-arvo` never deletes a previous
+generation for this reason; it renames it to `/giri/prev-<timestamp>`.
+
+`giri-cc` stamps the recorded link line's path into the binary as a `.giri_link`
+section, so `giri-instrument` still finds it after the build renames the binary
+(ffmpeg's `build.sh` moves `tools/target_dec_sami_fuzzer` to
+`$OUT/ffmpeg_AV_CODEC_ID_SAMI_fuzzer`).  `GIRI_LINKCMD` overrides it.
 
 ## Choosing the criterion
+
+`giri-criterion --asan <report>` does this automatically; what follows is why
+it picks what it picks.
 
 The natural criterion for an ARVO bug is the frame ASan blames: `#1` in the
 report, the first frame inside the project rather than the interceptor.
@@ -76,11 +112,14 @@ while (dst->len >= 2 && !strncmp(&dst->str[dst->len - 2], "\\N", 2))
 — that is `br label %488` in `while.body`, a block that only executes if the
 buffer really does end in `\N`.  It did not execute for this PoC, so
 `getLastDynValue()` found nothing in the trace and returned index 0, which the
-slicer then walked off the end of (patch 0003 turns that into a clean miss, but
+slicer then walked off the end of (the `findPreviousID` fix turns that into a
+clean miss, and Giri now says so outright, but
 the criterion is still the wrong instruction).
 
 `giri-criterion` prints every candidate with the index `-criterion-inst` wants,
-numbered by Giri's own `-srcline-mapping` pass so the two always agree:
+numbered by Giri's own `-srcline-mapping` pass so the two always agree, best
+first — the report's interceptor name (`strncmp`), its column (`174:30`) and
+opcode class do the ranking:
 
 ```
 ff_htmlmarkup_to_ass:570    %502 = getelementptr inbounds i8, i8* %496, i64 %501
@@ -91,8 +130,11 @@ ff_htmlmarkup_to_ass:582    br label %488, !llvm.loop        <- what -criterion-
 ## Giri fixes required to get this far
 
 Four defects only show up at real-program scale; all four are in upstream Giri,
-not in the LLVM 5 port.  Patches are in this directory and apply cleanly to
-`port/llvm-5.0.2`.
+not in the LLVM 5 port.  All four are commits on `port/llvm-5.0.2` — they used
+to be patch files in this directory, which meant the pipeline had a stage that
+could fail because the branch had moved.  A fifth change, the
+`criterion never executed` report, is described under
+[AUTOMATION.md](AUTOMATION.md#4-criterion-selection-stage-7--closed-with-a-caveat-worth-reading).
 
 **0001 — the tracing pass is quadratic in function size.**
 `instrumentLock`/`instrumentUnlock` pretty-print the whole instruction to a
@@ -164,7 +206,7 @@ written the safe way; this makes them match (and lets entry 0 be examined).
   `memcpy` (rather than the intrinsic) and — relevant here — `realloc`, which is
   how `av_bprint` grows the very buffer this bug overflows, are **not** modelled.
   Watch `Number of Dynamic Loads Lost` in `-stats`.
-* **Slicing is the slow stage, not tracing** — but with patch 0004 the whole
+* **Slicing is the slow stage, not tracing** — but with `-slice-terse` the whole
   slice takes 23 s.  What remains is `findPreviousID` linearly rescanning the
   trace per query, so cost is roughly queries × trace length, with no index and
   no memoisation.  That term grows with *trace* length, not module size, so a
@@ -179,8 +221,9 @@ written the safe way; this makes them match (and lets entry 0 be examined).
   host that is a 100 GB sparse file, truncated to the real length at exit.
 * **A killed traced process leaves an unusable trace.**  Without `finish()` the
   file keeps its full sparse size and has no `ENType` terminator, and Giri's
-  trace scans have no bound check — they segfault.  Re-run the binary to
-  completion rather than debugging the slicer against such a file.
+  trace scans have no bound check — they segfault.  `giri-trace` gates on
+  exactly this; re-run the binary to completion rather than debugging the slicer
+  against such a file.
 * **No sanitizer means no crash.**  The traced run executes the faulting
   instruction and carries on.  That is what you want for slicing, but the traced
   binary is not a reproducer.
@@ -215,7 +258,9 @@ order of preference:
 | `giri-build-runtime` | rebuild `librtgiri.a` against the target's C++ stdlib |
 | `giri-extract-bc` | `.llvm_bc` section → one linked `.bc` |
 | `giri-instrument` | bitcode → `-trace-giri` → codegen → relink |
-| `giri-criterion` | `file:line` → `function:index` candidates |
+| `giri-criterion` | `file:line` or ASan report → ranked `function:index` candidates |
+| `giri-trace` | run the traced binary; gate the trace it leaves |
+| `giri-arvo` | the driver: stages 0-9 against a container, from the host |
 | `giri-slice` | run `-dgiri` with a criterion against the trace |
 | `000{1,2,3,4}-*.patch` | the four Giri fixes described above |
 | `RESULTS-sample-container.md` | the measured slice for the sample bug |

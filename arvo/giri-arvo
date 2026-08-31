@@ -248,7 +248,7 @@ if [ "$SKIP_TARGET_BUILD" = "0" ]; then
   fi
 fi
 
-FAILED="$(dex 'wc -l < /giri/bc/failed.log 2>/dev/null || echo 0' | tr -d ' \r')"
+FAILED="$(dex 'if [ -f /giri/bc/failed.log ]; then wc -l < /giri/bc/failed.log; else echo 0; fi' | tr -d ' \r')"
 LINKS="$(dex 'ls /giri/bc/links/*.linkcmd 2>/dev/null | wc -l' | tr -d ' \r')"
 echo "    recorded link lines: $LINKS;  TUs whose bitcode copy failed: $FAILED"
 [ "${FAILED:-0}" -eq 0 ] || warn "$FAILED translation units are missing from the bitcode
