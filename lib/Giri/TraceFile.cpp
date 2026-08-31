@@ -66,7 +66,10 @@ TraceFile::TraceFile(string Filename,
   DEBUG(dbgs() << "TraceFile " << Filename << " successfully initialized.\n");
 }
 
-DynValue *TraceFile::getLastDynValue(Value  *V) {
+DynValue *TraceFile::getLastDynValue(Value  *V, bool *Executed) {
+  if (Executed)
+    *Executed = true;
+
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == nullptr)
     return new DynValue(V, 0);
@@ -79,9 +82,17 @@ DynValue *TraceFile::getLastDynValue(Value  *V) {
       return new DynValue(I, index);
   }
 
-  assert(trace[0].type == RecordType::BBType && trace[0].id == id &&
-         "Cannot find instruction in trace!\n");
+  // The loop above walks backwards and stops at 1, so entry 0 still has to be
+  // examined rather than assumed.
+  if (trace[0].type == RecordType::BBType && trace[0].id == id)
+    return new DynValue(I, 0);
 
+  // The basic block never appears in the trace: this value did not execute in
+  // the recorded run, and nothing anchors a slice at it.  The old code asserted
+  // here and returned index 0 anyway, which callers could not tell apart from
+  // finding the block at index 0.
+  if (Executed)
+    *Executed = false;
   return new DynValue(I, 0);
 }
 

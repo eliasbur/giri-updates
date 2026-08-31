@@ -177,7 +177,16 @@ public:
 
   /// Given an LLVM instruction, return a DynValue object that describes
   /// the last dynamic execution of the instruction within the trace.
-  DynValue *getLastDynValue(Value *I);
+  ///
+  /// \param[in]  I        - the value to look for.
+  /// \param[out] Executed - if non-null, set to false when the value's basic
+  ///                        block never appears in the trace.  Index 0 is a
+  ///                        legitimate answer, so it cannot itself carry the
+  ///                        "not found" meaning; without this flag a criterion
+  ///                        that never executed is indistinguishable from one
+  ///                        that executed first, and shows up only as an
+  ///                        unexpectedly small slice.
+  DynValue *getLastDynValue(Value *I, bool *Executed = nullptr);
 
   /// Given a dynamic instance of a value, find all other dynamic values
   /// instances that were used as inputs to this value.

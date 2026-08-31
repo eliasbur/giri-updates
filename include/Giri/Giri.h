@@ -182,7 +182,10 @@ public:
   /// \param Slice - the static slice container
   /// \param DynSlice - the dynamic slice container
   /// \param DataFlowGraph - the data flow graph
-  void getBackwardsSlice(Instruction *I,
+  /// \return false if the criterion never executed in the recorded run, in
+  ///         which case the slice is empty for want of an anchor rather than
+  ///         because the criterion has no sources.
+  bool getBackwardsSlice(Instruction *I,
                          std::set<Value *> &Slice,
                          std::unordered_set<DynValue> &DynSlice,
                          std::set<DynValue *> &DataFlowGraph);
