@@ -159,7 +159,7 @@ fix are already done and inherited. What this port changes on top:
   emit only (the 15.0.0 `-Xclang -no-opaque-pointers` flag is gone — accepted
   but inert, IR comes out `ptr`), `-load`/`-load-pass-plugin`/`-passes`
   plugin mechanism intact, `--enable-new-pm` survives only as a migration aid.
-  TODO 1/9 done; next: toolchain wiring commit.
+  TODO 1/9 done; next: toolchain wiring commit.  (continued) **Toolchain wiring** (this commit): `utils/install_llvm.sh` gained a `"16.0.0"` case (ubuntu-18.04 GitHub-Releases asset, 966,785,280 bytes; the 18.04 base image is required because the prebuilt links libtinfo.so.5, absent from 20.04; GLIBCXX_3.4.21 <= 18.04's 3.4.25 so no shim); `Dockerfile` rewritten (FROM ubuntu:18.04, CMake 3.31.12 pin retained — the 16.0.0 prebuilt's LLVMConfigVersion.cmake sets no CMake floor, the project's 3.5 floor is the binding constraint, and 3.31.12 satisfies 16.0.0's soft 3.20 requirement); `CMakeLists.txt` `find_package(LLVM 15.0 -> 16.0)`.
 
 ## Handoff
 
