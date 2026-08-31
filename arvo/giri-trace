@@ -39,12 +39,17 @@ RUN=("$EXE")
 
 echo "==> [1/2] run: ${RUN[*]}"
 start=$(date +%s)
+# stderr goes straight to the file and is echoed afterwards.  Through a
+# `2> >(tee ...)` the grep below can run before tee has flushed, which would
+# silently miss the abnormal-termination marker -- the one thing this gate is
+# for.
 if [ "$TIMEOUT" != "0" ] && command -v timeout >/dev/null 2>&1; then
-  timeout -s KILL "$TIMEOUT" "${RUN[@]}" < "${GIRI_TRACE_STDIN:-/dev/null}" 2> >(tee "$ERR" >&2)
+  timeout -s KILL "$TIMEOUT" "${RUN[@]}" < "${GIRI_TRACE_STDIN:-/dev/null}" 2>"$ERR"
 else
-  "${RUN[@]}" < "${GIRI_TRACE_STDIN:-/dev/null}" 2> >(tee "$ERR" >&2)
+  "${RUN[@]}" < "${GIRI_TRACE_STDIN:-/dev/null}" 2>"$ERR"
 fi
 rc=$?
+[ -s "$ERR" ] && cat "$ERR" >&2
 elapsed=$(( $(date +%s) - start ))
 echo "    exit $rc after ${elapsed}s"
 
