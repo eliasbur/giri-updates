@@ -1,6 +1,6 @@
 ---
 title: Port Giri to LLVM 16.0.0 (new pass manager; opaque pointers are now the only IR mode)
-status: open             # open | done (driver rewrites this on `finish`)
+status: done
 priority: high           # low | medium | high
 repo: giriupdates        # required; must match a GITHUB_<KEY>_TOKEN or GITLAB_<KEY>_TOKEN
 contexts: []
@@ -10,6 +10,8 @@ tags:
 timeEstimate: 0          # minutes
 dateCreated: 2026-08-31
 # dateModified / completedDate are added automatically by `driver.py finish`
+dateModified: 2026-09-01T02:29:00.677+02:00
+completedDate: 2026-09-01
 ---
 
 ## Goal
@@ -250,6 +252,6 @@ fix are already done and inherited. What this port changes on top:
 ## Handoff
 
 - branch `agent/jcode/llvm-16.0.0-port`
-- PR:
+- PR: giriupdates #23 https://github.com/eliasbur/giri-updates/pull/23
 Refs: `porting/AgentGuide.md`, `porting/HowItWorks.md`,
 `llvm-15.0.0-port.md`, `porting/TestAudit/llvm-15.0.0/SUMMARY.md`
