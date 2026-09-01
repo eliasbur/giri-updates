@@ -197,6 +197,55 @@ fix are already done and inherited. What this port changes on top:
     therefore stays in `test/Makefile.common`; no harness change was needed for
     16.0.0, so `git diff 63b02e2..HEAD -- test/` is empty (stronger than the
     DoD's "limited to 2 harness files").
+  - 2026-08-31 19-30 **s5/s6 verified in-container** (container `giri16`;
+    LLVM 16.0.0 at `/usr/local/llvm`): `git diff 63b02e2..HEAD -- test/`
+    empty (no harness change needed); `include/Giri/Runtime.h` identical to
+    base (`git diff fba2565..HEAD -- include/Giri/Runtime.h` empty);
+    `-no-pie` / `-g` / `-Wno-error=…` / `-no-opaque-pointers` intact in
+    `test/Makefile.common`. Invariants re-derived in-container:
+    `sizeof(Entry)=32` on x86_64 LP64, `4096 % 32 == 0`, every fresh
+    `.trace` record-size `%32==0` (22/22), numbering determinism by
+    construction (identical `function(mergereturn),bbnum,lsnum,…,remove-bbnum,remove-lsnum`
+    pipeline in both the instrument and slice stages, `test/Makefile.common`);
+    behaviorally proven by the 22/22 seq suite against the pristine 3.4
+    goldens.
+  - 2026-08-31 20-15 **s7 standalone-tool validation: 22 PASS / 0 FAIL.**
+    Reused the path-agnostic 15.0.0 `_tool_validation/full_tool_validation.py`
+    (saved under `porting/TestAudit/llvm-16.0.0/_tool_validation/`): every
+    `tracer` run's slice matches the 3.4 golden, `prtrace` decodes all 22
+    traces (Entry ABI), and the kmeans slice matches its 2-loc golden (no
+    opaque-pointer drift).
+  - 2026-08-31 21-05 **s8 cold-build acceptance PASSED:** `/giri/build`
+    wiped + `source /giri/utils/build.sh` (from `/giri`) → rc=0, 22 PASS,
+    all 5 artifacts. (A first attempt failed rc=2 because `build.sh` was
+    invoked without `cd /giri` first — `GIRI_ROOT=$(pwd)` defaulted to `/`.)
+    Evidence assembled under `porting/TestAudit/llvm-16.0.0/`: SUMMARY.md,
+    22 per-test reports, suite_final_table.txt, _test_logs/ (23 logs),
+    _tool_validation/ (22 PASS/0 FAIL), _cold_acceptance/ (cold-build suite
+    log, negative control: empty slice ≠ non-empty golden, diff rc=1; toolchain
+    provenance — Ubuntu 18.04.6, glibc 2.27, gcc 7.5.0, CMake 3.31.12,
+    llvm-config 16.0.0 Release, clean ldd, GLIBCXX max 3.4.21 ≤ host 3.4.25,
+    libtinfo.so.5 present, --cxxflags = -std=c++17, no CMake floor).
+    `AGENTS.md` rewritten as the 16.0.0 branch copy (Current state + Known
+    residuals — no `[regression]` rows).
+  - 2026-08-31 23-00 **s8 change data.** `porting/llvm-releases/16.0.0/` set
+    up: the saved `LLVM 16.0.0 Release Notes.html` (47 KB), the raw
+    per-version `16.0.0-api-breakings.yaml` (86 entries extracted + triaged
+    from the release notes; the 8 same-id changes re-stated in the 16.0.0
+    notes reuse their pre-existing ids so they merge in place when the
+    consolidated file is built), and the consolidated `api-breakings.yaml`
+    extended 8.0.0 → 16.0.0 (baseVersion 8.0.0; 406 entries; 9 new-id
+    16.0.0 entries in the 16.0.0 block + 8 same-id changes merged in place —
+    versions[]/originalIds[] extended — with notes-16.0.0 enrichment on the 3
+    port-relevant ones: the build-toolchain C++17 floor, the constant-expr
+    fneg removal, and the opaque-pointer re-verification). 16.0.0 header
+    facts root-caused against the prebuilt: the old `ReadNone` enum is gone
+    (replaced by the `memory(...)` attribute, AttrBuilder::addMemoryAttr,
+    Attributes.h:1237); `Attribute::NoUnwind` still compiles (minimal TU
+    rc=0); Giri uses no removed memory attributes, no `fneg`, no
+    `flt.rounds`; it uses `PointerType::getUnqual` (TracingNoGiri.cpp:94,
+    TraceFile.cpp:685) and `ConstantExpr::getZExtOrBitCast`, both
+    unaffected.
 
 ## Handoff
 

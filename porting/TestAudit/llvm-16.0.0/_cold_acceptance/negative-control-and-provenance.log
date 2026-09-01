@@ -1,0 +1,44 @@
+########## TOOLCHAIN PROVENANCE (giri-llvm-16, ubuntu:18.04) ##########
+--- os-release ---
+NAME="Ubuntu"
+VERSION="18.04.6 LTS (Bionic Beaver)"
+--- glibc ---
+ldd (Ubuntu GLIBC 2.27-3ubuntu1.6) 2.27
+--- gcc ---
+gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0
+--- cmake ---
+cmake version 3.31.12
+--- llvm-config ---
+16.0.0
+Release
+--- clang ident ---
+clang version 16.0.0
+Target: x86_64-unknown-linux-gnu
+--- prebuilt asset provenance (install_llvm.sh 16.0.0 case) ---
+		"16.0.0")
+			# GitHub Releases of llvm/llvm-project (tag llvmorg-16.0.0). 16.0.0
+			# the GitHub API: clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04.
+			# 16.0.0 is built with C++17 (per `llvm-config --cxxflags`); gcc 7.5
+			# tarball route ever breaks: build 16.0.0 from source (llvm-project
+			wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.0/clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+--- ldd on opt/clang (missing?) ---
+  (no lines above = clean ldd)
+--- max GLIBCXX symbol required by the toolchain vs host libstdc++ provides ---
+  opt needs: GLIBCXX_3.4.19
+  opt needs: GLIBCXX_3.4.20
+  opt needs: GLIBCXX_3.4.21
+  clang needs: GLIBCXX_3.4.19
+  clang needs: GLIBCXX_3.4.20
+  clang needs: GLIBCXX_3.4.21
+  host provides: GLIBCXX_3.4.24
+  host provides: GLIBCXX_3.4.25
+--- libtinfo (why ubuntu:18.04 base) ---
+  	libtinfo.so.5 => /lib/x86_64-linux-gnu/libtinfo.so.5 (0x00007f68bdbc6000)
+--- llvm-config --cxxflags (C++ standard) ---
+-I/usr/local/llvm/include -std=c++17   -fno-exceptions -fno-rtti -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
+--- CMake floor from the 16.0.0 prebuilt package ---
+
+########## NEGATIVE CONTROL: missing trace must NOT match a golden ##########
+got slice lines from fake slice: 0
+  golden test1 has 4 numeric lines
+  NEGATIVE CONTROL OK: empty slice != non-empty golden (diff rc=1)

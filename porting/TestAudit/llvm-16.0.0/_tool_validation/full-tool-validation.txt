@@ -1,0 +1,25 @@
+================================================================================================
+test1/extlibcalls                  PASS   MATCH (4 locs == golden) | prtrace OK | run-exit=12 | trace=1216B
+test2/ifelse                       PASS   MATCH (4 locs == golden) | prtrace OK | run-exit=2 | trace=544B
+test3/fibonacci                    PASS   MATCH (9 locs == golden) | prtrace OK | run-exit=98 | trace=726624B
+test4/example                      PASS   MATCH (7 locs == golden) | prtrace OK | run-exit=5 | trace=992B
+test5/hellothreads                 PASS   MATCH (12 locs == golden) | prtrace OK | run-exit=0 | trace=12640B
+test8/ptr                          PASS   MATCH (4 locs == golden) | prtrace OK | run-exit=54 | trace=1184B
+test9/forloop                      PASS   MATCH (5 locs == golden) | prtrace OK | run-exit=0 | trace=7712B
+test10/str                         PASS   MATCH (4 locs == golden) | prtrace OK | run-exit=103 | trace=3648B
+test11/hello2p                     PASS   MATCH (7 locs == golden) | prtrace OK | run-exit=52 | trace=6944B
+test12/psum                        PASS   MATCH (20 locs == golden) | prtrace OK | run-exit=28 | trace=112640B
+test13/struct                      PASS   MATCH (6 locs == golden) | prtrace OK | run-exit=2 | trace=1216B
+test14/struct-ptr                  PASS   MATCH (7 locs == golden) | prtrace OK | run-exit=2 | trace=1568B
+test15/hanoi                       PASS   MATCH (12 locs == golden) | prtrace OK | run-exit=31 | trace=110080B
+test16/struct-ptr                  PASS   MATCH (7 locs == golden) | prtrace OK | run-exit=2 | trace=1568B
+test17/plower                      PASS   MATCH (6 locs == golden) | prtrace OK | run-exit=0 | trace=12256B
+test18/extlibcalls                 PASS   MATCH (4 locs == golden) | prtrace OK | run-exit=12 | trace=1216B
+test19/fibocci                     PASS   MATCH (10 locs == golden) | prtrace OK | run-exit=13 | trace=19072B
+test20/even                        PASS   MATCH (11 locs == golden) | prtrace OK | run-exit=0 | trace=230880B
+test21/hwtype                      PASS   MATCH (6 locs == golden) | prtrace OK | run-exit=0 | trace=1248B
+matrix_multiply/matrix_multiply-seq PASS   MATCH (19 locs == golden) | prtrace OK | run-exit=0 | trace=124800B
+pca/pca-seq                        PASS   MATCH (17 locs == golden) | prtrace OK | run-exit=0 | trace=708576B
+kmeans/kmeans-seq                  PASS   MATCH (2 locs == golden) | prtrace OK | run-exit=0 | trace=36322176B
+================================================================================================
+standalone-tracer FULL RESULT: 22 PASS / 0 FAIL (of 22)
