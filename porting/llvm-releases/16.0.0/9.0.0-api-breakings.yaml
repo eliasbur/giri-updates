@@ -1,0 +1,290 @@
+---
+version: "9.0.0"
+sourceUrl: "https://releases.llvm.org/9.0.0/docs/ReleaseNotes.html"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-25"
+
+# Scope: top-level "Non-comprehensive list", Changes to the LLVM IR, building LLVM,
+# and every <Target> section. Out of scope (informational / not used by a static
+# legacy-PM pass): Noteworthy optimizations, LLDB, External Projects.
+
+changes:
+
+  - id: legacy-pm-full-lto-extension-points
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Two new extension points, EP_FullLinkTimeOptimizationEarly and EP_FullLinkTimeOptimizationLast, are available for plugins to specialize the legacy pass manager full LTO pipeline"
+    description: "Two new extension points, namely EP_FullLinkTimeOptimizationEarly and EP_FullLinkTimeOptimizationLast, are available for plugins to specialize the legacy pass manager full LTO pipeline."
+    affectedApi:
+      - "EP_FullLinkTimeOptimizationEarly"
+      - "EP_FullLinkTimeOptimizationLast"
+      - "legacy pass manager full LTO pipeline"
+    notes: "Legacy-PM full-LTO extension points; the port uses the legacy PM (`opt -enable-new-pm=0`) but not full LTO, so no interaction."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: llvm-objcopy-strip-coff-support
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "llvm-objcopy/llvm-strip got support for COFF object files/executables, supporting the most common copying/stripping options"
+    description: "llvm-objcopy/llvm-strip got support for COFF object files/executables, supporting the most common copying/stripping options."
+    affectedApi:
+      - "llvm-objcopy"
+      - "llvm-strip"
+      - "COFF"
+    notes: "llvm-objcopy/llvm-strip; not used by the Giri pipeline."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: z3-solver-cmake-variable-renamed
+    category: "general"
+    changeType: "renamed"
+    severity: "medium"
+    summary: "The CMake parameter CLANG_ANALYZER_ENABLE_Z3_SOLVER has been replaced by LLVM_ENABLE_Z3_SOLVER"
+    description: "The CMake parameter CLANG_ANALYZER_ENABLE_Z3_SOLVER has been replaced by LLVM_ENABLE_Z3_SOLVER."
+    affectedApi:
+      - "CLANG_ANALYZER_ENABLE_Z3_SOLVER"
+      - "LLVM_ENABLE_Z3_SOLVER"
+    notes: "Clang static-analyzer CMake variable; Giri does not build Clang or use the Z3 solver."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-target-no-longer-experimental
+    category: "general"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "The RISCV target is no longer \"experimental\" (see Changes to the RISCV Target below for more details)"
+    description: "The RISCV target is no longer \"experimental\" (see Changes to the RISCV Target below for more details)."
+    affectedApi:
+      - "RISCV"
+      - "LLVM_EXPERIMENTAL_TARGETS_TO_BUILD"
+    notes: "RISCV target; the port targets x86_64. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: orc-v1-jit-api-deprecated
+    category: "general"
+    changeType: "deprecated"
+    severity: "high"
+    summary: "The ORCv1 JIT API has been deprecated. Please see Transitioning from ORCv1 to ORCv2."
+    description: "The ORCv1 JIT API has been deprecated. Please see Transitioning from ORCv1 to ORCv2."
+    affectedApi:
+      - "ORCv1"
+      - "JIT"
+      - "ExecutionEngine"
+    notes: "ORCv1 JIT; Giri is a static opt pass with no JIT/ExecutionEngine use."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: ir-target-independent-hardware-loops
+    category: "general"
+    changeType: "added"
+    severity: "medium"
+    summary: "Support for target-independent hardware loops in IR has been added, with PowerPC and Arm implementations"
+    description: "Support for target-independent hardware loops in IR has been added, with PowerPC and Arm implementations."
+    affectedApi:
+      - "hardware loops"
+      - "IR"
+      - "PowerPC"
+      - "Arm"
+    notes: "IR hardware-loop support; Giri’s passes do not lower/emit hardware loops."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: immarg-parameter-attribute
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "medium"
+    summary: "Added immarg parameter attribute. This indicates an intrinsic parameter is required to be a simple constant. This annotation must be accurate to avoid possible miscompiles."
+    description: "Added immarg parameter attribute. This indicates an intrinsic parameter is required to be a simple constant. This annotation must be accurate to avoid possible miscompiles."
+    affectedApi:
+      - "immarg"
+    notes: "LLVM IR semantic/attribute change; Giri’s passes (bbnum/lsnum/dgiri/tracing) operate on IR but do not read the affected construct. Theoretical adjacency only; test inputs are recompiled with the target clang, so no IR-text drift reaches the pipeline."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: global-ctors-dtors-2-field-form-deleted
+    category: "llvm-ir"
+    changeType: "removed"
+    severity: "high"
+    summary: "The 2-field form of global variables @llvm.global_ctors and @llvm.global_dtors has been deleted. The third field of their element type is now mandatory. Specify i8* null to migrate from the obsoleted 2-field form."
+    description: "The 2-field form of global variables @llvm.global_ctors and @llvm.global_dtors has been deleted. The third field of their element type is now mandatory. Specify i8* null to migrate from the obsoleted 2-field form."
+    affectedApi:
+      - "@llvm.global_ctors"
+      - "@llvm.global_dtors"
+    notes: "IR text-format removal; Giri reads IR via the Module API (not text) and test inputs are recompiled, so no 2-field @llvm.global_ctors reach the pipeline."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: byval-type-parameter
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "medium"
+    summary: "The byval attribute can now take a type parameter: byval(<ty>). If present it must be identical to the argument's pointee type. In the next release we intend to make this parameter mandatory in preparation for opaque pointer types."
+    description: "The byval attribute can now take a type parameter: byval(<ty>). If present it must be identical to the argument's pointee type. In the next release we intend to make this parameter mandatory in preparation for opaque pointer types."
+    affectedApi:
+      - "byval"
+    notes: "LLVM IR semantic/attribute change; Giri’s passes (bbnum/lsnum/dgiri/tracing) operate on IR but do not read the affected construct. Theoretical adjacency only; test inputs are recompiled with the target clang, so no IR-text drift reaches the pipeline."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: atomicrmw-xchg-floating-point
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "atomicrmw xchg now allows floating point types"
+    description: "atomicrmw xchg now allows floating point types"
+    affectedApi:
+      - "atomicrmw xchg"
+    notes: "LLVM IR semantic/attribute change; Giri’s passes (bbnum/lsnum/dgiri/tracing) operate on IR but do not read the affected construct. Theoretical adjacency only; test inputs are recompiled with the target clang, so no IR-text drift reaches the pipeline."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: atomicrmw-fadd-fsub
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "atomicrmw now supports fadd and fsub"
+    description: "atomicrmw now supports fadd and fsub"
+    affectedApi:
+      - "atomicrmw fadd"
+      - "atomicrmw fsub"
+    notes: "LLVM IR semantic/attribute change; Giri’s passes (bbnum/lsnum/dgiri/tracing) operate on IR but do not read the affected construct. Theoretical adjacency only; test inputs are recompiled with the target clang, so no IR-text drift reaches the pipeline."
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: building-visual-studio-2017-required
+    category: "building"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Building LLVM with Visual Studio now requires version 2017 or later."
+    description: "Building LLVM with Visual Studio now requires version 2017 or later."
+    affectedApi:
+      - "Visual Studio"
+      - "build system"
+    notes: "Build-system change; Giri uses its own CMakeLists and a prebuilt x86_64 toolchain. No interaction with the port build."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-sve2-mte-assembly-support
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Assembly-level support was added for: Scalable Vector Extension 2 (SVE2) and Memory Tagging Extensions (MTE)."
+    description: "Assembly-level support was added for: Scalable Vector Extension 2 (SVE2) and Memory Tagging Extensions (MTE)."
+    affectedApi:
+      - "AArch64"
+      - "SVE2"
+      - "MTE"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: arm-armv81m-mve-support
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "added"
+    severity: "low"
+    summary: "Assembly-level support was added for the Armv8.1-M architecture, including the M-Profile Vector Extension (MVE). A pipeline model was added for Cortex-M4; code generation support for M-profile low-overhead loops."
+    description: "Assembly-level support was added for the Armv8.1-M architecture, including the M-Profile Vector Extension (MVE). A pipeline model was added for Cortex-M4. Code generation support for M-profile low-overhead loops."
+    affectedApi:
+      - "ARM"
+      - "Armv8.1-M"
+      - "MVE"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: mips-asm-pseudo-instr-support
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for .cplocal assembler directive; support for sge, sgeu, sgt, sgtu pseudo instructions; improved GlobalISel support (still experimental); complete P5600 scheduling model; various code-gen improvements."
+    description: "Support for .cplocal assembler directive. Support for sge, sgeu, sgt, sgtu pseudo instructions. Improved support of GlobalISel instruction selection framework (still experimental for MIPS targets). Various code-gen improvements, including floating-point register allocation. Complete P5600 scheduling model."
+    affectedApi:
+      - "MIPS"
+      - ".cplocal"
+      - "P5600"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-machine-verification-default
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "default-change"
+    severity: "low"
+    summary: "Various PowerPC codegen improvements; MachineVerification by default now (EXPENSIVE_CHECKS); P9 maddld exploitation; various bug fixes."
+    description: "Various new exploitations and bug fixes, e.g. exploited P9 maddld. Machine verification failures cleaned; EXPENSIVE_CHECKS will run MachineVerification by default now. Various new exploitations and bug fixes, e.g. exploited P9 maddld. Various codegen improvements for both scalar and vector code."
+    affectedApi:
+      - "PowerPC"
+      - "MachineVerification"
+      - "EXPENSIVE_CHECKS"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: systemz-arch13-support
+    category: "target-systemz"
+    targetName: "systemz"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for the arch13 architecture has been added (-march=arch13); -mtune=arch13 enables arch13 scheduling without new instructions; builtins for new vector instructions enabled with -mzvector (__VEC__ predefined to 10303); alignment hints auto-generated on vector load/store; various code-gen improvements."
+    description: "Support for the arch13 architecture has been added. When using the -march=arch13 option, the compiler will generate code making use of new instructions introduced with the vector enhancement facility 2 and the miscellaneous instruction extension facility 2. The -mtune=arch13 option enables arch13 specific instruction scheduling and tuning without making use of new instructions. Builtins for the new vector instructions have been added and can be enabled with the -mzvector option. Support for these builtins is indicated by the compiler predefining the __VEC__ macro to the value 10303. The compiler now supports and automatically generates alignment hints on vector load and store instructions."
+    affectedApi:
+      - "SystemZ"
+      - "arch13"
+      - "-mzvector"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-dwarf-unwind-32bit-mingw-fix
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Fixed a bug in generating DWARF unwind information for 32 bit MinGW"
+    description: "Fixed a bug in generating DWARF unwind information for 32 bit MinGW"
+    affectedApi:
+      - "X86"
+      - "DWARF unwind"
+      - "MinGW"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: amdgpu-function-calls-default-on
+    category: "target-amdgpu"
+    targetName: "amdgpu"
+    changeType: "default-change"
+    severity: "low"
+    summary: "Function call support is now enabled by default; improved 96-bit loads/stores; DPP combiner pass enabled by default; support for gfx10."
+    description: "Function call support is now enabled by default. Improved support for 96-bit loads and stores. DPP combiner pass is now enabled by default. Support for gfx10."
+    affectedApi:
+      - "AMDGPU"
+      - "gfx10"
+      - "DPP combiner"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: riscv-target-built-by-default
+    category: "target-riscv"
+    targetName: "riscv"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "The RISCV target is no longer \"experimental\"! It's now built by default, rather than needing to be enabled with LLVM_EXPERIMENTAL_TARGETS_TO_BUILD. Full codegen support for RV32I and RV64I base variants with the MAFDC standard extensions; hard and soft-float ABIs supported."
+    description: "The RISCV target is no longer \"experimental\"! It's now built by default, rather than needing to be enabled with LLVM_EXPERIMENTAL_TARGETS_TO_BUILD. The backend has full codegen support for the RV32I and RV64I base RISC-V instruction set variants, with the MAFDC standard extensions. We support the hard and soft-float ABIs for both targets."
+    affectedApi:
+      - "RISCV"
+      - "RV32I"
+      - "RV64I"
+      - "LLVM_EXPERIMENTAL_TARGETS_TO_BUILD"
+    notes: "Target-backend change; the port targets x86_64 (prebuilt x86_64 Linux LLVM) and Giri is a static opt pass, not a target backend. No source interaction."
+    relevance: "irrelevant"
+    status: "pending"

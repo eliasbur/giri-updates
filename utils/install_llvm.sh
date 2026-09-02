@@ -90,4 +90,25 @@ case $VERSION in
 			rm -f clang+llvm-15.0.0-x86_64-linux-gnu-rhel-8.4.tar.xz
 			mv clang+llvm-15.0.0-x86_64-linux-gnu-rhel-8.4 $LLVM_HOME
 			;;
+		"16.0.0")
+			# Use prebuilt release tarball — no build from source needed.
+			# NOTE: from LLVM 10.0.0 onward, prebuilt binaries live on the
+			# GitHub Releases of llvm/llvm-project (tag llvmorg-16.0.0). 16.0.0
+			# ships the x86_64-linux-gnu ubuntu-18.04 asset (verified against
+			# the GitHub API: clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04.
+			# tar.xz, 966,785,280 bytes) plus other non-x86_64-gnu builds. The
+			# prebuilt is an ubuntu-18.04 build linking libtinfo.so.5, so the
+			# Dockerfile base is ubuntu:18.04 (glibc 2.27, gcc 7.5): the spike
+			# showed ldd clean on opt/clang (0 missing) and the max symbol
+			# requirement GLIBCXX_3.4.21 <= 18.04's libstdc++ GLIBCXX_3.4.25,
+			# so no link shim is needed (unlike the 15.0.0 rhel-8.4 prebuilt).
+			# 16.0.0 is built with C++17 (per `llvm-config --cxxflags`); gcc 7.5
+			# meets the new hard GCC >= 7.1 requirement. Fallback if the
+			# tarball route ever breaks: build 16.0.0 from source (llvm-project
+			# monorepo tarball, also on the same GitHub release).
+			wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.0/clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+			tar xf clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+			rm -f clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+			mv clang+llvm-16.0.0-x86_64-linux-gnu-ubuntu-18.04 $LLVM_HOME
+			;;
 esac

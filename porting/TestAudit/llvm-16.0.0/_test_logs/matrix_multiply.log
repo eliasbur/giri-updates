@@ -1,0 +1,45 @@
+=== STAGE: BUILD ===
+make[1]: Entering directory '/giri/test/matrix_multiply'
+make[2]: Entering directory '/giri/build'
+make[3]: Entering directory '/giri/build'
+make[4]: Entering directory '/giri/build'
+make[4]: Leaving directory '/giri/build'
+[ 36%] Built target dgutility
+make[4]: Entering directory '/giri/build'
+make[4]: Leaving directory '/giri/build'
+[ 68%] Built target giri
+make[4]: Entering directory '/giri/build'
+make[4]: Leaving directory '/giri/build'
+[ 78%] Built target rtgiri
+make[4]: Entering directory '/giri/build'
+make[4]: Leaving directory '/giri/build'
+[ 89%] Built target tracer
+make[4]: Entering directory '/giri/build'
+make[4]: Leaving directory '/giri/build'
+[100%] Built target prtrace
+make[3]: Leaving directory '/giri/build'
+make[2]: Leaving directory '/giri/build'
+MatrixMult: Side of the matrix is 4 
+MatrixMult: Running...
+MatrixMult: Calling Serial Matrix Multiplication
+
+8  3  5  7  
+7  4  8  7  
+2  4  9  9  
+0  3  8  1  
+
+
+3  2  4  0  
+6  4  6  10  
+2  9  4  3  
+8  5  8  3  
+
+108  108  126  66  
+117  137  140  85  
+120  146  140  94  
+42  89  58  57  
+Start slicing Function:Instruction is defined as matrix_mult:291
+make[1]: Leaving directory '/giri/test/matrix_multiply'
+=== STAGE: TEST ===
+make[1]: Entering directory '/giri/test/matrix_multiply'
+make[1]: Leaving directory '/giri/test/matrix_multiply'

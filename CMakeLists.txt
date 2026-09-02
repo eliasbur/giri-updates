@@ -1,12 +1,21 @@
 cmake_minimum_required(VERSION 3.5)
 project(Giri C CXX)
 
-find_package(LLVM 15.0 REQUIRED CONFIG)
+find_package(LLVM 16.0 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 
 list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
 include(AddLLVM)
 include(HandleLLVMOptions)
+
+# LLVM 16.0.0 is built with C++17 by default and its headers use C++17
+# features (e.g. std::is_integral_v in llvm/ADT/bit.h). The 16.0.0 prebuilt's
+# CMake config exports no LLVM_OPTIMIZED_CXX_FLAGS and sets no C++ standard,
+# so without this the project would compile with the host compiler's
+# default (gnu++14 on 18.04's gcc 7.5) and fail against the 16.0.0 headers.
+# Set the standard explicitly.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Allow unresolved symbols in .so files (resolved by `opt` at load time)
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--allow-shlib-undefined" CACHE STRING "" FORCE)

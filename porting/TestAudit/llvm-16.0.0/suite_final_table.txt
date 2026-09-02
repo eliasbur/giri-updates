@@ -1,0 +1,27 @@
+Test
+Status
+Golden
+Diff
+Standalone
+test1	PASS	ans-inst.txt	empty	PASS
+test2	PASS	ans-inst.txt	empty	PASS
+test3	PASS	ans-inst.txt	empty	PASS
+test4	PASS	ans-inst.txt	empty	PASS
+test5	PASS	ans-inst.txt	empty	PASS
+test8	PASS	ans-inst.txt	empty	PASS
+test9	PASS	ans-inst.txt	empty	PASS
+test10	PASS	ans-inst.txt	empty	PASS
+test11	PASS	ans-inst.txt	empty	PASS
+test12	PASS	ans-inst.txt	empty	PASS
+test13	PASS	ans-inst.txt	empty	PASS
+test14	PASS	ans-inst.txt	empty	PASS
+test15	PASS	ans-inst.txt	empty	PASS
+test16	PASS	ans-inst.txt	empty	PASS
+test17	PASS	ans-inst.txt	empty	PASS
+test18	PASS	ans-inst.txt	empty	PASS
+test19	PASS	ans-inst.txt	empty	PASS
+test20	PASS	ans-inst.txt	empty	PASS
+test21	PASS	ans-inst.txt	empty	PASS
+matrix_multiply	PASS	ans-inst-seq.txt	empty	PASS
+pca	PASS	ans-inst-seq.txt	empty	PASS
+kmeans	PASS	ans-inst-seq.txt	empty	PASS
