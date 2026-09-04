@@ -209,3 +209,37 @@ program (expected exit code, 0 Abnormal-termination) → trace non-empty and
 on test1: the standalone-`tracer` trace is **identical** (prtrace ID/Type
 sequence diff empty) to the `opt` harness's `-trace-giri` trace. Evidence:
 `_tool_validation/` (script + 22-case log + test1 cross-check log).
+
+### 2026-09-04 — s7 cold-build acceptance (22/22, 5 artifacts, negative control)
+Honest acceptance: `/giri/build` wiped **and** `make -C /giri/test clean` (test
+artifacts wiped), then `source /giri/utils/build.sh` from `/giri` → cold CMake
+configure + `make -j$(nproc)` + full suite: rc=0, **22 PASS / 0 FAIL**, 5
+artifacts present. (First attempt aborted at configure because `build.sh` keys
+`GIRI_ROOT` off `pwd` — the container's default cwd `/`; re-run from `/giri`.)
+Per-test `_test_logs/*.log` show genuine `STAGE: BUILD`/`STAGE: TEST` re-runs
+(fresh timestamps) — the verdicts are non-vacuous. Negative control: an empty
+`slice.loc` does **not** match the test1 golden (diff rc≠0). Invariants
+re-derived in the cold state (logged to `/giri/invariants.log`): `sizeof(
+Entry)=32`, `4096%32==0`, fresh test1 trace 1216 B (`%32==0`), two `-bbnum
+-query-bbnum` runs byte-identical, `-g` file:line mapping present.
+
+### 2026-09-04 — s8 evidence + change data + AGENTS.md
+- `porting/TestAudit/llvm-12.0.0/` — SUMMARY.md + 22 per-test reports (19 unit
+  + 3 benchmarks) + `_test_logs/` (23 fresh cold-run logs) +
+  `_tool_validation/` (s6 script + 22-case log + test1 cross-check) +
+  `_cold_acceptance/` (s7 log + invariants). SUMMARY records the 8.0.0 audit's
+  "21" summary-line undercount (its per-test table and `auto-tests.txt` are
+  22-case; 5.0.2's audit was 22-case at 13/9) in the cross-version table.
+- `porting/llvm-releases/12.0.0/` — raw 9.0.0–12.0.0 `*-api-breakings.yaml`
+  (4) + release-notes HTML (4, from the 14-legacypm head) + consolidated
+  `api-breakings.yaml` (8.0.0→12.0.0): 269 entries = the 14-legacypm
+  consolidated union pruned to the window (81 13/14-only entries excluded; the
+  four redacted-markers kept at `[12.0.0]`), with the two in-window
+  header-level breaks (`originalIds: []`) — FunctionCallee (9.0.0),
+  CallSite→CallBase (11.0.0) — noted against commit `f6b39bf`. The two
+  out-of-window header-level breaks (F_*→OF_* 13.0.0; DEBUG_TYPE/STATISTIC
+  14.0.0) are correctly absent.
+- `AGENTS.md` — `## Current state` + `## Known residuals` rewritten as the
+  12.0.0 branch copy (22/22, standalone-tracer honest scope, the 20.04
+  deviation, the four source fixes, invariants, no `[regression]` rows);
+  shared sections byte-identical to the 8.0.0 head.
