@@ -1,6 +1,6 @@
 ---
 title: Port Giri to LLVM 12.0.0 (legacy pass manager line).
-status: open
+status: done
 priority: high           # low | medium | high
 repo: giriupdates        # required; must match a GITHUB_<KEY>_TOKEN or GITLAB_<KEY>_TOKEN
 contexts: []             # e.g. dev, cockpit, gpu1
@@ -10,6 +10,8 @@ tags:
 timeEstimate: 0          # minutes
 dateCreated: 2026-09-04
 # dateModified / completedDate are added automatically by `driver.py finish`
+dateModified: 2026-09-04T17:53:56.736+02:00
+completedDate: 2026-09-04
 ---
 ## Goal
 A Giri source tree on `port/llvm-12.0.0` that builds cleanly against prebuilt
@@ -243,3 +245,7 @@ Entry)=32`, `4096%32==0`, fresh test1 trace 1216 B (`%32==0`), two `-bbnum
   12.0.0 branch copy (22/22, standalone-tracer honest scope, the 20.04
   deviation, the four source fixes, invariants, no `[regression]` rows);
   shared sections byte-identical to the 8.0.0 head.
+
+
+## Handoff
+- PR: giri-updates #24 https://github.com/eliasbur/giri-updates/pull/24
