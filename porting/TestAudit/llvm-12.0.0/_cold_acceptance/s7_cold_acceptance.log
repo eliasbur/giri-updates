@@ -1,0 +1,682 @@
+=== COLD BUILD ACCEPTANCE (honest, artifacts wiped): Fri Sep  4 14:54:35 UTC 2026 ===
+=== wiping /giri/build ===
+=== wiping test artifacts (make clean) ===
+rm: cannot remove '/dev/null': Device or resource busy
+make: *** [Makefile:54: clean] Error 1
+make: Leaving directory '/giri/test'
+JCODE_PROGRESS {"percent":10,"message":"cold configure"}
+-- The C compiler identification is GNU 9.4.0
+-- The CXX compiler identification is GNU 9.4.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ZLIB: /usr/lib/x86_64-linux-gnu/libz.so (found version "1.2.11") 
+-- Found LLVM 12.0.0
+-- Linker detection: GNU ld
+-- Performing Test C_SUPPORTS_FPIC
+-- Performing Test C_SUPPORTS_FPIC - Success
+-- Performing Test CXX_SUPPORTS_FPIC
+-- Performing Test CXX_SUPPORTS_FPIC - Success
+-- Building with -fPIC
+-- Performing Test SUPPORTS_FVISIBILITY_INLINES_HIDDEN_FLAG
+-- Performing Test SUPPORTS_FVISIBILITY_INLINES_HIDDEN_FLAG - Success
+-- Performing Test C_SUPPORTS_WERROR_DATE_TIME
+-- Performing Test C_SUPPORTS_WERROR_DATE_TIME - Success
+-- Performing Test CXX_SUPPORTS_WERROR_DATE_TIME
+-- Performing Test CXX_SUPPORTS_WERROR_DATE_TIME - Success
+-- Performing Test C_SUPPORTS_WERROR_UNGUARDED_AVAILABILITY_NEW
+-- Performing Test C_SUPPORTS_WERROR_UNGUARDED_AVAILABILITY_NEW - Failed
+-- Performing Test CXX_SUPPORTS_WERROR_UNGUARDED_AVAILABILITY_NEW
+-- Performing Test CXX_SUPPORTS_WERROR_UNGUARDED_AVAILABILITY_NEW - Failed
+-- Performing Test CXX_SUPPORTS_MISSING_FIELD_INITIALIZERS_FLAG
+-- Performing Test CXX_SUPPORTS_MISSING_FIELD_INITIALIZERS_FLAG - Success
+-- Performing Test C_SUPPORTS_IMPLICIT_FALLTHROUGH_FLAG
+-- Performing Test C_SUPPORTS_IMPLICIT_FALLTHROUGH_FLAG - Success
+-- Performing Test CXX_SUPPORTS_IMPLICIT_FALLTHROUGH_FLAG
+-- Performing Test CXX_SUPPORTS_IMPLICIT_FALLTHROUGH_FLAG - Success
+-- Performing Test C_SUPPORTS_COVERED_SWITCH_DEFAULT_FLAG
+-- Performing Test C_SUPPORTS_COVERED_SWITCH_DEFAULT_FLAG - Failed
+-- Performing Test CXX_SUPPORTS_COVERED_SWITCH_DEFAULT_FLAG
+-- Performing Test CXX_SUPPORTS_COVERED_SWITCH_DEFAULT_FLAG - Failed
+-- Performing Test CXX_SUPPORTS_CLASS_MEMACCESS_FLAG
+-- Performing Test CXX_SUPPORTS_CLASS_MEMACCESS_FLAG - Success
+-- Performing Test CXX_SUPPORTS_REDUNDANT_MOVE_FLAG
+-- Performing Test CXX_SUPPORTS_REDUNDANT_MOVE_FLAG - Success
+-- Performing Test CXX_SUPPORTS_NOEXCEPT_TYPE_FLAG
+-- Performing Test CXX_SUPPORTS_NOEXCEPT_TYPE_FLAG - Success
+-- Performing Test C_SUPPORTS_DELETE_NON_VIRTUAL_DTOR_FLAG
+-- Performing Test C_SUPPORTS_DELETE_NON_VIRTUAL_DTOR_FLAG - Failed
+-- Performing Test CXX_SUPPORTS_DELETE_NON_VIRTUAL_DTOR_FLAG
+-- Performing Test CXX_SUPPORTS_DELETE_NON_VIRTUAL_DTOR_FLAG - Success
+-- Performing Test CXX_SUPPORTS_SUGGEST_OVERRIDE_FLAG
+-- Performing Test CXX_SUPPORTS_SUGGEST_OVERRIDE_FLAG - Success
+-- Performing Test CXX_WSUGGEST_OVERRIDE_ALLOWS_ONLY_FINAL
+-- Performing Test CXX_WSUGGEST_OVERRIDE_ALLOWS_ONLY_FINAL - Success
+-- Performing Test C_WCOMMENT_ALLOWS_LINE_WRAP
+-- Performing Test C_WCOMMENT_ALLOWS_LINE_WRAP - Failed
+-- Performing Test C_SUPPORTS_STRING_CONVERSION_FLAG
+-- Performing Test C_SUPPORTS_STRING_CONVERSION_FLAG - Failed
+-- Performing Test CXX_SUPPORTS_STRING_CONVERSION_FLAG
+-- Performing Test CXX_SUPPORTS_STRING_CONVERSION_FLAG - Failed
+-- Performing Test C_SUPPORTS_FNO_FUNCTION_SECTIONS
+-- Performing Test C_SUPPORTS_FNO_FUNCTION_SECTIONS - Success
+-- Performing Test C_SUPPORTS_FFUNCTION_SECTIONS
+-- Performing Test C_SUPPORTS_FFUNCTION_SECTIONS - Success
+-- Performing Test CXX_SUPPORTS_FFUNCTION_SECTIONS
+-- Performing Test CXX_SUPPORTS_FFUNCTION_SECTIONS - Success
+-- Performing Test C_SUPPORTS_FDATA_SECTIONS
+-- Performing Test C_SUPPORTS_FDATA_SECTIONS - Success
+-- Performing Test CXX_SUPPORTS_FDATA_SECTIONS
+-- Performing Test CXX_SUPPORTS_FDATA_SECTIONS - Success
+-- Looking for os_signpost_interval_begin
+-- Looking for os_signpost_interval_begin - not found
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /giri/build
+Scanning dependencies of target rtgiri
+[  5%] Building CXX object runtime/Giri/CMakeFiles/rtgiri.dir/Tracing.cpp.o
+Scanning dependencies of target prtrace
+[ 11%] Building CXX object tools/PrintTrace/CMakeFiles/prtrace.dir/PrintTrace.cpp.o
+Scanning dependencies of target dgutility
+[ 17%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/BasicBlockNumbering.cpp.o
+[ 23%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/LoadStoreNumbering.cpp.o
+[ 29%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/PostDominatorFrontier.cpp.o
+[ 41%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/SourceLineMapping.cpp.o
+[ 41%] Building CXX object lib/Utility/CMakeFiles/dgutility.dir/CountSrcLines.cpp.o
+/giri/runtime/Giri/Tracing.cpp: In member function 'void EntryCache::mapCache()':
+/giri/runtime/Giri/Tracing.cpp:152:8: warning: ignoring return value of 'ssize_t write(int, const void*, size_t)', declared with attribute warn_unused_result [-Wunused-result]
+  152 |   write(fd, buf, 1);
+      |   ~~~~~^~~~~~~~~~~~
+/giri/runtime/Giri/Tracing.cpp: In member function 'void EntryCache::closeCacheFile()':
+/giri/runtime/Giri/Tracing.cpp:229:12: warning: ignoring return value of 'int ftruncate(int, __off_t)', declared with attribute warn_unused_result [-Wunused-result]
+  229 |   ftruncate(fd, len + fileOffset);
+      |   ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+[ 47%] Linking CXX static library ../../lib/librtgiri.a
+[ 47%] Built target rtgiri
+In file included from /giri/lib/Utility/SourceLineMapping.cpp:3:
+/giri/include/Utility/SourceLineMapping.h:44:16: warning: 'virtual bool dg::SourceLineMappingPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   44 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/SourceLineMapping.h:46:16: warning: 'virtual void dg::SourceLineMappingPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   46 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Giri/TraceFile.h:18,
+                 from /giri/include/Utility/CountSrcLines.h:17,
+                 from /giri/lib/Utility/CountSrcLines.cpp:18:
+/giri/include/Utility/BasicBlockNumbering.h:34:16: warning: 'virtual bool dg::BasicBlockNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   34 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:36:16: warning: 'virtual void dg::BasicBlockNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   36 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:47:16: warning: 'virtual bool dg::QueryBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   47 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:49:16: warning: 'virtual void dg::QueryBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   49 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:78:16: warning: 'virtual bool dg::RemoveBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   78 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:80:16: warning: 'virtual void dg::RemoveBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   80 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Giri/TraceFile.h:18,
+                 from /giri/tools/PrintTrace/PrintTrace.cpp:15:
+/giri/include/Utility/BasicBlockNumbering.h:34:16: warning: 'virtual bool dg::BasicBlockNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   34 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:36:16: warning: 'virtual void dg::BasicBlockNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   36 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:47:16: warning: 'virtual bool dg::QueryBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   47 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:49:16: warning: 'virtual void dg::QueryBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   49 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:78:16: warning: 'virtual bool dg::RemoveBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   78 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:80:16: warning: 'virtual void dg::RemoveBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   80 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/lib/Utility/BasicBlockNumbering.cpp:16:
+/giri/include/Utility/BasicBlockNumbering.h:34:16: warning: 'virtual bool dg::BasicBlockNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   34 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:36:16: warning: 'virtual void dg::BasicBlockNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   36 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:47:16: warning: 'virtual bool dg::QueryBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   47 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:49:16: warning: 'virtual void dg::QueryBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   49 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:78:16: warning: 'virtual bool dg::RemoveBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   78 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:80:16: warning: 'virtual void dg::RemoveBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   80 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:19,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Utility/CountSrcLines.h:17,
+                 from /giri/lib/Utility/CountSrcLines.cpp:18:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Utility/CountSrcLines.h:17,
+                 from /giri/lib/Utility/CountSrcLines.cpp:18:
+/giri/include/Utility/LoadStoreNumbering.h: At global scope:
+/giri/include/Utility/LoadStoreNumbering.h:37:16: warning: 'virtual bool dg::LoadStoreNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   37 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:39:16: warning: 'virtual void dg::LoadStoreNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   39 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:52:16: warning: 'virtual bool dg::QueryLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool runOnModule(Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:54:16: warning: 'virtual void dg::QueryLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   54 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:82:16: warning: 'virtual bool dg::RemoveLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   82 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:84:16: warning: 'virtual void dg::RemoveLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   84 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/lib/Utility/CountSrcLines.cpp:18:
+/giri/include/Utility/CountSrcLines.h:47:16: warning: 'virtual bool dg::CountSrcLines::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   47 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/CountSrcLines.h:53:16: warning: 'virtual void dg::CountSrcLines::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   53 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/lib/Utility/CountSrcLines.cpp:19:
+/giri/include/Utility/SourceLineMapping.h:44:16: warning: 'virtual bool dg::SourceLineMappingPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   44 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/SourceLineMapping.h:46:16: warning: 'virtual void dg::SourceLineMappingPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   46 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:19,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/tools/PrintTrace/PrintTrace.cpp:15:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:19,
+                 from /giri/lib/Utility/LoadStoreNumbering.cpp:5:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/lib/Utility/SourceLineMapping.cpp:4:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/lib/Utility/LoadStoreNumbering.cpp:5:
+/giri/include/Utility/LoadStoreNumbering.h: At global scope:
+/giri/include/Utility/LoadStoreNumbering.h:37:16: warning: 'virtual bool dg::LoadStoreNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   37 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:39:16: warning: 'virtual void dg::LoadStoreNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   39 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/tools/PrintTrace/PrintTrace.cpp:15:
+/giri/include/Utility/LoadStoreNumbering.h: At global scope:
+/giri/include/Utility/LoadStoreNumbering.h:37:16: warning: 'virtual bool dg::LoadStoreNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   37 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:39:16: warning: 'virtual void dg::LoadStoreNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   39 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:52:16: warning: 'virtual bool dg::QueryLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool runOnModule(Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:54:16: warning: 'virtual void dg::QueryLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   54 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:82:16: warning: 'virtual bool dg::RemoveLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   82 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:84:16: warning: 'virtual void dg::RemoveLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   84 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:52:16: warning: 'virtual bool dg::QueryLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool runOnModule(Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:54:16: warning: 'virtual void dg::QueryLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   54 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:82:16: warning: 'virtual bool dg::RemoveLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   82 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:84:16: warning: 'virtual void dg::RemoveLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   84 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+[ 52%] Linking CXX executable ../../bin/prtrace
+[ 52%] Built target prtrace
+[ 58%] Linking CXX shared library ../libdgutility.so
+[ 58%] Built target dgutility
+Scanning dependencies of target giri
+[ 64%] Building CXX object lib/Giri/CMakeFiles/giri.dir/Giri.cpp.o
+[ 76%] Building CXX object lib/Giri/CMakeFiles/giri.dir/TraceFile.cpp.o
+[ 82%] Building CXX object lib/Giri/CMakeFiles/giri.dir/TracingNoGiri.cpp.o
+[ 82%] Building CXX object lib/Giri/CMakeFiles/giri.dir/TestPass.cpp.o
+In file included from /giri/include/Giri/TraceFile.h:18,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/lib/Giri/TestPass.cpp:18:
+/giri/include/Utility/BasicBlockNumbering.h:34:16: warning: 'virtual bool dg::BasicBlockNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   34 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:36:16: warning: 'virtual void dg::BasicBlockNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   36 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Giri/TraceFile.h:18,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/lib/Giri/TracingNoGiri.cpp:20:
+/giri/include/Utility/BasicBlockNumbering.h:34:16: warning: 'virtual bool dg::BasicBlockNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   34 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:36:16: warning: 'virtual void dg::BasicBlockNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   36 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Giri/TraceFile.h:18,
+                 from /giri/lib/Giri/TraceFile.cpp:16:
+/giri/include/Utility/BasicBlockNumbering.h:34:16: warning: 'virtual bool dg::BasicBlockNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   34 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:36:16: warning: 'virtual void dg::BasicBlockNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   36 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:47:16: warning: 'virtual bool dg::QueryBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   47 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:49:16: warning: 'virtual void dg::QueryBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   49 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:47:16: warning: 'virtual bool dg::QueryBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   47 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:49:16: warning: 'virtual void dg::QueryBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   49 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:47:16: warning: 'virtual bool dg::QueryBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   47 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:49:16: warning: 'virtual void dg::QueryBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   49 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:78:16: warning: 'virtual bool dg::RemoveBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   78 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:80:16: warning: 'virtual void dg::RemoveBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   80 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:78:16: warning: 'virtual bool dg::RemoveBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   78 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:80:16: warning: 'virtual void dg::RemoveBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   80 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:78:16: warning: 'virtual bool dg::RemoveBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   78 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:80:16: warning: 'virtual void dg::RemoveBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   80 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Giri/TraceFile.h:18,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/lib/Giri/Giri.cpp:18:
+/giri/include/Utility/BasicBlockNumbering.h:34:16: warning: 'virtual bool dg::BasicBlockNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   34 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:36:16: warning: 'virtual void dg::BasicBlockNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   36 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:47:16: warning: 'virtual bool dg::QueryBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   47 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:49:16: warning: 'virtual void dg::QueryBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   49 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:78:16: warning: 'virtual bool dg::RemoveBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   78 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:80:16: warning: 'virtual void dg::RemoveBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   80 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:19,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/lib/Giri/TracingNoGiri.cpp:20:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:19,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/lib/Giri/TraceFile.cpp:16:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:19,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/lib/Giri/Giri.cpp:18:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/lib/Giri/TracingNoGiri.cpp:20:
+/giri/include/Utility/LoadStoreNumbering.h: At global scope:
+/giri/include/Utility/LoadStoreNumbering.h:37:16: warning: 'virtual bool dg::LoadStoreNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   37 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:39:16: warning: 'virtual void dg::LoadStoreNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   39 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:52:16: warning: 'virtual bool dg::QueryLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool runOnModule(Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:54:16: warning: 'virtual void dg::QueryLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   54 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:82:16: warning: 'virtual bool dg::RemoveLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   82 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:84:16: warning: 'virtual void dg::RemoveLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   84 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:19,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/lib/Giri/TestPass.cpp:18:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/lib/Giri/TracingNoGiri.cpp:20:
+/giri/include/Giri/Giri.h:51:16: warning: 'virtual bool giri::TracingNoGiri::doInitialization(llvm::Module&)' can be marked override [-Wsuggest-override]
+   51 |   virtual bool doInitialization(Module &M);
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:52:16: warning: 'virtual bool giri::TracingNoGiri::doFinalization(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool doFinalization(Module &M) { return false; }
+      |                ^~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:57:16: warning: 'virtual bool giri::TracingNoGiri::runOnFunction(llvm::Function&)' can be marked override [-Wsuggest-override]
+   57 |   virtual bool runOnFunction(Function &F);
+      |                ^~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:63:16: warning: 'virtual void giri::TracingNoGiri::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   63 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:169:16: warning: 'virtual bool giri::DynamicGiri::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+  169 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Giri/Giri.h:171:16: warning: 'virtual void giri::DynamicGiri::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+  171 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/lib/Giri/TraceFile.cpp:16:
+/giri/include/Utility/LoadStoreNumbering.h: At global scope:
+/giri/include/Utility/LoadStoreNumbering.h:37:16: warning: 'virtual bool dg::LoadStoreNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   37 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:39:16: warning: 'virtual void dg::LoadStoreNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   39 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/lib/Giri/Giri.cpp:18:
+/giri/include/Utility/LoadStoreNumbering.h: At global scope:
+/giri/include/Utility/LoadStoreNumbering.h:37:16: warning: 'virtual bool dg::LoadStoreNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   37 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:39:16: warning: 'virtual void dg::LoadStoreNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   39 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:52:16: warning: 'virtual bool dg::QueryLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool runOnModule(Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:54:16: warning: 'virtual void dg::QueryLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   54 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:82:16: warning: 'virtual bool dg::RemoveLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   82 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:84:16: warning: 'virtual void dg::RemoveLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   84 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:52:16: warning: 'virtual bool dg::QueryLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool runOnModule(Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:54:16: warning: 'virtual void dg::QueryLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   54 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:82:16: warning: 'virtual bool dg::RemoveLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   82 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:84:16: warning: 'virtual void dg::RemoveLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   84 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/lib/Giri/Giri.cpp:18:
+/giri/include/Giri/Giri.h:51:16: warning: 'virtual bool giri::TracingNoGiri::doInitialization(llvm::Module&)' can be marked override [-Wsuggest-override]
+   51 |   virtual bool doInitialization(Module &M);
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:52:16: warning: 'virtual bool giri::TracingNoGiri::doFinalization(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool doFinalization(Module &M) { return false; }
+      |                ^~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:57:16: warning: 'virtual bool giri::TracingNoGiri::runOnFunction(llvm::Function&)' can be marked override [-Wsuggest-override]
+   57 |   virtual bool runOnFunction(Function &F);
+      |                ^~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:63:16: warning: 'virtual void giri::TracingNoGiri::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   63 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/lib/Giri/TestPass.cpp:18:
+/giri/include/Utility/LoadStoreNumbering.h: At global scope:
+/giri/include/Utility/LoadStoreNumbering.h:37:16: warning: 'virtual bool dg::LoadStoreNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   37 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:39:16: warning: 'virtual void dg::LoadStoreNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   39 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:169:16: warning: 'virtual bool giri::DynamicGiri::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+  169 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Giri/Giri.h:171:16: warning: 'virtual void giri::DynamicGiri::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+  171 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/lib/Giri/TraceFile.cpp: In constructor 'giri::TraceFile::TraceFile(std::string, const dg::QueryBasicBlockNumbers*, const dg::QueryLoadStoreNumbers*)':
+/giri/lib/Giri/TraceFile.cpp:53:7: warning: unused variable 'ret' [-Wunused-variable]
+   53 |   int ret = fstat(fd, &finfo);
+      |       ^~~
+In file included from /giri/lib/Giri/Giri.cpp:19:
+/giri/include/Utility/SourceLineMapping.h:44:16: warning: 'virtual bool dg::SourceLineMappingPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   44 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/SourceLineMapping.h:46:16: warning: 'virtual void dg::SourceLineMappingPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   46 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:52:16: warning: 'virtual bool dg::QueryLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool runOnModule(Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:54:16: warning: 'virtual void dg::QueryLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   54 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:82:16: warning: 'virtual bool dg::RemoveLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   82 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:84:16: warning: 'virtual void dg::RemoveLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   84 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/lib/Giri/TraceFile.cpp: In member function 'void giri::TraceFile::findAllStoresForLoad(giri::DynValue&, giri::TraceFile::Worklist_t&, long int, Entry)':
+/giri/lib/Giri/TraceFile.cpp:613:18: warning: unused variable 'LI' [-Wunused-variable]
+  613 |     Instruction *LI = dyn_cast<Instruction>(DV.getValue());
+      |                  ^~
+In file included from /giri/lib/Giri/TestPass.cpp:18:
+/giri/include/Giri/Giri.h:51:16: warning: 'virtual bool giri::TracingNoGiri::doInitialization(llvm::Module&)' can be marked override [-Wsuggest-override]
+   51 |   virtual bool doInitialization(Module &M);
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:52:16: warning: 'virtual bool giri::TracingNoGiri::doFinalization(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool doFinalization(Module &M) { return false; }
+      |                ^~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:57:16: warning: 'virtual bool giri::TracingNoGiri::runOnFunction(llvm::Function&)' can be marked override [-Wsuggest-override]
+   57 |   virtual bool runOnFunction(Function &F);
+      |                ^~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:63:16: warning: 'virtual void giri::TracingNoGiri::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   63 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:169:16: warning: 'virtual bool giri::DynamicGiri::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+  169 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Giri/Giri.h:171:16: warning: 'virtual void giri::DynamicGiri::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+  171 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/lib/Giri/TestPass.cpp:47:16: warning: 'virtual bool giri::TestGiri::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   47 |   virtual bool runOnModule (Module & M) {
+      |                ^~~~~~~~~~~
+/giri/lib/Giri/TestPass.cpp:75:16: warning: 'virtual void giri::TestGiri::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   75 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/lib/Giri/TestPass.cpp:83:16: warning: 'virtual void giri::TestGiri::releaseMemory()' can be marked override [-Wsuggest-override]
+   83 |   virtual void releaseMemory () {
+      |                ^~~~~~~~~~~~~
+/giri/lib/Giri/TestPass.cpp:87:16: warning: 'virtual void giri::TestGiri::print(llvm::raw_ostream&, const llvm::Module*) const' can be marked override [-Wsuggest-override]
+   87 |   virtual void print (llvm::raw_ostream & O, const Module * M) const {
+      |                ^~~~~
+[ 88%] Linking CXX shared library ../libgiri.so
+[ 88%] Built target giri
+Scanning dependencies of target tracer
+[ 94%] Building CXX object tools/Tracer/CMakeFiles/tracer.dir/Tracer.cpp.o
+In file included from /giri/include/Giri/TraceFile.h:18,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/tools/Tracer/Tracer.cpp:17:
+/giri/include/Utility/BasicBlockNumbering.h:34:16: warning: 'virtual bool dg::BasicBlockNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   34 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:36:16: warning: 'virtual void dg::BasicBlockNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   36 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:47:16: warning: 'virtual bool dg::QueryBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   47 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:49:16: warning: 'virtual void dg::QueryBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   49 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:78:16: warning: 'virtual bool dg::RemoveBasicBlockNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   78 |   virtual bool runOnModule (Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/BasicBlockNumbering.h:80:16: warning: 'virtual void dg::RemoveBasicBlockNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   80 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/include/Utility/LoadStoreNumbering.h:19,
+                 from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/tools/Tracer/Tracer.cpp:17:
+/giri/include/Utility/Utils.h: In function 'llvm::CallInst* getCallInst(const llvm::Type*, const string&, std::vector<llvm::Value*, std::allocator<llvm::Value*> >&, const string&, llvm::Instruction*)':
+/giri/include/Utility/Utils.h:146:51: warning: cast from type 'const llvm::Type*' to type 'llvm::Type*' casts away qualifiers [-Wcast-qual]
+  146 |   FunctionType *FType = FunctionType::get((Type *)RetTy, Params, false);
+      |                                                   ^~~~~
+In file included from /giri/include/Giri/TraceFile.h:19,
+                 from /giri/include/Giri/Giri.h:17,
+                 from /giri/tools/Tracer/Tracer.cpp:17:
+/giri/include/Utility/LoadStoreNumbering.h: At global scope:
+/giri/include/Utility/LoadStoreNumbering.h:37:16: warning: 'virtual bool dg::LoadStoreNumberPass::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   37 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:39:16: warning: 'virtual void dg::LoadStoreNumberPass::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   39 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:52:16: warning: 'virtual bool dg::QueryLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool runOnModule(Module & M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:54:16: warning: 'virtual void dg::QueryLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   54 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:82:16: warning: 'virtual bool dg::RemoveLoadStoreNumbers::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+   82 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Utility/LoadStoreNumbering.h:84:16: warning: 'virtual void dg::RemoveLoadStoreNumbers::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   84 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+In file included from /giri/tools/Tracer/Tracer.cpp:17:
+/giri/include/Giri/Giri.h:51:16: warning: 'virtual bool giri::TracingNoGiri::doInitialization(llvm::Module&)' can be marked override [-Wsuggest-override]
+   51 |   virtual bool doInitialization(Module &M);
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:52:16: warning: 'virtual bool giri::TracingNoGiri::doFinalization(llvm::Module&)' can be marked override [-Wsuggest-override]
+   52 |   virtual bool doFinalization(Module &M) { return false; }
+      |                ^~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:57:16: warning: 'virtual bool giri::TracingNoGiri::runOnFunction(llvm::Function&)' can be marked override [-Wsuggest-override]
+   57 |   virtual bool runOnFunction(Function &F);
+      |                ^~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:63:16: warning: 'virtual void giri::TracingNoGiri::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+   63 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+/giri/include/Giri/Giri.h:169:16: warning: 'virtual bool giri::DynamicGiri::runOnModule(llvm::Module&)' can be marked override [-Wsuggest-override]
+  169 |   virtual bool runOnModule(Module &M);
+      |                ^~~~~~~~~~~
+/giri/include/Giri/Giri.h:171:16: warning: 'virtual void giri::DynamicGiri::getAnalysisUsage(llvm::AnalysisUsage&) const' can be marked override [-Wsuggest-override]
+  171 |   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      |                ^~~~~~~~~~~~~~~~
+[100%] Linking CXX executable ../../bin/tracer
+[100%] Built target tracer
+make: Entering directory '/giri/test'
+Building the Giri...
+Running the test cases...
+[37mUnitTests/test1     [34m[PASS][0m
+[37mUnitTests/test2     [34m[PASS][0m
+[37mUnitTests/test3     [34m[PASS][0m
+[37mUnitTests/test4     [34m[PASS][0m
+[37mUnitTests/test5     [34m[PASS][0m
+[37mUnitTests/test8     [34m[PASS][0m
+[37mUnitTests/test9     [34m[PASS][0m
+[37mUnitTests/test10    [34m[PASS][0m
+[37mUnitTests/test11    [34m[PASS][0m
+[37mUnitTests/test12    [34m[PASS][0m
+[37mUnitTests/test13    [34m[PASS][0m
+[37mUnitTests/test14    [34m[PASS][0m
+[37mUnitTests/test15    [34m[PASS][0m
+[37mUnitTests/test16    [34m[PASS][0m
+[37mUnitTests/test17    [34m[PASS][0m
+[37mUnitTests/test18    [34m[PASS][0m
+[37mUnitTests/test19    [34m[PASS][0m
+[37mUnitTests/test20    [34m[PASS][0m
+[37mUnitTests/test21    [34m[PASS][0m
+[37mmatrix_multiply     [34m[PASS][0m
+[37mpca                 [34m[PASS][0m
+[37mkmeans              [34m[PASS][0m
+make: Leaving directory '/giri/test'
+=== BUILD.SH RC=0 ===
+=== 5 artifacts ===
+OK  lib/libgiri.so
+OK  lib/libdgutility.so
+OK  lib/librtgiri.a
+OK  bin/tracer
+OK  bin/prtrace
+=== NEGATIVE CONTROL: empty slice must NOT match test1 golden ===
+NEGATIVE CONTROL OK: empty slice != golden (diff rc=1)
+diff: /giri/test/UnitTests/test1/extlibcalls.slice.loc: No such file or directory
+=== real slice.loc (test1) vs golden: MISMATCH ===
+=== COLD ACCEPTANCE done Fri Sep  4 14:55:07 UTC 2026 ===

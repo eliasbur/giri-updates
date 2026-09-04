@@ -1,0 +1,5 @@
+=== invariants re-derived: Fri Sep  4 14:58:58 UTC 2026 (cold-build state) ===
+sizeof(Entry)=32  4096%32=0
+fresh test1 trace bytes: 1216  %32=0
+numbering determinism: OK (two -bbnum runs identical)
+        37: End         :      0:        0:                0:        0

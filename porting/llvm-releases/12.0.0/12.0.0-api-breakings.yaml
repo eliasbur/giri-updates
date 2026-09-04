@@ -1,0 +1,1009 @@
+---
+version: "12.0.0"
+sourceUrl: "https://releases.llvm.org/12.0.0/docs/ReleaseNotes.html"
+generatedBy: "jcode-swarm-worker"
+generatedDate: "2026-08-25"
+
+# Scope: top-level "Non-comprehensive list", Changes to the LLVM IR, building LLVM,
+# TableGen, every <Target> section, Debug Info, LLVM tools, Sanitizers.
+# Empty sections (C API, Go bindings, DAG infrastructure, LLDB) recorded as
+# comments. Out of scope: External Projects.
+
+changes:
+
+  # --- General changes (top-level "Non-comprehensive list of changes") ---
+
+  - id: constantpropagation-pass-removed
+    category: "general"
+    changeType: "removed"
+    severity: "high"
+    summary: "The ConstantPropagation pass was removed; users should use the InstSimplify pass instead"
+    description: "The ConstantPropagation pass was removed. Users should use the InstSimplify pass instead."
+    affectedApi:
+      - "ConstantPropagation"
+      - "InstSimplify"
+    notes: |-
+      Not exercised by the Giri pipeline: the test harness opt invocations are
+      -mergereturn -bbnum -lsnum -dgiri -remove-bbnum -remove-lsnum (test/Makefile.common),
+      and no Giri source references ConstantPropagation.
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the LLVM IR ---
+
+  - id: llvm-ir-changes-list-redacted
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "First LLVM IR change-list bullet: content redacted as an ellipsis in the provided HTML source"
+    description: "…"
+    affectedApi:
+      - "Changes to the LLVM IR"
+    notes: "Redacted in the provided HTML source; the bullet's text is not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: byref-attribute-added
+    category: "llvm-ir"
+    changeType: "added"
+    severity: "low"
+    summary: "Added the byref attribute to better represent argument passing for the amdgpu_kernel calling convention"
+    description: "Added the byref attribute to better represent argument passing for the amdgpu_kernel calling convention."
+    affectedApi:
+      - "byref"
+      - "amdgpu_kernel"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: sret-type-parameter
+    category: "llvm-ir"
+    changeType: "behavior-change"
+    severity: "medium"
+    summary: "Added a type parameter to the sret attribute to continue work on removing pointer element types"
+    description: "Added type parameter to the sret attribute to continue work on removing pointer element types."
+    affectedApi:
+      - "sret"
+    notes: ""
+    relevance: "unlikely"
+    status: "pending"
+
+  - id: vector-reduce-intrinsics-renamed
+    category: "llvm-ir"
+    changeType: "renamed"
+    severity: "low"
+    summary: "The llvm.experimental.vector.reduce family of intrinsics has been renamed to drop the \"experimental\" from the name, reflecting its now fully supported status in the IR"
+    description: "The llvm.experimental.vector.reduce family of intrinsics have been renamed to drop the \"experimental\" from the name, reflecting their now fully supported status in the IR."
+    affectedApi:
+      - "llvm.experimental.vector.reduce"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to building LLVM ---
+
+  - id: llvm-build-llvmbuild-txt-removed
+    category: "building"
+    changeType: "removed"
+    severity: "medium"
+    summary: "The internal llvm-build Python script and the associated LLVMBuild.txt files have been removed and replaced by a pure CMake approach, where each component stores extra properties in the created targets"
+    description: |-
+      The internal llvm-build Python script and the associated LLVMBuild.txt files used to describe the LLVM component structure have been removed and replaced by a pure CMake approach, where each component stores extra properties in the created targets. These properties are processed once all components are defined to resolve library dependencies and to produce the header expected by llvm-config.
+    affectedApi:
+      - "llvm-build"
+      - "LLVMBuild.txt"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to TableGen ---
+
+  - id: tablegen-programmers-reference-replacement
+    category: "general"
+    changeType: "renamed"
+    severity: "low"
+    summary: "The new \"TableGen Programmer's Reference\" replaces the \"TableGen Language Introduction\" and \"TableGen Language Reference\" documents"
+    description: "The new \"TableGen Programmer's Reference\" replaces the \"TableGen Language Introduction\" and \"TableGen Language Reference\" documents."
+    affectedApi:
+      - "TableGen"
+      - "documentation"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: tablegen-range-list-syntax
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "The syntax for specifying an integer range in a range list has changed: the hyphen syntax (e.g. {0-9}) is deprecated in favor of the \"...\" range punctuation (e.g. {0...9})"
+    description: |-
+      The syntax for specifying an integer range in a range list has changed. The old syntax used a hyphen in the range (e.g., {0-9}). The new syntax uses the "..." range punctuation (e.g., {0...9}). The hyphen syntax is deprecated.
+    affectedApi:
+      - "TableGen"
+      - "range list"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the AArch64 Backend ---
+
+  - id: aarch64-windows-unwind-data-packed
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Lots of improvements to generation of Windows unwind data; the unwind data is optimized and written in packed form where possible, reducing the size of unwind data (pdata and xdata sections) by around 60% compared with LLVM 11; prolog/epilog generation tweaked when targeting Windows to increase the chances of the packed format"
+    description: |-
+      Lots of improvements to generation of Windows unwind data; the unwind data is optimized and written in packed form where possible, reducing the size of unwind data (pdata and xdata sections) by around 60% compared with LLVM 11. The generation of prologs/epilogs is tweaked when targeting Windows, to increase the chances of being able to use the packed unwind info format.
+    affectedApi:
+      - "AArch64"
+      - "Windows unwind data"
+      - "pdata"
+      - "xdata"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-seh-assembly-directives
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for creating Windows unwind data using .seh_* assembler directives"
+    description: "Support for creating Windows unwind data using .seh_* assembler directives."
+    affectedApi:
+      - "AArch64"
+      - ".seh_*"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-windows-assembly-lo12-relocations
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Produce proper assembly output for the Windows target, including :lo12: relocation specifiers, to allow the assembly output to actually be assembled"
+    description: "Produce proper assembly output for the Windows target, including :lo12: relocation specifiers, to allow the assembly output to actually be assembled."
+    affectedApi:
+      - "AArch64"
+      - ":lo12:"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: aarch64-msvc-assembly-comment-string
+    category: "target-aarch64"
+    targetName: "aarch64"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Changed the assembly comment string for MSVC targets to // (consistent with the MinGW and ELF targets), freeing up ; to be used as statement separator"
+    description: "Changed the assembly comment string for MSVC targets to // (consistent with the MinGW and ELF targets), freeing up ; to be used as statement separator."
+    affectedApi:
+      - "AArch64"
+      - "MSVC assembly output"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the ARM Backend (section body redacted in source) ---
+
+  - id: arm-changes-redacted
+    category: "target-arm"
+    targetName: "arm"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "ARM section body redacted as an ellipsis in the provided HTML source"
+    description: "During this release …"
+    affectedApi:
+      - "ARM target"
+    notes: "Redacted in the provided HTML source; the actual ARM changes are not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the MIPS Target (section body redacted in source) ---
+
+  - id: mips-changes-redacted
+    category: "target-mips"
+    targetName: "mips"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "MIPS section body redacted as an ellipsis in the provided HTML source"
+    description: "During this release …"
+    affectedApi:
+      - "MIPS target"
+    notes: "Redacted in the provided HTML source; the actual MIPS changes are not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the PowerPC Target ---
+
+  - id: powerpc-unroll-and-jam-pragmas
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Made improvements to loop unroll-and-jam including fix to respect user provided #pragma unroll-and-jam for loops on targets other than ARM"
+    description: "Made improvements to loop unroll-and-jam including fix to respect user provided #pragma unroll-and-jam for loops on targets other than ARM."
+    affectedApi:
+      - "PowerPC"
+      - "#pragma unroll-and-jam"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-partial-inliner-switch
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved PartialInliner allowing it to handle code regions in a switch statements"
+    description: "Improved PartialInliner allowing it to handle code regions in a switch statements."
+    affectedApi:
+      - "PartialInliner"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-pgo-aix-compiler-rt
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improved PGO support on AIX by building and linking with compiler-rt profile library"
+    description: "Improved PGO support on AIX by building and linking with compiler-rt profile library."
+    affectedApi:
+      - "PowerPC"
+      - "PGO"
+      - "AIX"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-epilogue-vectorization-default
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "Add support for Epilogue Vectorization and enabled it by default"
+    description: "Add support for Epilogue Vectorization and enabled it by default."
+    affectedApi:
+      - "PowerPC"
+      - "Epilogue Vectorization"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-power10-support
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "CodeGen: POWER10 support"
+    description: "CodeGen: POWER10 support."
+    affectedApi:
+      - "PowerPC"
+      - "POWER10"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-pc-relative-addressing-lld
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Implementation of PC Relative addressing in LLD including the associated linker optimizations"
+    description: "Implementation of PC Relative addressing in LLD including the associated linker optimizations."
+    affectedApi:
+      - "PowerPC"
+      - "LLD"
+      - "PC Relative addressing"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-mma-instructions
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Add support for the new matrix multiplication (MMA) instructions to Clang and LLVM"
+    description: "Add support for the new matrix multiplication (MMA) instructions to Clang and LLVM."
+    affectedApi:
+      - "PowerPC"
+      - "MMA"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-power10-builtins
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Implementation of Power10 builtins"
+    description: "Implementation of Power10 builtins."
+    affectedApi:
+      - "PowerPC"
+      - "Power10 builtins"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-scheduling-algorithm
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Add a new algorithm to cluster more loads/stores if the DAG is not too complicated"
+    description: "Add a new algorithm to cluster more loads/stores if the DAG is not too complicated."
+    affectedApi:
+      - "PowerPC"
+      - "scheduling"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-p10-scheduling-heuristic
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Enable the PowerPC scheduling heuristic for Power10"
+    description: "Enable the PowerPC scheduling heuristic for Power10."
+    affectedApi:
+      - "PowerPC"
+      - "Power10"
+      - "scheduling heuristic"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-loop-strength-reduce-p10
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Enhance LoopStrengthReduce/PPCLoopInstrFormPrep pass for PowerPC, especially for P10 intrinsics"
+    description: "Enhance LoopStrengthReduce/PPCLoopInstrFormPrep pass for PowerPC, especially for P10 intrinsics."
+    affectedApi:
+      - "PowerPC"
+      - "LoopStrengthReduce"
+      - "PPCLoopInstrFormPrep"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-machine-combiner-register-pressure
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Enhance machine combiner pass to reduce register pressure for PowerPC"
+    description: "Enhance machine combiner pass to reduce register pressure for PowerPC."
+    affectedApi:
+      - "PowerPC"
+      - "machine combiner"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-machine-sink-register-pressure
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improve MachineSink to do more sinking based on register pressure and alias analysis"
+    description: "Improve MachineSink to do more sinking based on register pressure and alias analysis."
+    affectedApi:
+      - "PowerPC"
+      - "MachineSink"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-constrained-floating-point
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Complete the constrained floating point operations support"
+    description: "Complete the constrained floating point operations support."
+    affectedApi:
+      - "PowerPC"
+      - "constrained floating point"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-exegesis-improvements
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improve the llvm-exegesis support"
+    description: "Improve the llvm-exegesis support."
+    affectedApi:
+      - "llvm-exegesis"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-stack-clash-protection-improvement
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improve the stack clash protection to probe the gap between stackptr and realigned stackptr"
+    description: "Improve the stack clash protection to probe the gap between stackptr and realigned stackptr."
+    affectedApi:
+      - "PowerPC"
+      - "stack clash protection"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-ieee-long-double-power8
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Improve the IEEE long double support for Power8"
+    description: "Improve the IEEE long double support for Power8."
+    affectedApi:
+      - "PowerPC"
+      - "Power8"
+      - "IEEE long double"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-memoryssa-loopsink
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Enable MemorySSA for LoopSink"
+    description: "Enable MemorySSA for LoopSink."
+    affectedApi:
+      - "PowerPC"
+      - "MemorySSA"
+      - "LoopSink"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-debug-options
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Enhance LLVM debugging functionality via options such as -print-changed and -print-before-changed"
+    description: "Enhance LLVM debugging functionality via options such as -print-changed and -print-before-changed."
+    affectedApi:
+      - "-print-changed"
+      - "-print-before-changed"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-power9-builtins
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Add builtins for Power9 (i.e. darn, xvtdiv, xvtsqrt etc)"
+    description: "Add builtins for Power9 (i.e. darn, xvtdiv, xvtsqrt etc)."
+    affectedApi:
+      - "PowerPC"
+      - "Power9"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-loop-idiom-recognize-disable-options
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Add options to disable all or part of LoopIdiomRecognizePass"
+    description: "Add options to disable all or part of LoopIdiomRecognizePass."
+    affectedApi:
+      - "PowerPC"
+      - "LoopIdiomRecognizePass"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-ddg-dot-form
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Add support for printing the DDG in DOT form allowing for visual inspection of the Data Dependence Graph"
+    description: "Add support for printing the DDG in DOT form allowing for visual inspection of the Data Dependence Graph."
+    affectedApi:
+      - "PowerPC"
+      - "DDG"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-qpx-support-removed
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "removed"
+    severity: "medium"
+    summary: "Remove the QPX support"
+    description: "Remove the QPX support."
+    affectedApi:
+      - "PowerPC"
+      - "QPX"
+    notes: |-
+      Completes the 11.0.0 deprecation of BG/Q/QPX support.
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-bug-fixes-julia
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Significant number of bug fixes including all the fixes necessary to achieve a clean test run for Julia"
+    description: "Significant number of bug fixes including all the fixes necessary to achieve a clean test run for Julia."
+    affectedApi:
+      - "PowerPC"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # PowerPC AIX Support: Compiler-rt support
+
+  - id: powerpc-aix-compiler-rt-32bit-power
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "AIX Support Compiler-rt support: Add support for building compiler-rt for AIX and 32-bit Power targets"
+    description: "AIX Support Compiler-rt support: Add support for building compiler-rt for AIX and 32-bit Power targets."
+    affectedApi:
+      - "PowerPC"
+      - "AIX"
+      - "compiler-rt"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-compiler-rt-default-rtlib
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "Made compiler-rt the default rtlib for AIX"
+    description: "Made compiler-rt the default rtlib for AIX."
+    affectedApi:
+      - "PowerPC"
+      - "AIX"
+      - "rtlib"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # PowerPC AIX Support: General Improvements
+
+  - id: powerpc-aix-extended-altivec-abi
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Enable the AIX extended AltiVec ABI under option -mabi=vec-extabi"
+    description: "Enable the AIX extended AltiVec ABI under option -mabi=vec-extabi."
+    affectedApi:
+      - "PowerPC"
+      - "AIX"
+      - "-mabi=vec-extabi"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-c99-complex-support
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Add partial C99 complex type support"
+    description: "Add partial C99 complex type support."
+    affectedApi:
+      - "PowerPC"
+      - "C99 complex"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-traceback-table
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Implemente traceback table for functions (encodes vector information, emits exception handling)"
+    description: "Implemente traceback table for functions (encodes vector information, emits exception handling)."
+    notes: "Source text reads 'Implemente' (sic)."
+    affectedApi:
+      - "PowerPC"
+      - "AIX"
+      - "traceback table"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-cxx-dynamic-init-bcdtors
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Implemente code generation for C++ dynamic initialization and finalization of non-local variables for use with the -bcdtors option of the AIX linker"
+    description: "Implemente code generation for C++ dynamic initialization and finalization of non-local variables for use with the -bcdtors option of the AIX linker."
+    notes: "Source text reads 'Implemente' (sic); the bullet continues from the previous line in the source."
+    affectedApi:
+      - "PowerPC"
+      - "AIX"
+      - "-bcdtors"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-mignore-xcoff-visibility
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Add new option -mignore-xcoff-visibility"
+    description: "Add new option -mignore-xcoff-visibility."
+    affectedApi:
+      - "PowerPC"
+      - "-mignore-xcoff-visibility"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-explicit-sections
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Enable explicit sections on AIX"
+    description: "Enable explicit sections on AIX."
+    affectedApi:
+      - "PowerPC"
+      - "AIX"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-data-sections-default
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "default-change"
+    severity: "medium"
+    summary: "Enable -f[no-]data-sections on AIX and set -fdata-sections to be the default on AIX"
+    description: "Enable -f[no-]data-sections on AIX and set -fdata-sections to be the default on AIX."
+    affectedApi:
+      - "PowerPC"
+      - "AIX"
+      - "-fdata-sections"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-function-sections
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Enable -f[no-]function-sections"
+    description: "Enable -f[no-]function-sections."
+    affectedApi:
+      - "PowerPC"
+      - "-ffunction-sections"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-large-code-model-relocations
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "added"
+    severity: "low"
+    summary: "Add support for relocation generation using the large code model"
+    description: "Add support for relocation generation using the large code model."
+    affectedApi:
+      - "PowerPC"
+      - "large code model"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: powerpc-aix-pragma-align-natural
+    category: "target-powerpc"
+    targetName: "powerpc"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "Add pragma align natural and sorted out pragma pack stack effect"
+    description: "Add pragma align natural and sorted out pragma pack stack effect."
+    affectedApi:
+      - "PowerPC"
+      - "pragma align natural"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the X86 Target ---
+
+  - id: x86-changes-redacted
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "X86 section body redacted as an ellipsis in the provided HTML source (first bullet)"
+    description: "During this release …"
+    affectedApi:
+      - "X86 target"
+    notes: "Redacted in the provided HTML source; the bullet's text is not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: x86-mpx-removed
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "removed"
+    severity: "medium"
+    summary: "The 'mpx' feature was removed from the backend (it had been removed from the clang frontend in 10.0); mention of the 'mpx' feature in an IR file will print a message to stderr, but IR should still compile"
+    description: "The 'mpx' feature was removed from the backend. It had been removed from clang frontend in 10.0. Mention of the 'mpx' feature in an IR file will print a message to stderr, but IR should still compile."
+    affectedApi:
+      - "X86"
+      - "mpx"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-new-march-options
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for -march=alderlake, -march=sapphirerapids, -march=znver3 and -march=x86-64-v[234] has been added"
+    description: "Support for -march=alderlake, -march=sapphirerapids, -march=znver3 and -march=x86-64-v[234] has been added."
+    affectedApi:
+      - "X86"
+      - "-march=alderlake"
+      - "-march=sapphirerapids"
+      - "-march=znver3"
+      - "-march=x86-64-v[234]"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-disp32-disp8-pseudo-prefixes
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "The assembler now has support for {disp32} and {disp8} pseudo prefixes for controlling displacement size for memory operands and jump displacements; the assembler also supports the .d32 and .d8 mnemonic suffixes to do the same"
+    description: "The assembler now has support for {disp32} and {disp8} pseudo prefixes for controlling displacement size for memory operands and jump displacements. The assembler also supports the .d32 and .d8 mnemonic suffixes to do the same."
+    affectedApi:
+      - "X86"
+      - "{disp32}"
+      - "{disp8}"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-tune-cpu-attribute
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "medium"
+    summary: "A new function attribute \"tune-cpu\" has been added to support -mtune like gcc, allowing microarchitectural optimizations independent from the \"target-cpu\" attribute or TargetMachine CPU; if absent, the tune CPU follows the target CPU"
+    description: |-
+      A new function attribute "tune-cpu" has been added to support -mtune like gcc. This allows microarchitectural optimizations to be applied independent from the "target-cpu" attribute or TargetMachine CPU which will be used to select Instruction Set. If the attribute is not present, the tune CPU will follow the target CPU.
+    affectedApi:
+      - "X86"
+      - "tune-cpu"
+      - "-mtune"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-hreset-instructions
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for HRESET instructions has been added"
+    description: "Support for HRESET instructions has been added."
+    affectedApi:
+      - "X86"
+      - "HRESET"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-uintr-instructions
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for UINTR instructions has been added"
+    description: "Support for UINTR instructions has been added."
+    affectedApi:
+      - "X86"
+      - "UINTR"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: x86-avxvnni-instructions
+    category: "target-x86"
+    targetName: "x86"
+    changeType: "added"
+    severity: "low"
+    summary: "Support for AVXVNNI instructions has been added"
+    description: "Support for AVXVNNI instructions has been added."
+    affectedApi:
+      - "X86"
+      - "AVXVNNI"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the AMDGPU Target ---
+
+  - id: amdgpu-changes-redacted
+    category: "target-amdgpu"
+    targetName: "amdgpu"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AMDGPU section body redacted as an ellipsis in the provided HTML source (first bullet)"
+    description: "During this release …"
+    affectedApi:
+      - "AMDGPU target"
+    notes: "Redacted in the provided HTML source; the bullet's text is not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: amdgpu-byref-preferred
+    category: "target-amdgpu"
+    targetName: "amdgpu"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "The new byref attribute is now the preferred method for representing aggregate kernel arguments"
+    description: "The new byref attribute is now the preferred method for representing aggregate kernel arguments."
+    affectedApi:
+      - "AMDGPU"
+      - "byref"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the AVR Target (section body redacted in source) ---
+
+  - id: avr-changes-redacted
+    category: "target-avr"
+    targetName: "avr"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "AVR section body redacted as an ellipsis in the provided HTML source"
+    description: "During this release …"
+    affectedApi:
+      - "AVR target"
+    notes: "Redacted in the provided HTML source; the actual AVR changes are not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the WebAssembly Target (section body redacted in source) ---
+
+  - id: webassembly-changes-redacted
+    category: "target-webassembly"
+    targetName: "webassembly"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "WebAssembly section body redacted as an ellipsis in the provided HTML source"
+    description: "During this release …"
+    affectedApi:
+      - "WebAssembly target"
+    notes: "Redacted in the provided HTML source; the actual WebAssembly changes are not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  # --- Changes to the OCaml bindings (section present, no items in source) ---
+
+  # --- Changes to the C API (section present, no items in source) ---
+
+  # --- Changes to the Go bindings (section present, no items in source) ---
+
+  # --- Changes to the DAG infrastructure (section present, no items in source) ---
+
+  # --- Changes to the Debug Info ---
+
+  - id: debuginfo-changes-redacted
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "First Debug Info change-list bullet redacted as an ellipsis in the provided HTML source"
+    description: "During this release …"
+    affectedApi:
+      - "Debug Info"
+    notes: "Redacted in the provided HTML source; the bullet's text is not recoverable from this file."
+    relevance: "unknown"
+    status: "pending"
+
+  - id: dimodule-module-declaration-field
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "The DIModule metadata is extended with a field to indicate if it is a module declaration, enabling emission of debug info for a Fortran 'use <external module>' statement"
+    description: |-
+      The DIModule metadata is extended with a field to indicate if it is a module declaration. This extension enables the emission of debug info for a Fortran 'use <external module>' statement. For more information on what the debug info entries should look like and how the debugger can use them, please see test/DebugInfo/X86/dimodule-external-fortran.ll.
+    affectedApi:
+      - "DIModule"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the LLVM tools ---
+
+  - id: llvm-readobj-readelf-no-input-error
+    category: "general"
+    changeType: "behavior-change"
+    severity: "low"
+    summary: "llvm-readobj and llvm-readelf behavior has changed to report an error when executed with no input files instead of reading an input from stdin; reading from stdin can still be achieved by specifying - as an input file"
+    description: "llvm-readobj and llvm-readelf behavior has changed to report an error when executed with no input files instead of reading an input from stdin. Reading from stdin can still be achieved by specifying - as an input file."
+    affectedApi:
+      - "llvm-readobj"
+      - "llvm-readelf"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: llvm-mca-timeline-summary-serialization
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "llvm-mca supports serialization of the timeline and summary views; the --json command line option prints a JSON representation of these views to stdout"
+    description: "llvm-mca supports serialization of the timeline and summary views. The --json command line option prints a JSON representation of these views to stdout."
+    affectedApi:
+      - "llvm-mca"
+      - "--json"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  # --- Changes to the Sanitizers ---
+
+  - id: sanitizers-unsigned-shift-base
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "The integer sanitizer -fsanitize=integer now has a new sanitizer: -fsanitize=unsigned-shift-base; it's not undefined behavior for an unsigned left shift to overflow, but it has been the source of bugs and exploits in certain codebases"
+    description: |-
+      The integer sanitizer -fsanitize=integer now has a new sanitizer: -fsanitize=unsigned-shift-base. It's not undefined behavior for an unsigned left shift to overflow (i.e. to shift bits out), but it has been the source of bugs and exploits in certain codebases in the past.
+    affectedApi:
+      - "-fsanitize=integer"
+      - "-fsanitize=unsigned-shift-base"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"
+
+  - id: sanitizers-musl-linux-support
+    category: "general"
+    changeType: "added"
+    severity: "low"
+    summary: "Many Sanitizers (asan, cfi, lsan, msan, tsan, ubsan) have support for musl-based Linux distributions; some of them may be rudimentary"
+    description: "Many Sanitizers (asan, cfi, lsan, msan, tsan, ubsan) have support for musl-based Linux distributions. Some of them may be rudimentary."
+    affectedApi:
+      - "Sanitizers"
+      - "musl"
+    notes: ""
+    relevance: "irrelevant"
+    status: "pending"

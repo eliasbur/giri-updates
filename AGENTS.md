@@ -8,89 +8,114 @@ Every version branch (`port/llvm-*`) carries a copy of this file and may append 
 
 ## Current state
 
-`port/llvm-8.0.0` was cut from the completed `port/llvm-5.0.2` port (base `5527588`) and
-carries its honest harness (per-test `EXPECTED_EXIT`/`EXIT_UNCHECKED` in
-`test/Makefile.common` + `[GIRI] Abnormal termination` crash detection). The automated
-suite (`make -C /giri/test`, `TEST_PARALLELISM=seq`) reports **21 PASS / 0 FAIL** on the
-8.0.0 port — the 5.0.2 standing failure (`matrix_multiply-seq`, criterion drift) did
-**not** recur: the 5.0.2-era retuned criterion (`matrix_mult 291`, commit `ec0e6b7`)
-reproduces the 19-line golden exactly under 8.0.0 codegen (19/19 identical, verified by
-fresh clean build + manual slice). Every PASS is against the pristine 3.4 goldens —
-`git diff 86f3b8a..HEAD -- 'test/**/ans-*.txt'` is empty. Full history and root causes:
-`porting/TestAudit/llvm-8.0.0/SUMMARY.md` → "Suite results across the port".
+`port/llvm-12.0.0` is the **legacy pass manager** port to LLVM 12.0.0, cut from the
+completed 8.0.0 legacy-PM port head `224bdfb`. It sits on the legacy-PM line
+5.0.2 → 8.0.0 → **12.0.0** → 14.0.0-legacypm (PR #19): 12.0.0 uses the legacy PM by
+default (no `-enable-new-pm` flag anywhere) and typed pointers by default
+(pre-opaque-pointer era), so the 8.0.0 harness needs **zero** changes —
+`git diff 224bdfb..HEAD -- test/` **and** `-- include/Giri/Runtime.h` are **both
+empty** (the strongest clause: no harness, golden, or criterion file was touched).
 
-The 8.0.0 image is `giri-llvm-8` (base **ubuntu:18.04**, gcc 7.5, prebuilt x86_64 LLVM
-8.0.0 tools, cmake 3.12.4, `libxml2-dev`). The base-image choice is recorded in the
-`Dockerfile` comment: 14.04's gcc 4.8 is below LLVM 8's GCC ≥ 5.1 requirement, and
-16.04 (xenial) is no longer served by old-releases.ubuntu.com, so the port used bionic
-from the normal archive (no repo redirection needed). LLVM 8 builds with C++11
-(measured via `llvm-config --cxxflags`), so the CMake flags stay `-std=c++11`.
+The automated suite (`make -C /giri/test`, `TEST_PARALLELISM=seq`) reports
+**22 PASS / 0 FAIL** (rc=0) on the 12.0.0 port: 19 UnitTests (test1–5, test8–21)
+plus the three app benchmarks in their seq variant, all against the pristine 3.4
+goldens. A standalone `tracer`/`prtrace` validation over the same 22 cases is
+**22 PASS / 0 FAIL** in its validatable scope (the `tracer` instrument stage +
+`prtrace` decode; the standalone slice mode is a pre-existing legacy-PM-line
+limitation — see Known residuals). Full history and root causes:
+`porting/TestAudit/llvm-12.0.0/SUMMARY.md` → "Suite results across the port".
 
-Build/test (inside a `giri-llvm-8` container; see `porting/AgentGuide.md`):
+The 12.0.0 image is `giri-llvm-12` (base **ubuntu:20.04**, prebuilt x86_64
+LLVM/Clang 12.0.0 GitHub-Releases tarball
+`clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz` at `/usr/local/llvm`,
+`llvm-config --version` == 12.0.0, cmake 3.12.4 pin). **Documented deviation:** the
+`llvmorg-12.0.0` GitHub release ships no x86_64 ubuntu-18.04 asset (x86_64 assets:
+ubuntu-16.04, ubuntu-20.04, sles12.4), so the 8/14 images' 18.04 convention cannot
+apply; the base moves to 20.04 to match the tarball (recorded in the `Dockerfile`
+comment). `llvm-config --cxxflags` = `-std=c++14 …` and the host gcc 9.4.0 default
+(`gnu++14`) matches, so **no forced `CMAKE_CXX_STANDARD` pin** is needed (16.0.0
+needed one because its headers are C++17); the 8.0.0 CMake flags stay untouched.
+`ldd` on `opt`/`clang` is clean on 20.04 (no link shim: the prebuilt's max GLIBCXX
+symbol is satisfied by 20.04's libstdc++, and
+`std::__throw_bad_array_new_length` is not referenced by any 12.0.0 static lib).
+
+Build/test (inside a `giri-llvm-12` container; see `porting/AgentGuide.md`):
 
 ```bash
-docker build -t giri-llvm-8 .          # from the repo root
-docker run -it --rm giri-llvm-8 bash
-source /giri/utils/build.sh            # cmake + make + make -C test
+docker build -t giri-llvm-12 .         # from the repo root
+docker run -it --rm giri-llvm-12 bash
+source /giri/utils/build.sh             # cmake + make + make -C test
 ```
 
-Source changes for 8.0.0 were minimal (commit `16236bd`):
-- Four one-line `#define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)` compat shims
-  (`lib/Giri/Giri.cpp`, `lib/Giri/TraceFile.cpp`,
-  `lib/Utility/BasicBlockNumbering.cpp`, `lib/Utility/LoadStoreNumbering.cpp`) —
-  LLVM 8's `Debug.h` no longer defines the bare `DEBUG` macro (renamed to
-  `LLVM_DEBUG` in 7.0.0); each file already defines `DEBUG_TYPE` and includes
-  `Debug.h`, so behavior is preserved (no-op under `NDEBUG`).
-- `tools/Tracer/Tracer.cpp`: `WriteBitcodeToFile` takes `const Module &` in 8.0.0
-  (2 call sites changed from `M.get()` to `*M`).
-- `CallSite` **survives in 8.0.0** (deprecated there, removed in a later release), so
-  the three `CallSite` call sites (`TracingNoGiri.cpp`, `TraceFile.cpp`,
-  `SourceLineMapping.cpp`) needed no migration.
+Source changes for 12.0.0 (commit `f6b39bf`), each root-caused against the 12.0.0
+prebuilt and applied only because the 12.0.0 compiler demands it:
+- **`FunctionCallee` (9.0.0)** — `Module::getOrInsertFunction(...)` returns
+  `FunctionCallee`, not `Function*`: `cast<Function>(...getCallee())` in
+  `include/Utility/Utils.h` (2 sites) and `lib/Giri/TracingNoGiri.cpp` (1).
+- **`CallSite` removal (11.0.0)** — `lib/Giri/TraceFile.cpp` casts `const CallBase *`
+  and uses `arg_size()`/`getArgOperand(i)`; `lib/Giri/TracingNoGiri.cpp` +
+  `lib/Utility/SourceLineMapping.cpp` use `CallBase::getCalledOperand()`; three
+  `llvm/IR/CallSite.h` includes dropped. The 8.0.0 `DEBUG(X)` shim **stays**
+  (12.0.0 `Debug.h` still has no bare `DEBUG`, only `DEBUG_WITH_TYPE`).
+- **`BasicBlockPass` deleted (10.0.0)** — `TracingNoGiri` (the tree's one
+  `BasicBlockPass`) became a `FunctionPass` with a `runOnFunction` loop calling
+  `runOnBasicBlock` per BB (`include/Giri/Giri.h`, `lib/Giri/TracingNoGiri.cpp`).
+- **`tracer` link** — the 12.0.0 prebuilt CMake package sets no
+  `LLVM_COMPONENT_LIBS`, so `llvm_map_components_to_libnames(all)` expands empty and
+  `tracer` fails to link; replaced with `llvm-config --libfiles all` +
+  `--system-libs` (`tools/Tracer/CMakeLists.txt`). The same fix the
+  14.0.0-legacypm port made.
+
+Not needed on 12.0.0 (recorded in the task note): the `#include <map>` contingency
+(compiles without it), the `sys::fs::F_*`→`OF_*` rename (13.0.0), and the 14.0.0-era
+DEBUG_TYPE/STATISTIC and `Twine` fixes.
 
 The three critical invariants are verified (this port):
 1. **Numbering determinism** — identical pass sequence in both pipeline stages
-   (`-mergereturn -bbnum -lsnum … -remove-bbnum -remove-lsnum`, `test/Makefile.common`
-   lines 45 and 85); behaviorally proven by the 21/21 PASS against the 3.4 goldens.
-2. **`Entry` struct ABI** — `include/Giri/Runtime.h` byte-identical to the 3.4 base
-   (`git diff 86f3b8a..HEAD` empty); `sizeof(Entry)` = 32 on x86_64 LP64, divides the
-   4096 page size exactly.
+   (`-mergereturn -bbnum -lsnum … -remove-bbnum -remove-lsnum`,
+   `test/Makefile.common` lines 45 and 85); two `-bbnum -query-bbnum` runs on the
+   same `.bc` are byte-identical; behaviorally proven by the 22/22 PASS.
+2. **`Entry` struct ABI** — `include/Giri/Runtime.h` untouched
+   (`git diff 224bdfb..HEAD -- include/Giri/Runtime.h` empty); `sizeof(Entry)` = 32
+   on x86_64 LP64, divides the 4096 page size; every fresh `.trace` `% 32 == 0`;
+   `prtrace` decodes all 22 traces ending in the `End` record.
 3. **Debug info** — `-g` mandatory in the test compile
-   (`CFLAGS += -g -O0 -c -emit-llvm`); `SourceLineMapping` yields the 3.4-era
-   `file:line` slices across all 21 passing tests.
+   (`CFLAGS += -g -O0 -c -emit-llvm`); `clang -g` on 12.0.0 emits the DWARF DI
+   metadata; `SourceLineMapping` yields the 3.4-era `file:line` slices across all 22
+   passing tests.
 
-**The suite measures the seq variants.** `Dockerfile` sets `TEST_PARALLELISM=seq`, so a
-suite result says nothing about a pthread variant unless run by hand. Manual pthread
-runs (this port): `pca-pthread` CLEAN (34/34); `matrix_multiply-pthread`
-**FAIL-EXPECTED** — criterion instruction drift, 3.4's `matrixmult_map:138` ≠ 8.0.0's
-#138 (**153** instructions in the function under 8.0.0 codegen); corrected full 1–154
-sweep: **N=136 reproduces the 60-line golden exactly (60/60, 0 missing, 0 extra)** — a
-valid criterion retune exists (reproducible across fresh traces); as shipped, `:138`
-gives 52/60 (8 golden lines absent: 140,144,145,147,149,150,152,155; 0 extra — monotonic
-subset, no wrong lines). Correction note: the earlier "148 instructions / no index
-reproduces the golden" claim came from a sweep run against a stale build state and is
-retracted. The criterion file was **not** touched (golden-file constraint); the ready-made
-forward option is retuning it to `matrixmult_map 136` (needs explicit user consent) —
-see the open item in `porting/TestAudit/llvm-8.0.0/matrix_multiply-pthread.md`.
-`kmeans-pthread`
-**FAIL-HARNESS** — asserts `num_threads == num_procs` (`kmeans-pthread.c:316`) on the
-256-CPU host (100 points → 100 threads), caught by the `[GIRI] Abnormal termination`
-marker; identical to the 5.0.2 finding (108 GB trace then, 101 GB here).
+**The suite measures the seq variants.** `Dockerfile` sets
+`TEST_PARALLELISM=seq`, so a suite result says nothing about a pthread variant
+unless run by hand. The pthread variants were **not** re-measured for 12.0.0 (the
+automated suite is the parity gate for this branch); the 8.0.0 audit's pthread
+findings (`matrix_multiply-pthread` FAIL-EXPECTED criterion drift,
+`kmeans-pthread` FAIL-HARNESS on the 256-CPU host) stand as the last measurements.
+
+> The **14.0.0-legacypm** port (`port/llvm-14.0.0-legacypm`, PR #19) is the forward
+> successor on this line and also reports 22/22; it keeps `-enable-new-pm=0` because
+> the legacy PM still exists in 14.0.0. The **16.0.0** new-PM port
+> (`port/llvm-16.0.0`, PR #23) is the parallel new-PM line (the forward-compatible
+> path that survives LLVM 17+, where the legacy PM is removed) and reports 22/22
+> there.
 
 ## Known residuals
 
-The port is functionally closed (21/21 on the honest seq suite). Inherited gaps (never
-covered by any LLVM version) are marked [inherited]; regressions (broken by the port)
-are [regression]. There are no [regression] rows.
+The port is functionally closed (22/22 on the honest seq suite, plus a 22/22
+standalone-`tracer` instrument/`prtrace` validation). Inherited gaps (never covered
+by any LLVM version) are marked [inherited]; regressions (broken by the port) are
+[regression]. There are no [regression] rows.
 
 | What | Status | Why acceptable / Evidence |
 |------|--------|---------------------------|
-| `matrix_multiply-pthread` — FAIL-EXPECTED | Final state for the *shipped* criterion (not in the automated suite) | Criterion instruction drift (3.4's `matrixmult_map:138` ≠ 8.0.0's #138; **153** instructions under 8.0.0 codegen). Corrected full 1–154 sweep: **N=136 reproduces the 60-line golden exactly (60/60)** — a valid retune exists; as shipped `:138` gives 52/60 (8 lines absent, 0 extra). Golden untouched (pristine 3.4); criterion untouched (retuning to `:136` needs explicit user consent). The earlier "148 / no retune exists" claim is retracted (stale-build-state sweep). Evidence: `porting/TestAudit/llvm-8.0.0/matrix_multiply-pthread.md` |
-| `kmeans-pthread` — cannot run | [inherited] gap | Asserts on hosts where `sysconf(_SC_NPROCESSORS_ONLN)` exceeds 100 (256 in this container). Harness catches the abort via the `[GIRI] Abnormal termination` marker. Same as 5.0.2 |
-| No pthread suite coverage | [inherited] gap | `Dockerfile` pins `TEST_PARALLELISM=seq`. pthread variants are one-off manual measurements, not ongoing coverage |
-| test6 (sigusr1), test7 (sigint), test22 (fp) | [inherited] gap | Have golden files but not in `auto-tests.txt`; signals tests need interactive terminal setup, test22 needs `-lm`. Same as 5.0.2 |
+| `matrix_multiply-pthread` — FAIL-EXPECTED | [inherited] (not in the automated suite) | Inherited from 8.0.0: criterion instruction drift (3.4's `matrixmult_map:138` ≠ 8.0.0's #138; **153** instructions under 8.0.0 codegen; N=136 reproduces the 60-line golden). Not re-measured on 12.0.0. Evidence: `porting/TestAudit/llvm-8.0.0/matrix_multiply-pthread.md` |
+| `kmeans-pthread` — cannot run | [inherited] gap | Asserts on hosts where `_SC_NPROCESSORS_ONLN` > 100 (256 in this container). Same as 5.0.2/8.0.0 |
+| No pthread suite coverage | [inherited] gap | `Dockerfile` pins `TEST_PARALLELISM=seq`. Last pthread measurements: the 8.0.0 audit |
+| test6 (sigusr1), test7 (sigint), test22 (fp) | [inherited] gap | Have golden files but not in `auto-tests.txt`; signals tests need interactive terminal setup, test22 needs `-lm`. Same as 5.0.2/8.0.0 |
 | HelloWorld, histogram, linear_regression, word_count | [inherited] gap | No golden file on any LLVM version; not wired into the suite |
-| `ensurePostDomFrontierComputed` — memory leak | Acceptable | `DynamicGiri::ensurePostDomFrontierComputed` (`Giri.cpp:67`) `new`s the `PostDominatorTreeWrapperPass` and `PostDominanceFrontier` and frees neither; bounded by `opt` process lifetime, no observable cost. Inherited from 5.0.2 |
-| `signal(SIGKILL, …)` — no-op | Harmless | `runtime/Giri/Tracing.cpp`. SIGKILL cannot be caught per POSIX; the `signal()` call returns `SIG_ERR`. Inherited from 5.0.2 |
+| `opt -stats` prints nothing | [inherited] harmless toolchain behavior | The 12.0.0 prebuilt `opt` prints nothing to stderr for `-stats` (0× across the suite logs). Stderr-only; never pollutes the `.ll`/trace/slice files or the slice. |
+| Standalone `tracer` slice mode SIGBUSes | [inherited] pre-existing legacy-PM-line limitation | The 3.4-vintage `tools/Tracer/Tracer.cpp` has a fixed `main()` pipeline that never applies `-bbnum -lsnum`, so its slice mode (`-dgiri`/`DynamicGiri`) reads empty numbering maps and `findPreviousID` SIGBUSes. Untouched by this port (`git diff 224bdfb..HEAD -- tools/Tracer/Tracer.cpp` empty); the 8.0.0→14.0.0-legacypm delta made no `Tracer.cpp` pipeline change either. The standalone **instrument** stage + `prtrace` are validated (22/22); the slice *result* is validated via `opt` in the suite. |
+| `ensurePostDomFrontierComputed` — memory leak | [inherited] benign | `DynamicGiri` `new`s the `PostDominatorTree`/`PostDominanceFrontier` and frees neither; bounded by `opt` process lifetime, no observable cost. Inherited from 5.0.2/8.0.0 |
+| `signal(SIGKILL, …)` — no-op | [inherited] harmless | `runtime/Giri/Tracing.cpp`. SIGKILL cannot be caught per POSIX. Inherited from 5.0.2/8.0.0 |
 
 ## Containers — two kinds
 
