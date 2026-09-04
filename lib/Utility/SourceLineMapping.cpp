@@ -14,7 +14,6 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/IR/CallSite.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/IR/InstIterator.h"
@@ -73,7 +72,7 @@ std::string SourceLineMappingPass::locateSrcInfo(Instruction *I) {
         return "";
     }
   } else if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
-    if (Value *CalledVal = II->getCalledValue()) {
+    if (Value *CalledVal = II->getCalledOperand()) {
       if (Function *CalledFunc = dyn_cast<Function>(CalledVal->stripPointerCasts())) {
         if (isTracerFunction(CalledFunc))
           return "";
