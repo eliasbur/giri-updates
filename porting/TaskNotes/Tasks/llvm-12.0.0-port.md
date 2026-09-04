@@ -66,31 +66,31 @@ size), and debug-info-driven source line mapping (`-g` mandatory).
 
 ## DoD
 
-- [ ] `port/llvm-12.0.0` created from `224bdfb`; working branch
+- [x] `port/llvm-12.0.0` created from `224bdfb`; working branch
       `agent/jcode/llvm-12.0.0-port`
-- [ ] Image `giri-llvm-12` builds (ubuntu:20.04 + 12.0.0 prebuilt, provenance
+- [x] Image `giri-llvm-12` builds (ubuntu:20.04 + 12.0.0 prebuilt, provenance
       documented in the Dockerfile comment); `source /giri/utils/build.sh`
       produces `build/lib/{libgiri.so,libdgutility.so,librtgiri.a}` and
       `build/bin/{tracer,prtrace}`
-- [ ] `opt -load` lists `-bbnum`, `-lsnum`, `-trace-giri`, `-dgiri`
-- [ ] Honest seq suite (`TEST_PARALLELISM=seq`): **22 PASS / 0 FAIL** against the
+- [x] `opt -load` lists `-bbnum`, `-lsnum`, `-trace-giri`, `-dgiri`
+- [x] Honest seq suite (`TEST_PARALLELISM=seq`): **22 PASS / 0 FAIL** against the
       pristine 3.4 goldens; any FAIL root-caused (criterion-drift policy:
       documented FAIL-EXPECTED residual; retuning needs explicit user consent)
-- [ ] Standalone `tracer` + `prtrace` validated over the same 22 cases
-- [ ] Cold-build acceptance: wipe `/giri/build`, `source /giri/utils/build.sh`
+- [x] Standalone `tracer` + `prtrace` validated over the same 22 cases
+- [x] Cold-build acceptance: wipe `/giri/build`, `source /giri/utils/build.sh`
       from `/giri` → rc=0, 22 PASS, 5 artifacts; negative control (empty slice
       ≠ golden)
-- [ ] In-container invariants re-derived (`sizeof(Entry)`, trace `%32`, pipeline
+- [x] In-container invariants re-derived (`sizeof(Entry)`, trace `%32`, pipeline
       identity, `file:line` mapping)
-- [ ] `git diff 224bdfb..HEAD -- test/` and `-- include/Giri/Runtime.h` empty
-- [ ] Evidence: `porting/TestAudit/llvm-12.0.0/` (SUMMARY + 22 per-test reports +
+- [x] `git diff 224bdfb..HEAD -- test/` and `-- include/Giri/Runtime.h` empty
+- [x] Evidence: `porting/TestAudit/llvm-12.0.0/` (SUMMARY + 22 per-test reports +
       `_test_logs/` + `_tool_validation/` + `_cold_acceptance/`)
-- [ ] Change data: `porting/llvm-releases/12.0.0/` (raw 9.0.0–12.0.0 yamls +
+- [x] Change data: `porting/llvm-releases/12.0.0/` (raw 9.0.0–12.0.0 yamls +
       release-notes HTML + consolidated `api-breakings.yaml` 8.0.0→12.0.0 with
       port-critical `originalIds: []` entries)
-- [ ] `AGENTS.md` rewritten as the 12.0.0 branch copy (Current state + Known
+- [x] `AGENTS.md` rewritten as the 12.0.0 branch copy (Current state + Known
       residuals, no `[regression]` rows)
-- [ ] PR opened into `port/llvm-12.0.0` via `driver.py open-mr`;
+- [x] PR opened into `port/llvm-12.0.0` via `driver.py open-mr`;
       `driver.py finish` (human merge only)
 
 ## Progress
@@ -246,6 +246,16 @@ Entry)=32`, `4096%32==0`, fresh test1 trace 1216 B (`%32==0`), two `-bbnum
   deviation, the four source fixes, invariants, no `[regression]` rows);
   shared sections byte-identical to the 8.0.0 head.
 
+
+### 2026-09-04 — s9 push + PR + finish
+- Pushed `agent/jcode/llvm-12.0.0-port` and the PR target `port/llvm-12.0.0`
+  (at `224bdfb`) over HTTPS with the token-in-env askpass mechanism.
+- **PR #24** opened into `port/llvm-12.0.0` via `driver.py open-mr`
+  (https://github.com/eliasbur/giri-updates/pull/24); verified OPEN,
+  head `agent/jcode/llvm-12.0.0-port`, base `port/llvm-12.0.0`, mergeable,
+  not merged (human review only). PRs #21/#23 left OPEN/untouched.
+- `driver.py finish` wrote the `## Handoff` line + `status: done` +
+  `completedDate` and pushed the bookkeeping commit.
 
 ## Handoff
 - PR: giri-updates #24 https://github.com/eliasbur/giri-updates/pull/24
