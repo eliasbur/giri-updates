@@ -25,7 +25,6 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/CommandLine.h"
@@ -60,7 +59,7 @@ static inline Function *getOrInsertF(Module &M,
                                        Type *RetTy,
                                        ArrayRef<Type *> Args = None) {
   FunctionType *FTy = FunctionType::get(RetTy, Args, false);
-  return cast<Function>(M.getOrInsertFunction(Name, FTy));
+  return cast<Function>(M.getOrInsertFunction(Name, FTy).getCallee());
 }
 
 static bool hasPHI(const BasicBlock & BB) {
@@ -383,12 +382,12 @@ void TracingNoGiri::visitCallInst(CallInst &CI) {
      return;
   }
 
-  if (isa<InlineAsm>(CI.getCalledValue()->stripPointerCasts()))
+  if (isa<InlineAsm>(CI.getCalledOperand()->stripPointerCasts()))
     return;
 
   instrumentLock(&CI);
   Value *CallID = ConstantInt::get(Int32Type, lsNumPass->getID(&CI));
-  Value *FP = castTo(CI.getCalledValue(), VoidPtrType, "", &CI);
+  Value *FP = castTo(CI.getCalledOperand(), VoidPtrType, "", &CI);
   std::vector<Value *> args = make_vector<Value *>(CallID, FP, 0);
   Instruction *RC;
   if (CalledFunc->isDeclaration())
@@ -405,6 +404,14 @@ void TracingNoGiri::visitCallInst(CallInst &CI) {
   ++NumCalls;
 
   visitSpecialCall(CI);
+}
+
+// LLVM 10 removed the legacy BasicBlockPass, which previously called
+// runOnBasicBlock once per basic block. Drive that loop ourselves.
+bool TracingNoGiri::runOnFunction(Function &F) {
+  for (Function::iterator I = F.begin(); I != F.end(); ++I)
+    runOnBasicBlock(*I);
+  return true;
 }
 
 bool TracingNoGiri::runOnBasicBlock(BasicBlock &BB) {

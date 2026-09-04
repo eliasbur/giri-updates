@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.3)
 project(Giri C CXX)
 
-find_package(LLVM 8.0 REQUIRED CONFIG)
+find_package(LLVM 12.0 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 
 list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")

@@ -1,0 +1,33 @@
+=== STAGE: BUILD ===
+make[1]: Entering directory '/giri/test/UnitTests/test5'
+make[2]: Entering directory '/giri/build'
+make[3]: Entering directory '/giri/build'
+make[4]: Entering directory '/giri/build'
+make[4]: Leaving directory '/giri/build'
+[ 35%] Built target dgutility
+make[4]: Entering directory '/giri/build'
+make[4]: Leaving directory '/giri/build'
+[ 64%] Built target giri
+make[4]: Entering directory '/giri/build'
+make[4]: Leaving directory '/giri/build'
+[ 76%] Built target rtgiri
+make[4]: Entering directory '/giri/build'
+make[4]: Leaving directory '/giri/build'
+[ 88%] Built target tracer
+make[4]: Entering directory '/giri/build'
+make[4]: Leaving directory '/giri/build'
+[100%] Built target prtrace
+make[3]: Leaving directory '/giri/build'
+make[2]: Leaving directory '/giri/build'
+[1] Hello thread 139844356429568!
+[0] Hello thread 139844364822272!
+[2] Hello thread 139844348036864!
+[3] Hello thread 139844269373184!
+[4] Hello thread 139844260980480!
+[5] Hello thread 139844252587776!
+[6] Hello thread 139844244195072!
+[7] Hello thread 139844235802368!
+make[1]: Leaving directory '/giri/test/UnitTests/test5'
+=== STAGE: TEST ===
+make[1]: Entering directory '/giri/test/UnitTests/test5'
+make[1]: Leaving directory '/giri/test/UnitTests/test5'

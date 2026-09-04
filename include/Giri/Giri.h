@@ -36,24 +36,29 @@ namespace giri {
 
 /// This class defines an LLVM function pass that instruments a program to
 /// generate a trace of its execution usable for dynamic slicing.
-class TracingNoGiri : public BasicBlockPass,
+/// LLVM 10 removed the legacy BasicBlockPass, so this is now a FunctionPass
+/// that iterates its own basic blocks (preserving the original per-BB
+/// instrumentation behavior and order).
+class TracingNoGiri : public FunctionPass,
                       public InstVisitor<TracingNoGiri> {
 public:
   static char ID;
-  TracingNoGiri() : BasicBlockPass(ID) {}
+  TracingNoGiri() : FunctionPass(ID) {}
 
   /// This method does module level changes needed for adding tracing
   /// instrumentation for dynamic slicing. Specifically, we add the function
   /// prototypes for the dynamic slicing functionality here.
   virtual bool doInitialization(Module &M);
   virtual bool doFinalization(Module &M) { return false; }
-  virtual bool doInitialization(Function &F) { return false; }
-  virtual bool doFinalization(Function &F) { return false; }
 
   /// This method starts execution of the dynamic slice tracing instrumentation
   /// pass. It will add code to a function that records the execution of basic
   /// blocks.
-  virtual bool runOnBasicBlock(BasicBlock &BB);
+  virtual bool runOnFunction(Function &F);
+
+  /// Instrument a single basic block. This drove the pass in LLVM <= 8, when
+  /// TracingNoGiri was a BasicBlockPass.
+  bool runOnBasicBlock(BasicBlock &BB);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<QueryBasicBlockNumbers>();

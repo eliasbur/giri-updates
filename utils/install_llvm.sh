@@ -57,4 +57,18 @@ case $VERSION in
 		rm -f clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
 		mv clang+llvm-8.0.0-x86_64-linux-gnu-ubuntu-18.04 $LLVM_HOME
 		;;
+	"12.0.0")
+		# Use prebuilt release tarball — no build from source needed.
+		# From LLVM 10.0.0 onward the prebuilts no longer live on
+		# releases.llvm.org (sources/docs only) — they moved to the GitHub
+		# Releases of llvm/llvm-project (tag llvmorg-12.0.0). This release
+		# ships no x86_64 ubuntu-18.04 asset (x86_64 assets are ubuntu-16.04,
+		# ubuntu-20.04, sles12.4), so the image uses the ubuntu-20.04 asset
+		# on an ubuntu:20.04 base (see Dockerfile) — a documented deviation
+		# from the 18.04 convention of the 8/14 images.
+		wget https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
+		tar xf clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
+		rm -f clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz
+		mv clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04 $LLVM_HOME
+		;;
 esac

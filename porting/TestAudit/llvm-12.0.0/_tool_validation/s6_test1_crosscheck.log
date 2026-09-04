@@ -1,0 +1,9 @@
+=== test1 standalone-tracer vs opt-harness instrument cross-check ===
+A (standalone tracer -trace) run rc=12  B (opt -trace-giri harness) run rc=12
+A trace bytes: 1216  B trace bytes: 1216
+Abnormal A: 0  B: 0
+--- prtrace ID/Type sequence diff (empty == identical) ---
+IDENTICAL: standalone tracer instrument == opt harness instrument
+--- prtrace tail (End record = Entry ABI) ---
+        36: BasicBlock  :      1: 140103179571008:           401410: 4294967295
+        37: End         :      0:        0:                0:        0
